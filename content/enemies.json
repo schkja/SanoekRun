@@ -1,0 +1,61 @@
+[
+  {
+    "id": "walker",
+    "label": "Walker",
+    "behavior": "patrol",
+    "speed": 3,
+    "health": 1,
+    "points": 50,
+    "size": [1.1, 1.1, 1.1],
+    "color": "#e8615f",
+    "shape": "box"
+  },
+  {
+    "id": "hopper",
+    "label": "Hopper",
+    "behavior": "hover",
+    "speed": 2.2,
+    "health": 1,
+    "points": 60,
+    "size": [1.0, 1.0, 1.0],
+    "color": "#f08a3c",
+    "shape": "sphere",
+    "params": { "height": 2 }
+  },
+  {
+    "id": "stalker",
+    "label": "Stalker",
+    "behavior": "chase",
+    "speed": 4.2,
+    "health": 2,
+    "points": 120,
+    "size": [1.2, 1.4, 1.2],
+    "color": "#9b59d0",
+    "shape": "box",
+    "params": { "range": 11 }
+  },
+  {
+    "id": "spinner",
+    "label": "Spinner",
+    "behavior": "spinner",
+    "speed": 3.4,
+    "health": 1,
+    "points": 80,
+    "size": [1.0, 1.0, 1.0],
+    "color": "#3ac6b0",
+    "shape": "gem",
+    "params": { "radius": 3.5 }
+  },
+  {
+    "id": "spike",
+    "label": "Spike Trap",
+    "behavior": "static",
+    "speed": 0,
+    "health": 99,
+    "points": 0,
+    "size": [1.2, 1.2, 1.2],
+    "color": "#b03a48",
+    "shape": "gem",
+    "spiky": true
+  }
+]

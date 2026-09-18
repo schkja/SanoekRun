@@ -1,0 +1,68 @@
+{
+  "name": "Frozen Drift",
+  "subtitle": "The pale platforms are ice — you will slide. Beat the clock.",
+  "spawn": [0, 2, 3],
+  "killY": -15,
+  "cameraYaw": -1.5708,
+  "timeLimit": 110,
+  "theme": { "sky": "#2a3a5e", "fog": "#43578a", "fogDistance": 55, "light": "#cfe4ff" },
+  "platforms": [
+    { "position": [0, 0, 0], "size": [12, 1, 12], "color": "#5d6f92" },
+    { "position": [10, 1, 0], "size": [7, 1, 7], "surface": "ice" },
+    { "position": [19, 1.5, -3], "size": [6, 1, 6], "surface": "ice" },
+    {
+      "position": [26, 2, -3],
+      "size": [4, 0.8, 6],
+      "color": "#7d8bb0",
+      "move": { "offset": [0, 3, 0], "duration": 5 }
+    },
+    { "position": [33, 4, -3], "size": [7, 1, 7], "color": "#5d6f92" },
+    { "position": [41, 4.5, 0], "size": [6, 1, 10], "surface": "ice" },
+    { "position": [41, 7, 7], "size": [3, 0.8, 3], "color": "#7d8bb0" },
+    { "position": [48, 3, 0], "size": [4, 0.8, 4], "surface": "bounce" },
+    { "position": [54, 8, 0], "size": [8, 1, 8], "color": "#5d6f92" }
+  ],
+  "pickups": [
+    {
+      "item": "coin",
+      "position": [-3, 2, 0],
+      "repeat": { "count": 4, "to": [3, 2, 0] }
+    },
+    {
+      "item": "coin",
+      "position": [10, 3, -2],
+      "repeat": { "count": 3, "to": [10, 3, 2] }
+    },
+    { "item": "feather", "position": [19, 3.5, -3] },
+    {
+      "item": "coin",
+      "position": [26, 4, -3],
+      "repeat": { "count": 3, "to": [33, 6, -3] }
+    },
+    { "item": "clock", "position": [33, 6, 0] },
+    { "item": "gem", "position": [41, 8.5, 7] },
+    {
+      "item": "coin",
+      "position": [48, 6, 0],
+      "repeat": { "count": 4, "to": [52, 10, 0] }
+    },
+    { "item": "heart", "position": [54, 10, 0] }
+  ],
+  "enemies": [
+    { "enemy": "walker", "position": [10, 1, 2], "patrolTo": [10, 1, -2] },
+    { "enemy": "hopper", "position": [23, 3, -3] },
+    {
+      "enemy": "stalker",
+      "position": [33, 4, -1],
+      "overrides": { "speed": 3.6 }
+    },
+    { "enemy": "walker", "position": [41, 4.5, 3], "patrolTo": [41, 4.5, -3] },
+    { "enemy": "spike", "position": [38.5, 4.5, 0] },
+    {
+      "enemy": "spinner",
+      "position": [54, 8, 0],
+      "overrides": { "speed": 3 }
+    }
+  ],
+  "goal": { "position": [57, 8, 3], "requires": 12 }
+}

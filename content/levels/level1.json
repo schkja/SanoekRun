@@ -1,0 +1,49 @@
+{
+  "name": "Sunny Steps",
+  "subtitle": "Collect the coins. Stomp the walkers. Find the portal.",
+  "spawn": [0, 2, 4],
+  "killY": -15,
+  "cameraYaw": -1.5708,
+  "theme": { "sky": "#8fd3f4", "fog": "#a8dcf7", "fogDistance": 70, "light": "#fff4dc" },
+  "platforms": [
+    { "position": [0, 0, 0], "size": [16, 1, 16] },
+    { "position": [12, 1.5, 0], "size": [6, 1, 6] },
+    { "position": [20, 3, 0], "size": [6, 1, 6] },
+    { "position": [28, 4, -2], "size": [6, 1, 6] },
+    { "position": [28, 6.5, 4], "size": [4, 0.8, 4], "color": "#d6b36a" },
+    {
+      "position": [36, 4, 2],
+      "size": [5, 0.8, 5],
+      "color": "#c98f4b",
+      "move": { "offset": [0, 0, -8], "duration": 6 }
+    },
+    { "position": [45, 5, -2], "size": [10, 1, 10] },
+    { "position": [45, 7.5, -8], "size": [4, 0.8, 4], "color": "#d6b36a" }
+  ],
+  "pickups": [
+    {
+      "item": "coin",
+      "position": [-4, 2, 0],
+      "repeat": { "count": 5, "to": [4, 2, 0] }
+    },
+    {
+      "item": "coin",
+      "position": [12, 3.5, 0],
+      "repeat": { "count": 3, "to": [20, 5, 0] }
+    },
+    { "item": "coin", "position": [28, 8, 4] },
+    { "item": "gem", "position": [45, 9, -8] },
+    { "item": "heart", "position": [36, 6, 2] }
+  ],
+  "enemies": [
+    { "enemy": "walker", "position": [3, 0, -4], "patrolTo": [-3, 0, -4] },
+    { "enemy": "walker", "position": [18.5, 3, 1.5], "patrolTo": [21.5, 3, -1.5] },
+    { "enemy": "hopper", "position": [42, 7.5, -2] },
+    {
+      "enemy": "spinner",
+      "position": [42, 5, 1],
+      "overrides": { "speed": 2.6 }
+    }
+  ],
+  "goal": { "position": [48, 5, 1], "requires": 8 }
+}
