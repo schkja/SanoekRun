@@ -102,7 +102,7 @@ export class Engine {
     // A glowing abyss shouldn't fade into the fog — lava stays bright.
     this.abyssMaterial.fog = !theme.abyssGlow;
     this.abyssMaterial.needsUpdate = true;
-    this.abyss.position.y = theme.abyssGlow ? -9 : -22;
+    this.abyss.position.y = theme.ground ? -0.06 : theme.abyssGlow ? -9 : -22;
   }
 
   addShake(amount: number): void {

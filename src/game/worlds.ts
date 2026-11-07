@@ -18,8 +18,8 @@ import type { Character } from './settings';
 
 export type ObstacleKind = 'low' | 'high' | 'gap' | 'block';
 export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'snowball';
-export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow';
-export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow';
+export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail';
+export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail';
 
 export interface WorldTheme {
   /** Sky colour at the top of the screen and at the horizon. */
@@ -38,6 +38,8 @@ export interface WorldTheme {
   abyssGlow: boolean;
   /** Portal and highlight colour. */
   accent: string;
+  /** True for worlds on the forest floor: the `abyss` colour becomes grass right under the path. */
+  ground?: boolean;
 }
 
 export interface WorldDef {

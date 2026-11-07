@@ -36,7 +36,7 @@ thick outlines), bright forest. Portrait phone first, works on desktop.
 
 - **Two heroes, each with its own route of worlds** (`content/worlds.json` → `routes`):
   - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
-  - **Squirrel** (white legs, teal scarf): `treetops` → `autumn-canopy` → `snowy-pines`. Collects **acorns**. Chased by a **hawk**, later a **snowball**.
+  - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `autumn-canopy` → `snowy-pines`. Collects **acorns**. Chased by a **hawk**, later a **snowball**.
 - Each world is 650 m, then a portal to the next; the route loops faster.
 - **Controls:** swipe left/right = turn at a corner or change lane; up = jump; down = slide (or slam mid-air). Keyboard: arrows/WASD, Space = jump, **Esc or P = pause**.
 - **Fail:** miss a corner (fall), or stumble twice within the danger window (the chaser catches you). One stumble puts the chaser on your heels for a few seconds.
@@ -221,6 +221,12 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 - Title toolbar → ℹ️ Info: version, author (opens site), bug report (mailto), website, privacy/imprint, last 4 changelog entries.
 - `public/legal.html` (static, linkable from forums): Impressum (§ 5 DDG), Datenschutzerklärung (DE, binding) + English summary, licences (three.js MIT, fonts OFL). **The postal address in the Impressum must be filled in.**
 - Privacy by design, keep it that way: no cookies, no analytics, no third-party requests, fonts bundled; nginx `access_log off`; API keeps IPs only as a salted in-memory hash for rate limiting (cleared hourly); Docker logs capped (5 MB × 2); name prompt warns to use a nickname. Any new data flow (accounts, analytics, ads, external fonts/CDNs) requires updating `legal.html` first.
+
+### 6.9 Ground worlds (forest trail)
+`theme.ground: true` raises the engine's "abyss" plane to y −0.06 and colours it as grass, so the path lies on the forest floor. Decor `trail` + path style `trail`: sandy path, grass verge, bushes (some with berries), flower bunches, ferns, stones, toadstools, rooted trees, hedge at every corner. No gaps (`obstacles.gap: 0`). Missing a corner = "ran into the bushes" (instant death in `step()`, no falling).
+
+### 6.10 iPhone home-screen height
+In iOS standalone mode with a translucent status bar the viewport is short by the status-bar height. `main.ts` sets `--app-h` to `screen.height` when `navigator.standalone`; `#game`/`#ui` use `height: var(--app-h, 100lvh)`. Page background is forest green as a last fallback.
 
 ## 7. Content: adding a world
 

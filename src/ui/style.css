@@ -38,7 +38,7 @@ body {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  background: #9fdcff;
+  background: #4f9e4a;
   font-family: var(--font-body);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -60,6 +60,8 @@ body {
   width: 100vw;
   height: 100vh;
   height: 100lvh;
+  /* Set from main.ts in the iPhone home-screen app. */
+  height: var(--app-h, 100lvh);
 }
 
 #game canvas {

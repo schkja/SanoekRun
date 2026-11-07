@@ -7,12 +7,57 @@
       "lava"
     ],
     "squirrel": [
+      "forest-trail",
       "treetops",
       "autumn-canopy",
       "snowy-pines"
     ]
   },
   "worlds": [
+    {
+      "id": "forest-trail",
+      "name": "Forest trail",
+      "length": 650,
+      "chaser": "hawk",
+      "caughtBy": "Snatched by the hawk",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#4fb8ff",
+        "sky": "#d8f4ff",
+        "fog": "#cdeedd",
+        "fogNear": 38,
+        "fogFar": 130,
+        "sun": "#fff6d8",
+        "sunIntensity": 2.8,
+        "hemiSky": "#ffffff",
+        "hemiGround": "#7fc060",
+        "abyss": "#7ccb5a",
+        "abyssGlow": false,
+        "accent": "#ffd23f",
+        "ground": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#ecc98f",
+        "grout": "#c99a5e",
+        "body": "#b3874f",
+        "curb": "#5fbf4a"
+      },
+      "palette": {
+        "leaves": [
+          "#4cc35a",
+          "#8fdc4f",
+          "#2fa84f"
+        ],
+        "trunk": "#8a5a33"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
     {
       "id": "boardwalk",
       "name": "Forest boardwalk",

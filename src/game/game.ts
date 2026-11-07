@@ -852,6 +852,15 @@ export class Game {
     this.updateChaser(dt);
     this.updateHints(dt);
 
+    // On the forest floor there is nothing to fall from: missing a corner
+    // means running straight into the bushes.
+    if (this.world.theme.ground && r.y <= 0.01 && !this.track.hasFloor(r.seg, r.s, r.x)) {
+      r.frozen = true;
+      if (settings.effects.cameraShake) this.engine.addShake(0.6);
+      this.die(t('death.bushes'), false);
+      return;
+    }
+
     if (r.falling && r.y < -1) {
       const decor = this.world.decor;
       this.die(t(decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : 'death.trees'), false);
