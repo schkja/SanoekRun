@@ -719,8 +719,15 @@ function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number,
   for (let s = seg.index === 0 ? -10 : W / 2; s < seg.length + W / 2; s += rand(1.5, 3.5)) {
     const side = Math.random() < 0.5 ? -1 : 1;
     if (blocked(side, s)) continue;
-    const fly = add(GEO.sphere, NIGHT.firefly, side * (W / 2 + rand(0.6, 5)), rand(0.8, 6), s, 0.12, 0.12, 0.12);
+    const fly = add(GEO.sphere, NIGHT.fireflies[Math.floor(Math.random() * 3)], side * (W / 2 + rand(0.6, 5)), rand(0.8, 6), s, 0.12, 0.12, 0.12);
     fly.castShadow = false;
+    if (seg.world.decor === 'trail' && Math.random() < 0.08) {
+      // Someone watching from a dark bush on the forest floor: two glowing eyes.
+      const bx = side * (W / 2 + rand(2.5, 5));
+      const by = 0.7;
+      add(GEO.blob, kit.leaves[2], bx, by, s, 1.1, 0.9, 1.0);
+      for (const e of [-0.18, 0.18]) add(GEO.sphere, NIGHT.eyes, bx + e, by + 0.15, s - 0.95, 0.14, 0.18, 0.06).castShadow = false;
+    }
     if (Math.random() < 0.25) {
       const x = side * (W / 2 + 0.05);
       add(GEO.trunk, kit.white, x, 0.15, s, 0.22, 0.3, 0.22);
@@ -730,9 +737,13 @@ function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number,
 }
 
 const NIGHT = {
-  firefly: new THREE.MeshBasicMaterial({ color: '#fff27a' }),
+  /** Three groups of fireflies, each blinking on its own rhythm (see animateSegment). */
+  fireflies: [0, 1, 2].map(() => new THREE.MeshBasicMaterial({ color: '#fff27a' })),
   glowCap: new THREE.MeshBasicMaterial({ color: '#6ff3ff' }),
+  eyes: new THREE.MeshBasicMaterial({ color: '#ffe066' }),
 };
+const FIREFLY_DIM = new THREE.Color('#5a5a2a');
+const FIREFLY_BRIGHT = new THREE.Color('#fff27a');
 
 /** A small decorative toadstool, tilted by `lean` (radians around z). */
 function toadstool(add: AddFn, kit: Kit, x: number, y: number, s: number, size: number, lean: number): void {
@@ -821,8 +832,8 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
     else add(GEO.canopy, leaf(), rand(-6, 6), rand(10.5, 13.5), s, r, r * 0.55, r);
   }
 
-  // 4. Sunbeams slanting down through the gaps.
-  for (let s = from + rand(4, 12); s < to; s += rand(16, 26)) {
+  // 4. Sunbeams slanting down through the gaps (not at night).
+  for (let s = from + rand(4, 12); s < (seg.world.theme.night ? from : to); s += rand(16, 26)) {
     const sideBeam = Math.random() < 0.5 ? -1 : 1;
     const beam = add(GEO.beam, SUNBEAM, sideBeam * rand(0.5, 4), 6, s, rand(1.2, 2.4), 18, 1);
     beam.rotation.z = sideBeam * 0.32;
@@ -1362,6 +1373,11 @@ function buildPowerup(kind: 'magnet' | 'shield' | 'double'): THREE.Group {
 
 /** Spin coins and flicker fire jets. Called once per frame with the visible segments. */
 export function animateSegment(group: THREE.Group, time: number): void {
+  // Fireflies blink: each group fades in and out on its own rhythm.
+  NIGHT.fireflies.forEach((m, i) => {
+    const glow = 0.5 + 0.5 * Math.sin(time * (1.7 + i * 0.6) + i * 2.1);
+    m.color.copy(FIREFLY_DIM).lerp(FIREFLY_BRIGHT, glow * glow);
+  });
   for (const child of group.children) {
     if (child.userData.coin) {
       if (child.userData.spin === 'y') child.rotation.y = time * 3;

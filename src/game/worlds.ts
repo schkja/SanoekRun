@@ -44,6 +44,10 @@ export interface WorldTheme {
   abyssY?: number;
   /** Night: fireflies and glowing mushrooms in the scenery. */
   night?: boolean;
+  /** Painted into the sky: stars, a moon, or a low sun (its colour) for sunset and sunrise. */
+  stars?: boolean;
+  moon?: boolean;
+  sunDisc?: string;
 }
 
 export interface WorldDef {
