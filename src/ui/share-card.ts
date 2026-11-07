@@ -20,7 +20,7 @@ export interface RunSummary {
   distance: number;
   coins: number;
   /** What the character collects. */
-  collectible: 'coins' | 'nuts';
+  collectible: 'coins' | 'nuts' | 'honey';
   character: Character;
   world: string;
   newBest: boolean;
@@ -80,7 +80,7 @@ export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement
   outlined(g, number, W / 2, 830, fitSize(g, number, 210, W - 220), '#ffffff', 24);
 
   // What happened.
-  const items = t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins');
+  const items = t(run.collectible === 'nuts' ? 'share.nuts' : run.collectible === 'honey' ? 'share.honey' : 'share.coins');
   const line = t('share.reached', { world: run.world, n: run.coins, items });
   outlined(g, line, W / 2, 1035, fitSize(g, line, 58, W - 160), '#ffc93c', 12);
 

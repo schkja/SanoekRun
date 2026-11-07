@@ -101,8 +101,8 @@ function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): M
 // Collectibles
 // ---------------------------------------------------------------------------
 
-/** What you collect: gold coins for the lumberjack, acorns for the squirrel. */
-export type Collectible = 'coin' | 'acorn';
+/** What you collect: gold coins for the lumberjack, acorns for the squirrel, honey for the bear. */
+export type Collectible = 'coin' | 'acorn' | 'honey';
 let collectible: Collectible = 'coin';
 
 export function setCollectible(kind: Collectible): void {
@@ -112,6 +112,26 @@ export function setCollectible(kind: Collectible): void {
 const ACORN_NUT = toon('#d48a42', { emissive: '#6a3608', emissiveIntensity: 0.35 });
 const ACORN_CAP = std('#6b4325', { roughness: 0.9 });
 const COIN_MATERIAL = toon('#ffd23f', { emissive: '#c99a00', emissiveIntensity: 0.45 });
+
+const HONEY = toon('#ffb21f', { emissive: '#b86a00', emissiveIntensity: 0.5 });
+const HONEY_LID = std('#8a5a33', { roughness: 0.9 });
+const HONEY_CLOTH = std('#ff5c7a', { roughness: 0.9 });
+
+/** A little honey pot with a cloth tied over the top. */
+function makeHoney(): THREE.Group {
+  const g = new THREE.Group();
+  const pot = new THREE.Mesh(GEO.sphere, HONEY);
+  pot.scale.set(0.58, 0.56, 0.58);
+  pot.position.y = -0.05;
+  const rim = new THREE.Mesh(GEO.cyl, HONEY_LID);
+  rim.scale.set(0.4, 0.08, 0.4);
+  rim.position.y = 0.22;
+  const cloth = new THREE.Mesh(GEO.sphere, HONEY_CLOTH);
+  cloth.scale.set(0.46, 0.16, 0.46);
+  cloth.position.y = 0.3;
+  g.add(pot, rim, cloth);
+  return g;
+}
 
 function makeAcorn(): THREE.Group {
   const g = new THREE.Group();
@@ -451,7 +471,9 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
-    if (collectible === 'acorn') {
+    if (collectible === 'honey') {
+      item = makeHoney();
+    } else if (collectible === 'acorn') {
       item = makeAcorn();
       item.userData.spin = 'y';
     } else {
@@ -1064,8 +1086,8 @@ export interface RunnerModel {
   gait?: 'run' | 'quad';
 }
 
-export function makeCharacterModel(character: 'lumberjack' | 'squirrel', outfit = ''): RunnerModel {
-  const model = character === 'squirrel' ? makeSquirrelModel(outfit) : makeLumberjackModel(outfit);
+export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear', outfit = ''): RunnerModel {
+  const model = character === 'squirrel' ? makeSquirrelModel(outfit) : character === 'bear' ? makeBearModel(outfit) : makeLumberjackModel(outfit);
   outline(model.root);
   return model;
 }
@@ -1366,6 +1388,98 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
     part(mat('#ffd23f'), head, GEO.sphere, 0.08, 0.82, -0.13, 0.1, 0.1, 0.05);
   } else if (outfit === 'crown-squirrel') {
     crown(head, part, mat, 0.6, 0.3);
+  }
+
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };
+}
+
+/**
+ * Bruno the bear, on all fours: a big round brown body, a cream muzzle with
+ * honey smeared on it, round ears and a stubby tail. Same skeleton as the
+ * squirrel (hips, knees, shoulders, elbows, head), so it gallops the same way.
+ */
+export function makeBearModel(outfit = 'bandana-blue'): RunnerModel {
+  const { root, body, part } = characterKit();
+  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.8 });
+  const fur = mat('#8a5530');
+  const dark = mat('#5e3a20');
+  const muzzle = mat('#e2b27a');
+  const ink = mat('#2b2b3d');
+  const honey = mat('#ffb21f');
+  const bandana = mat('#3b82f6');
+
+  const pivot = (x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    body.add(g);
+    return g;
+  };
+  const joint = (parent: THREE.Object3D, x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
+
+  // Big round body with a lighter belly.
+  part(fur, body, GEO.sphere, 0, 0.82, 0.08, 1.05, 0.9, 1.4);
+  part(muzzle, body, GEO.sphere, 0, 0.68, -0.22, 0.7, 0.6, 0.8);
+
+  // Thick legs: furry upper part, dark lower leg and paw.
+  const legL = pivot(-0.3, 0.78, 0.42);
+  const legR = pivot(0.3, 0.78, 0.42);
+  const knees: THREE.Group[] = [];
+  for (const leg of [legL, legR]) {
+    part(fur, leg, GEO.sphere, 0, -0.06, 0.02, 0.42, 0.56, 0.56);
+    const knee = joint(leg, 0, -0.3, -0.04);
+    part(dark, knee, LIMB, 0, -0.14, 0.04, 0.12, 0.16, 0.12).rotation.x = -0.35;
+    part(dark, knee, GEO.sphere, 0, -0.36, -0.06, 0.28, 0.14, 0.38);
+    knees.push(knee);
+  }
+  const armL = pivot(-0.28, 0.7, -0.5);
+  const armR = pivot(0.28, 0.7, -0.5);
+  const elbows: THREE.Group[] = [];
+  for (const arm of [armL, armR]) {
+    part(fur, arm, LIMB, 0, -0.14, 0, 0.13, 0.18, 0.13);
+    const elbow = joint(arm, 0, -0.32, 0);
+    part(dark, elbow, LIMB, 0, -0.1, 0, 0.11, 0.12, 0.11);
+    part(dark, elbow, GEO.sphere, 0, -0.27, -0.05, 0.26, 0.13, 0.32);
+    elbows.push(elbow);
+  }
+
+  // Head: round, with little round ears, a cream muzzle and honey on the nose.
+  const head = pivot(0, 1.12, -0.7);
+  part(bandana, head, GEO.cyl, 0, -0.1, 0.16, 0.66, 0.14, 0.66);
+  part(fur, head, GEO.sphere, 0, 0.22, -0.04, 0.8, 0.72, 0.76);
+  part(muzzle, head, GEO.sphere, 0, 0.1, -0.38, 0.4, 0.3, 0.32);
+  part(ink, head, GEO.sphere, 0, 0.18, -0.54, 0.14, 0.1, 0.09);
+  part(honey, head, GEO.sphere, 0.1, 0.02, -0.5, 0.16, 0.08, 0.08);
+  for (const side of [-1, 1]) {
+    part(ink, head, GEO.sphere, side * 0.18, 0.32, -0.36, 0.1, 0.12, 0.06);
+    part(fur, head, GEO.sphere, side * 0.28, 0.56, 0.02, 0.24, 0.24, 0.14);
+    part(muzzle, head, GEO.sphere, side * 0.28, 0.56, -0.03, 0.13, 0.13, 0.06);
+  }
+
+  // A stubby tail.
+  const tail = pivot(0, 0.92, 0.78);
+  part(fur, tail, GEO.sphere, 0, 0, 0, 0.26, 0.26, 0.24);
+
+  // Shop items.
+  if (outfit === 'strawhat') {
+    const straw = mat('#f2d27a');
+    part(straw, head, GEO.cyl, 0, 0.6, 0, 1.0, 0.04, 1.0);
+    part(straw, head, GEO.cyl, 0, 0.72, 0, 0.5, 0.24, 0.5);
+    part(mat('#e8423a'), head, GEO.cyl, 0, 0.64, 0, 0.52, 0.06, 0.52);
+  } else if (outfit === 'beekeeper') {
+    const white = mat('#fbfbf4');
+    part(white, head, GEO.cyl, 0, 0.62, 0, 1.0, 0.04, 1.0);
+    part(white, head, GEO.sphere, 0, 0.68, 0, 0.56, 0.36, 0.56);
+    const veil = new THREE.Mesh(GEO.cyl, new THREE.MeshBasicMaterial({ color: '#2b2b3d', transparent: true, opacity: 0.25 }));
+    veil.position.set(0, 0.36, 0);
+    veil.scale.set(0.96, 0.5, 0.96);
+    head.add(veil);
+  } else if (outfit === 'crown-bear') {
+    crown(head, part, mat, 0.6, 0.32);
   }
 
   return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };

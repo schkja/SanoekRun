@@ -33,4 +33,20 @@ export const PORTRAITS = {
   <ellipse cx="46" cy="49" rx="3.5" ry="2.5" fill="${INK}"/>
   <rect x="28" y="60" width="36" height="7" rx="3.5" fill="#3ac6b0" stroke="${INK}" stroke-width="3"/>
 </svg>`,
+  bear: `
+<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="48" cy="52" r="40" fill="#ffe9a8"/>
+  <ellipse cx="48" cy="80" rx="26" ry="18" fill="#8a5530" stroke="${INK}" stroke-width="3.5"/>
+  <rect x="26" y="62" width="44" height="8" rx="4" fill="#3b82f6" stroke="${INK}" stroke-width="3"/>
+  <circle cx="26" cy="26" r="10" fill="#8a5530" stroke="${INK}" stroke-width="3.5"/><circle cx="26" cy="26" r="4.5" fill="#e2b27a"/>
+  <circle cx="70" cy="26" r="10" fill="#8a5530" stroke="${INK}" stroke-width="3.5"/><circle cx="70" cy="26" r="4.5" fill="#e2b27a"/>
+  <circle cx="48" cy="44" r="24" fill="#8a5530" stroke="${INK}" stroke-width="3.5"/>
+  <ellipse cx="48" cy="54" rx="12" ry="9" fill="#e2b27a" stroke="${INK}" stroke-width="3"/>
+  <ellipse cx="48" cy="49" rx="5" ry="3.5" fill="${INK}"/>
+  <path d="M52 56 Q58 62 55 66" stroke="#ffb21f" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="39" cy="40" r="3.5" fill="${INK}"/><circle cx="57" cy="40" r="3.5" fill="${INK}"/>
+  <circle cx="40" cy="39" r="1.2" fill="#ffffff"/><circle cx="58" cy="39" r="1.2" fill="#ffffff"/>
+  <g transform="translate(78 58)"><ellipse rx="5" ry="4" fill="#ffd23f" stroke="${INK}" stroke-width="2"/><path d="M-1 -4 V4 M2 -4 V4" stroke="${INK}" stroke-width="1.5"/><ellipse cx="-2" cy="-5" rx="3" ry="2" fill="#ffffff" opacity="0.8"/></g>
+  <g transform="translate(14 62)"><ellipse rx="4" ry="3.2" fill="#ffd23f" stroke="${INK}" stroke-width="2"/><path d="M0 -3 V3" stroke="${INK}" stroke-width="1.5"/></g>
+</svg>`,
 };

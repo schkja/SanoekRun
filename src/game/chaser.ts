@@ -43,6 +43,7 @@ export class Chaser {
       hawk: buildHawk(),
       owl: buildHawk(OWL),
       snowball: buildSnowball(),
+      bees: buildBees(),
       lava: buildLavaWave(),
     };
     for (const body of Object.values(this.bodies)) {
@@ -88,6 +89,9 @@ export class Chaser {
     // wings loom over the top of the screen without covering the runner.
     hawk.position.set(sway * 0.9, 5.3, -Math.max(0, this.gap - 2.0));
     hawk.rotation.z = -sway * 0.25;
+
+    // The bee swarm hums along behind, a little above head height.
+    if (this.kind === 'bees') this.bodies.bees.root.position.set(Math.sin(this.time * 1.3) * 0.5, 2.7, -Math.max(0, this.gap - 1.2));
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
   }
@@ -281,6 +285,50 @@ function buildHawk(c: BirdColours = HAWK): Body {
       g.rotation.x = 0.4;
       head.rotation.y = Math.sin(time * 0.9) * 0.25;
       for (const leg of talons) leg.rotation.x = Math.sin(time * 2.5) * 0.12;
+    },
+  };
+}
+
+/**
+ * An angry swarm of bees: a dozen striped little bees buzzing around a
+ * moving centre, each on its own wobbly orbit, with blurred wings.
+ */
+function buildBees(): Body {
+  const root = new THREE.Group();
+  const yellow = mat('#ffd23f');
+  const black = mat('#1f2a44');
+  const wing = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.7 });
+  const bees: Array<{ g: THREE.Group; wings: THREE.Mesh[]; r: number; speed: number; phase: number; tilt: number }> = [];
+  for (let i = 0; i < 12; i++) {
+    const g = new THREE.Group();
+    g.scale.setScalar(0.24);
+    part(SPHERE, yellow, g, 0, 0, 0, 0.7, 0.6, 1.0);
+    part(BOX, black, g, 0, 0, 0.1, 0.72, 0.62, 0.14);
+    part(BOX, black, g, 0, 0, 0.32, 0.6, 0.5, 0.12);
+    part(SPHERE, black, g, 0, 0.05, -0.5, 0.45, 0.45, 0.4);
+    part(new THREE.ConeGeometry(0.06, 0.25, 4), black, g, 0, 0, 0.62, 1, 1, 1).rotation.x = Math.PI / 2;
+    const wings: THREE.Mesh[] = [];
+    for (const side of [-1, 1]) {
+      const w = new THREE.Mesh(SPHERE, wing);
+      w.scale.set(0.5, 0.06, 0.32);
+      w.position.set(side * 0.35, 0.35, -0.05);
+      g.add(w);
+      wings.push(w);
+    }
+    root.add(g);
+    bees.push({ g, wings, r: 0.3 + Math.random() * 0.7, speed: 2 + Math.random() * 2.5, phase: Math.random() * Math.PI * 2, tilt: Math.random() * 0.8 });
+  }
+  return {
+    root,
+    animate: (_pace, time) => {
+      for (const b of bees) {
+        const a = time * b.speed + b.phase;
+        b.g.position.set(Math.cos(a) * b.r, Math.sin(a * 1.7) * 0.4 + Math.sin(a) * b.tilt * 0.4, Math.sin(a) * b.r * 0.7);
+        b.g.rotation.y = -a;
+        const flap = Math.sin(time * 60 + b.phase) * 0.6;
+        b.wings[0].rotation.z = flap;
+        b.wings[1].rotation.z = -flap;
+      }
     },
   };
 }

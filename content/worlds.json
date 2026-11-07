@@ -21,6 +21,13 @@
       "sunset-glade",
       "moonlit-forest",
       "firefly-night"
+    ],
+    "bear": [
+      "honey-meadow",
+      "berry-woods",
+      "honey-autumn",
+      "honey-sunset",
+      "starry-meadow"
     ]
   },
   "worlds": [
@@ -818,6 +825,230 @@
         "low": 3,
         "high": 2,
         "gap": 3,
+        "block": 3
+      }
+    },
+    {
+      "id": "honey-meadow",
+      "name": "Honey meadow",
+      "length": 650,
+      "chaser": "bees",
+      "caughtBy": "Stung by the bees",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#4fb8ff",
+        "sky": "#e6f6ff",
+        "fog": "#e8f2c8",
+        "fogNear": 38,
+        "fogFar": 130,
+        "sun": "#fff6d8",
+        "sunIntensity": 2.9,
+        "hemiSky": "#ffffff",
+        "hemiGround": "#9fc05a",
+        "abyss": "#9ad05a",
+        "abyssGlow": false,
+        "accent": "#ffb21f",
+        "ground": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#ecc98f",
+        "grout": "#c99a5e",
+        "body": "#b3874f",
+        "curb": "#5fbf4a"
+      },
+      "palette": {
+        "leaves": [
+          "#8fd04f",
+          "#b8e05a",
+          "#5fb04a"
+        ],
+        "trunk": "#8a5a33"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
+      "id": "berry-woods",
+      "name": "Berry woods",
+      "length": 650,
+      "chaser": "bees",
+      "caughtBy": "Stung by the bees",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#4f9fe0",
+        "sky": "#cfeee0",
+        "fog": "#bfe3cf",
+        "fogNear": 38,
+        "fogFar": 130,
+        "sun": "#fff6d8",
+        "sunIntensity": 2.8,
+        "hemiSky": "#ffffff",
+        "hemiGround": "#7fc060",
+        "abyss": "#5fae5a",
+        "abyssGlow": false,
+        "accent": "#e8423a",
+        "ground": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#ecc98f",
+        "grout": "#c99a5e",
+        "body": "#b3874f",
+        "curb": "#5fbf4a"
+      },
+      "palette": {
+        "leaves": [
+          "#2fa84f",
+          "#3fbf5a",
+          "#1f8a45"
+        ],
+        "trunk": "#6a4528"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
+      "id": "honey-autumn",
+      "name": "Golden autumn",
+      "length": 650,
+      "chaser": "bees",
+      "caughtBy": "Stung by the bees",
+      "decor": "boardwalk",
+      "theme": {
+        "skyTop": "#ff9e6b",
+        "sky": "#ffe3c2",
+        "fog": "#ffd9b0",
+        "fogNear": 40,
+        "fogFar": 140,
+        "sun": "#ffd9a0",
+        "sunIntensity": 2.5,
+        "hemiSky": "#fff1e0",
+        "hemiGround": "#b0703a",
+        "abyss": "#b8602a",
+        "abyssGlow": false,
+        "accent": "#5ce1a0",
+        "weather": "leaves"
+      },
+      "path": {
+        "style": "planks",
+        "slab": "#b8784a",
+        "grout": "#7a4a2a",
+        "body": "#6e3f1f",
+        "curb": "#8a5530"
+      },
+      "palette": {
+        "leaves": [
+          "#ff8a3d",
+          "#ffb347",
+          "#e8562f"
+        ],
+        "trunk": "#7a4a2a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 3,
+        "gap": 2,
+        "block": 2
+      }
+    },
+    {
+      "id": "honey-sunset",
+      "name": "Honey sunset",
+      "length": 650,
+      "chaser": "bees",
+      "caughtBy": "Stung by the bees",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#5b3d8f",
+        "sky": "#ff9e6b",
+        "fog": "#f7b48a",
+        "fogNear": 36,
+        "fogFar": 125,
+        "sun": "#ffc98a",
+        "sunIntensity": 2.3,
+        "hemiSky": "#ffd6b0",
+        "hemiGround": "#7a7a4a",
+        "abyss": "#8fb45a",
+        "abyssGlow": false,
+        "accent": "#ff7a59",
+        "ground": true,
+        "sunDisc": "#ffd27a"
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#f0c890",
+        "grout": "#c99060",
+        "body": "#a87a4a",
+        "curb": "#7fae4a"
+      },
+      "palette": {
+        "leaves": [
+          "#7fb84a",
+          "#b0cf55",
+          "#5f9a3f"
+        ],
+        "trunk": "#7a4a2f"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
+      "id": "starry-meadow",
+      "name": "Starry meadow",
+      "length": 650,
+      "chaser": "bees",
+      "caughtBy": "Stung by the bees",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#070f2a",
+        "sky": "#1d2f63",
+        "fog": "#1a2850",
+        "fogNear": 26,
+        "fogFar": 105,
+        "sun": "#c3d4ff",
+        "sunIntensity": 1.8,
+        "hemiSky": "#93a6e6",
+        "hemiGround": "#22304a",
+        "abyss": "#24504a",
+        "abyssGlow": false,
+        "accent": "#ffe27a",
+        "ground": true,
+        "night": true,
+        "stars": true,
+        "moon": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#c9b48e",
+        "grout": "#8f7a5a",
+        "body": "#6a5a44",
+        "curb": "#2f6a5a"
+      },
+      "palette": {
+        "leaves": [
+          "#22625e",
+          "#2f7a70",
+          "#1a4c4a"
+        ],
+        "trunk": "#4e3b3a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
         "block": 3
       }
     }

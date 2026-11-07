@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.10.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New hero: the Bear! He ate the bees' honey and now the whole hive is after him. Five worlds of his own, honey pots to collect and his own outfits"
+      ],
+      "de": [
+        "Neuer Held: der Bär! Er hat den Bienen den Honig gefuttert, jetzt ist der ganze Stock hinter ihm her. Fünf eigene Welten, Honigtöpfe zum Sammeln und eigene Outfits"
+      ],
+      "ru": [
+        "Новый герой: Медведь! Он съел мёд у пчёл, и теперь за ним гонится весь улей. Пять своих миров, горшочки с мёдом и свои наряды"
+      ],
+      "uk": [
+        "Новий герой: Ведмідь! Він з’їв мед у бджіл, і тепер за ним женеться весь вулик. П’ять власних світів, горщики з медом і власні вбрання"
+      ],
+      "es": [
+        "Nuevo héroe: ¡el Oso! Se comió la miel de las abejas y ahora toda la colmena va tras él. Cinco mundos propios, tarros de miel y su propia ropa"
+      ]
+    }
+  },
+  {
     "version": "1.9.0",
     "date": "2026-11-07",
     "notes": {

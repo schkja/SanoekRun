@@ -80,6 +80,10 @@ export const OUTFITS: Outfit[] = [
   { id: 'headphones', character: 'squirrel', price: 8000, icon: '🎧' },
   { id: 'wizard', character: 'squirrel', price: 12000, icon: '🧙' },
   { id: 'crown-squirrel', character: 'squirrel', price: 20000, icon: '👑' },
+  { id: 'bandana-blue', character: 'bear', price: 0, icon: '🧣' },
+  { id: 'strawhat', character: 'bear', price: 1500, icon: '👒' },
+  { id: 'beekeeper', character: 'bear', price: 6000, icon: '🐝' },
+  { id: 'crown-bear', character: 'bear', price: 20000, icon: '👑' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -126,11 +130,11 @@ function load(): Profile {
     level: 1,
     missions: newMissions(1),
     owned: OUTFITS.filter((o) => o.price === 0).map((o) => o.id),
-    equipped: { lumberjack: 'beanie-orange', squirrel: 'scarf-teal' },
+    equipped: { lumberjack: 'beanie-orange', squirrel: 'scarf-teal', bear: 'bandana-blue' },
     totals: {},
     name: '',
     device: randomId(),
-    reached: { lumberjack: [], squirrel: [] },
+    reached: { lumberjack: [], squirrel: [], bear: [] },
     startWorld: {},
   };
   try {
