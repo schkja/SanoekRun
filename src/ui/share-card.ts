@@ -8,19 +8,20 @@
  */
 
 import { GAME_NAME, SHARE_URL } from '../game/settings';
+import { formatNumber, t } from '../i18n';
 
 export interface RunSummary {
   distance: number;
   coins: number;
-  /** "coins" or "nuts" — whatever the character collects. */
-  collectibleName: string;
+  /** What the character collects. */
+  collectible: 'coins' | 'nuts';
   world: string;
   newBest: boolean;
 }
 
 const W = 1080;
 const H = 1350;
-const FONT = "'Lilita One', 'Trebuchet MS', system-ui, sans-serif";
+const FONT = "'Lilita One', 'Rubik', 'Trebuchet MS', system-ui, sans-serif";
 
 export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | null): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -62,20 +63,31 @@ export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | nul
 
   g.fillStyle = '#ffffff';
   g.font = `190px ${FONT}`;
-  g.fillText(`${Math.floor(run.distance).toLocaleString('en-US')} m`, W / 2, 360);
+  g.fillText(`${formatNumber(run.distance)} ${t('hud.unit')}`, W / 2, 360);
 
   g.font = `52px ${FONT}`;
   g.fillStyle = '#ffd23f';
-  g.fillText(`Reached the ${run.world} · ${run.coins} ${run.collectibleName}`, W / 2, 440);
+  fitText(g, t('share.reached', { world: run.world, n: run.coins, items: t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins') }), W / 2, 440, W - 80, 52);
 
-  if (run.newBest) pill(g, W / 2, 530, 'New personal best', '#ff5c7a', '#ffffff', 38);
+  if (run.newBest) pill(g, W / 2, 530, t('share.newBest'), '#ff5c7a', '#ffffff', 38);
 
-  pill(g, W / 2, H - 230, 'Can you beat me?', '#ffd23f', '#3a2a00', 64);
+  pill(g, W / 2, H - 230, t('share.challenge'), '#ffd23f', '#3a2a00', 64);
   g.font = `42px ${FONT}`;
   g.fillStyle = '#ffffff';
   g.fillText(SHARE_URL.replace(/^https?:\/\//, ''), W / 2, H - 110);
 
   return canvas;
+}
+
+/** Draw a line of text, shrinking it until it fits the width. */
+function fitText(g: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, size: number): void {
+  let s = size;
+  g.font = `${s}px ${FONT}`;
+  while (g.measureText(text).width > maxWidth && s > 24) {
+    s -= 2;
+    g.font = `${s}px ${FONT}`;
+  }
+  g.fillText(text, x, y);
 }
 
 function pill(g: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, fg: string, size: number): void {
@@ -98,7 +110,7 @@ export async function shareRun(card: HTMLCanvasElement, run: RunSummary): Promis
   const blob = await new Promise<Blob | null>((resolve) => card.toBlob(resolve, 'image/png'));
   if (!blob) return 'failed';
   const file = new File([blob], 'sanoekrun.png', { type: 'image/png' });
-  const text = `I ran ${Math.floor(run.distance)} m in ${GAME_NAME}. Can you beat me? ${SHARE_URL}`;
+  const text = t('share.text', { m: run.distance, game: GAME_NAME, url: SHARE_URL });
 
   try {
     if (navigator.canShare?.({ files: [file] })) {

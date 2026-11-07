@@ -7,6 +7,10 @@
 import '@fontsource/lilita-one/latin-400.css';
 import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-800.css';
+// Cyrillic letters (Russian, Ukrainian): Nunito has them; Rubik stands in for the display font.
+import '@fontsource/nunito/cyrillic-700.css';
+import '@fontsource/nunito/cyrillic-800.css';
+import '@fontsource/rubik/cyrillic-800.css';
 import { Game } from './game/game';
 
 const canvasContainer = document.getElementById('game');

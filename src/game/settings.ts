@@ -7,6 +7,8 @@
  * the in-game Settings screen; their choices are saved on their device.
  */
 
+import { LANGUAGES, type LanguageChoice } from '../i18n';
+
 export const GAME_NAME = 'SanökRun';
 
 /** The link printed on share cards. */
@@ -30,36 +32,33 @@ export interface Effects {
   screenFlash: boolean;
   /** The view widens as you speed up and through portals. */
   speedZoom: boolean;
+  /** Dark cartoon outlines around everything. */
+  outlines: boolean;
 }
 
 export interface Settings {
   character: Character;
+  /** 'auto' follows the phone or browser language. */
+  language: LanguageChoice;
   music: MusicStyle;
   sound: boolean;
   effects: Effects;
 }
 
-export const EFFECT_LABELS: Record<keyof Effects, string> = {
-  coinSparkle: 'Coin sparkles',
-  speedLines: 'Speed lines',
-  slowMotion: 'Slow-mo close calls',
-  turnTilt: 'Corner tilt',
-  cameraShake: 'Camera shake',
-  screenFlash: 'Screen flashes',
-  speedZoom: 'Speed zoom',
-};
-
-export const CHARACTER_LABELS: Record<Character, string> = {
-  lumberjack: 'Lumberjack',
-  squirrel: 'Squirrel',
-};
-
-export const MUSIC_LABELS: Record<MusicStyle, string> = {
-  chase: 'Chase',
-  hop: 'Forest hop',
-  menu: 'Menu chill',
-  off: 'Off',
-};
+/** The options, in the order the Settings buttons cycle through them. Their names live in src/i18n. */
+export const CHARACTERS: Character[] = ['lumberjack', 'squirrel'];
+export const MUSIC_STYLES: MusicStyle[] = ['chase', 'hop', 'menu', 'off'];
+export const EFFECT_KEYS: Array<keyof Effects> = [
+  'coinSparkle',
+  'speedLines',
+  'slowMotion',
+  'turnTilt',
+  'cameraShake',
+  'screenFlash',
+  'speedZoom',
+  'outlines',
+];
+export const LANGUAGE_CHOICES: LanguageChoice[] = ['auto', ...LANGUAGES];
 
 /** `VITE_FX_SPEED_LINES=false` → false. Unset → the fallback. `VITE_FX=off` turns every effect off. */
 function envFlag(name: string, fallback: boolean): boolean {
@@ -76,6 +75,7 @@ function envChoice<T extends string>(name: string, options: readonly T[], fallba
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: envChoice('VITE_LANGUAGE', LANGUAGE_CHOICES, 'auto'),
   character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
@@ -87,6 +87,7 @@ export const DEFAULT_SETTINGS: Settings = {
     cameraShake: envFlag('VITE_FX_CAMERA_SHAKE', true),
     screenFlash: envFlag('VITE_FX_SCREEN_FLASH', true),
     speedZoom: envFlag('VITE_FX_SPEED_ZOOM', true),
+    outlines: envFlag('VITE_FX_OUTLINES', true),
   },
 };
 
@@ -112,7 +113,8 @@ function load(): Settings {
     const saved = JSON.parse(raw) as Partial<Settings>;
     // The explorer became the lumberjack.
     if ((saved.character as string) === 'explorer') saved.character = 'lumberjack';
-    if (saved.character && !(saved.character in CHARACTER_LABELS)) delete saved.character;
+    if (saved.character && !CHARACTERS.includes(saved.character)) delete saved.character;
+    if (saved.language && !LANGUAGE_CHOICES.includes(saved.language)) delete saved.language;
     return {
       ...base,
       ...saved,

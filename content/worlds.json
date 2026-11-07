@@ -1,7 +1,16 @@
 {
   "routes": {
-    "lumberjack": ["boardwalk", "autumn-boardwalk", "temple", "lava"],
-    "squirrel": ["treetops", "autumn-canopy", "snowy-pines"]
+    "lumberjack": [
+      "boardwalk",
+      "autumn-boardwalk",
+      "temple",
+      "lava"
+    ],
+    "squirrel": [
+      "treetops",
+      "autumn-canopy",
+      "snowy-pines"
+    ]
   },
   "worlds": [
     {
@@ -21,13 +30,31 @@
         "sunIntensity": 2.6,
         "hemiSky": "#ffffff",
         "hemiGround": "#7fb07a",
-        "abyss": "#5fa86a",
+        "abyss": "#3f8a45",
         "abyssGlow": false,
         "accent": "#ffb347"
       },
-      "path": { "style": "planks", "slab": "#c98b52", "grout": "#8a5a33", "body": "#7a4e2c", "curb": "#9c6a3e" },
-      "palette": { "leaves": ["#4cc35a", "#7ad94f", "#2fa84f"], "trunk": "#8a5a33" },
-      "obstacles": { "low": 3, "high": 2, "gap": 2, "block": 3 }
+      "path": {
+        "style": "planks",
+        "slab": "#c98b52",
+        "grout": "#8a5a33",
+        "body": "#7a4e2c",
+        "curb": "#9c6a3e"
+      },
+      "palette": {
+        "leaves": [
+          "#4cc35a",
+          "#7ad94f",
+          "#2fa84f"
+        ],
+        "trunk": "#8a5a33"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
+      }
     },
     {
       "id": "autumn-boardwalk",
@@ -46,13 +73,31 @@
         "sunIntensity": 2.5,
         "hemiSky": "#fff1e0",
         "hemiGround": "#b0703a",
-        "abyss": "#d98a4a",
+        "abyss": "#b8602a",
         "abyssGlow": false,
         "accent": "#5ce1a0"
       },
-      "path": { "style": "planks", "slab": "#b8784a", "grout": "#7a4a2a", "body": "#6e3f1f", "curb": "#8a5530" },
-      "palette": { "leaves": ["#ff8a3d", "#ffb347", "#e8562f"], "trunk": "#7a4a2a" },
-      "obstacles": { "low": 3, "high": 3, "gap": 2, "block": 2 }
+      "path": {
+        "style": "planks",
+        "slab": "#b8784a",
+        "grout": "#7a4a2a",
+        "body": "#6e3f1f",
+        "curb": "#8a5530"
+      },
+      "palette": {
+        "leaves": [
+          "#ff8a3d",
+          "#ffb347",
+          "#e8562f"
+        ],
+        "trunk": "#7a4a2a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 3,
+        "gap": 2,
+        "block": 2
+      }
     },
     {
       "id": "temple",
@@ -75,9 +120,27 @@
         "abyssGlow": false,
         "accent": "#5ce1a0"
       },
-      "path": { "style": "stone", "slab": "#ecd29a", "grout": "#b8955a", "body": "#9c7a4a", "curb": "#c9a86c" },
-      "palette": { "leaves": ["#3fbf6a", "#6fd66a", "#2f9f55"], "trunk": "#8a6a40" },
-      "obstacles": { "low": 3, "high": 2, "gap": 2, "block": 3 }
+      "path": {
+        "style": "stone",
+        "slab": "#ecd29a",
+        "grout": "#b8955a",
+        "body": "#9c7a4a",
+        "curb": "#c9a86c"
+      },
+      "palette": {
+        "leaves": [
+          "#3fbf6a",
+          "#6fd66a",
+          "#2f9f55"
+        ],
+        "trunk": "#8a6a40"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
+      }
     },
     {
       "id": "lava",
@@ -100,9 +163,27 @@
         "abyssGlow": true,
         "accent": "#ffb03a"
       },
-      "path": { "style": "stone", "slab": "#6e5864", "grout": "#2a1d24", "body": "#3a2a32", "curb": "#56444e" },
-      "palette": { "leaves": ["#3b2a30", "#2a1c22", "#59434c"], "trunk": "#3b2a30" },
-      "obstacles": { "low": 2, "high": 3, "gap": 3, "block": 2 }
+      "path": {
+        "style": "stone",
+        "slab": "#6e5864",
+        "grout": "#2a1d24",
+        "body": "#3a2a32",
+        "curb": "#56444e"
+      },
+      "palette": {
+        "leaves": [
+          "#3b2a30",
+          "#2a1c22",
+          "#59434c"
+        ],
+        "trunk": "#3b2a30"
+      },
+      "obstacles": {
+        "low": 2,
+        "high": 3,
+        "gap": 3,
+        "block": 2
+      }
     },
     {
       "id": "treetops",
@@ -121,13 +202,31 @@
         "sunIntensity": 2.7,
         "hemiSky": "#ffffff",
         "hemiGround": "#6fb060",
-        "abyss": "#5aae5a",
+        "abyss": "#3f8a45",
         "abyssGlow": false,
         "accent": "#ffd23f"
       },
-      "path": { "style": "bark", "slab": "#a86b3c", "grout": "#7d4b26", "body": "#7d4b26", "curb": "#5fb04a" },
-      "palette": { "leaves": ["#4cc35a", "#7ad94f", "#2fa84f"], "trunk": "#8a5a33" },
-      "obstacles": { "low": 3, "high": 2, "gap": 3, "block": 3 }
+      "path": {
+        "style": "bark",
+        "slab": "#a86b3c",
+        "grout": "#7d4b26",
+        "body": "#7d4b26",
+        "curb": "#5fb04a"
+      },
+      "palette": {
+        "leaves": [
+          "#4cc35a",
+          "#7ad94f",
+          "#2fa84f"
+        ],
+        "trunk": "#8a5a33"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 3,
+        "block": 3
+      }
     },
     {
       "id": "autumn-canopy",
@@ -146,13 +245,31 @@
         "sunIntensity": 2.5,
         "hemiSky": "#fff3e0",
         "hemiGround": "#b06a30",
-        "abyss": "#e08840",
+        "abyss": "#b8602a",
         "abyssGlow": false,
         "accent": "#5ce1a0"
       },
-      "path": { "style": "bark", "slab": "#9c5f33", "grout": "#6e3f1f", "body": "#6e3f1f", "curb": "#e0a040" },
-      "palette": { "leaves": ["#ff8a3d", "#ffb347", "#e8562f"], "trunk": "#7a4a2a" },
-      "obstacles": { "low": 3, "high": 3, "gap": 3, "block": 2 }
+      "path": {
+        "style": "bark",
+        "slab": "#9c5f33",
+        "grout": "#6e3f1f",
+        "body": "#6e3f1f",
+        "curb": "#e0a040"
+      },
+      "palette": {
+        "leaves": [
+          "#ff8a3d",
+          "#ffb347",
+          "#e8562f"
+        ],
+        "trunk": "#7a4a2a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 3,
+        "gap": 3,
+        "block": 2
+      }
     },
     {
       "id": "snowy-pines",
@@ -171,13 +288,31 @@
         "sunIntensity": 2.4,
         "hemiSky": "#ffffff",
         "hemiGround": "#9fbcd6",
-        "abyss": "#cfe4f5",
+        "abyss": "#a9c8e4",
         "abyssGlow": false,
         "accent": "#ff5c7a"
       },
-      "path": { "style": "snow", "slab": "#f4f9ff", "grout": "#8a6a50", "body": "#6b4a35", "curb": "#ffffff" },
-      "palette": { "leaves": ["#2f8f6a", "#3fae80", "#ffffff"], "trunk": "#6b4a35" },
-      "obstacles": { "low": 3, "high": 2, "gap": 3, "block": 3 }
+      "path": {
+        "style": "snow",
+        "slab": "#f4f9ff",
+        "grout": "#8a6a50",
+        "body": "#6b4a35",
+        "curb": "#ffffff"
+      },
+      "palette": {
+        "leaves": [
+          "#2f8f6a",
+          "#3fae80",
+          "#ffffff"
+        ],
+        "trunk": "#6b4a35"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 3,
+        "block": 3
+      }
     }
   ]
 }

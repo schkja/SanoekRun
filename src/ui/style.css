@@ -9,7 +9,7 @@
    =========================================================================== */
 
 :root {
-  --font-display: 'Lilita One', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
+  --font-display: 'Lilita One', 'Rubik', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Nunito', 'Trebuchet MS', system-ui, -apple-system, sans-serif;
 
   --ink: #1f2a44;          /* outlines and dark text */

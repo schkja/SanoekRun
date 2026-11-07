@@ -5,6 +5,8 @@
  * Plain DOM on top of the canvas — far easier to style than text in WebGL.
  */
 
+import { formatNumber, t } from '../i18n';
+
 export interface HudState {
   distance: number;
   coins: number;
@@ -32,7 +34,7 @@ export class Hud {
     this.root.className = 'hud is-hidden';
     this.root.innerHTML = `
       <div class="hud-top">
-        <div class="hud-chip hud-distance"><span class="hud-value" data-distance>0</span><span class="hud-unit">m</span></div>
+        <div class="hud-chip hud-distance"><span class="hud-value" data-distance>0</span><span class="hud-unit" data-unit></span></div>
         <div class="hud-right">
           <div class="hud-chip hud-coins"><span class="hud-coin" aria-hidden="true"></span><span class="hud-value" data-coins>0</span></div>
           <button class="hud-pause" aria-label="Pause"><span></span><span></span></button>
@@ -43,7 +45,7 @@ export class Hud {
         <div class="hud-multiplier" data-multiplier>x1</div>
       </div>
       <div class="hud-danger" data-danger>
-        <span>It's right behind you</span>
+        <span data-danger-label></span>
         <div class="hud-danger-bar"><div data-danger-fill></div></div>
       </div>
       <div class="hud-hint" data-hint></div>
@@ -63,8 +65,16 @@ export class Hud {
     this.toastsEl = q('[data-toasts]');
     this.hintEl = q('[data-hint]');
     this.flashEl = q('[data-flash]');
+    this.relabel();
     q('.hud-pause').addEventListener('click', onPause);
     q('.hud-pause').addEventListener('pointerdown', (e) => e.stopPropagation());
+  }
+
+  /** Refresh the fixed labels after the language changes. */
+  relabel(): void {
+    this.root.querySelector('[data-unit]')!.textContent = t('hud.unit');
+    this.root.querySelector('[data-danger-label]')!.textContent = t('hud.danger');
+    this.last.score = -1;
   }
 
   setVisible(visible: boolean): void {
@@ -84,7 +94,7 @@ export class Hud {
     }
     const score = Math.floor(state.score);
     if (score !== this.last.score) {
-      this.scoreEl.textContent = score.toLocaleString('en-US');
+      this.scoreEl.textContent = formatNumber(score);
       this.last.score = score;
     }
     if (state.multiplier !== this.last.multiplier) {
