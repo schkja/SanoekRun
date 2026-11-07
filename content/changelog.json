@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.8.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New music: warm pads, a soft marimba melody, round bass and gentle drums with reverb and echo, instead of 8-bit beeps"
+      ],
+      "de": [
+        "Neue Musik: warme Flächen, eine sanfte Marimba-Melodie, runder Bass und leichte Drums mit Hall und Echo statt 8-Bit-Piepsen"
+      ],
+      "ru": [
+        "Новая музыка: тёплые пэды, мягкая мелодия маримбы, круглый бас и лёгкие барабаны с эхом вместо 8-битного писка"
+      ],
+      "uk": [
+        "Нова музика: теплі педи, м’яка мелодія маримби, круглий бас і легкі барабани з відлунням замість 8-бітного писку"
+      ],
+      "es": [
+        "Música nueva: pads cálidos, una melodía suave de marimba, bajo redondo y batería ligera con reverberación y eco, en vez de pitidos de 8 bits"
+      ]
+    }
+  },
+  {
     "version": "1.7.0",
     "date": "2026-11-07",
     "notes": {

@@ -237,6 +237,9 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 ### 6.10c Sky painting and night
 `engine.paintSky()` paints the 256×512 sky backdrop: gradient plus optional `theme.stars`, `theme.moon` (with halo and craters), `theme.sunDisc` (a low glowing sun, colour = hex). Seeded random, so each world's sky is always the same. It's screen-space (stays put when you turn), like a theatre backdrop. Night worlds (`theme.night`): no sunbeams; fireflies in three material groups that blink out of phase (`animateSegment` updates `NIGHT.fireflies` colours); on ground (trail) night worlds, dark bushes with two glowing eyes. Never put decorations in mid-air in branch worlds.
 
+### 6.10d Music
+`src/core/music.ts` is a small Web Audio studio (no files): compressor bus, convolver reverb (generated impulse), dotted-eighth echo. Instruments: detuned-saw pads through a low-pass, round sine+triangle bass, FM marimba pluck (sine carrier, 4× modulator with fast-decaying depth) for melody and arpeggio, soft kick, clap, hats. `SONGS` (exported for previews): `chase` (A minor, Am F C G, 124 bpm), `hop` (C major, C G Am F, 112 bpm, swung), `menu` (Fmaj7 Em7 Dm7 Cmaj7, 80 bpm, no drums). Each is 4 bars: chords, bass per bar with a rhythm, 64-step melody. Layers 1 pads+kick, 2 bass, 3 drums+arpeggio, 4 melody. The owner found the old square-wave music too "80s". Preview: import the module in the dev server and render with an `OfflineAudioContext` to WAV.
+
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
 - Anything decorative must stand on something: the squirrel hollow needs the giant corner trunk (trail and branch worlds both build one).
