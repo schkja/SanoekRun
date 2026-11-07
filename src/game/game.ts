@@ -243,9 +243,8 @@ export class Game {
         {
           title: t('info.about'),
           rows: [
-            { label: t('info.madeBy'), value: AUTHOR.name, onClick: open(AUTHOR.site) },
+            { label: t('info.madeBy'), value: AUTHOR.name },
             { label: t('info.bug'), hint: AUTHOR.email, value: '✉️', onClick: () => (location.href = `mailto:${AUTHOR.email}?subject=${encodeURIComponent(`${GAME_NAME} ${APP_VERSION}`)}`) },
-            { label: t('info.site'), value: AUTHOR.site.replace(/^https?:\/\//, '').replace(/\/$/, ''), onClick: open(AUTHOR.site) },
             { label: t('info.legal'), value: '', onClick: open(LEGAL_URL) },
           ],
         },
