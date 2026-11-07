@@ -220,7 +220,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 - `src/about.ts`: `APP_VERSION` (from `package.json`, injected by Vite `define`), `BUILD_DATE`, `AUTHOR` (Sascha Belon, saschabelon@gmail.com; no personal website link, owner's wish), `LEGAL_URL`.
 - `content/changelog.json`: one entry per version with notes in all 5 languages. **On every release:** bump `package.json` version and add a changelog entry.
 - Title toolbar → ℹ️ Info: version, author (opens site), bug report (mailto), website, privacy/imprint, last 4 changelog entries.
-- `public/legal.html` (static, linkable from forums): Impressum (§ 5 DDG), Datenschutzerklärung (DE, binding) + English summary, licences (three.js MIT, fonts OFL). **The postal address in the Impressum must be filled in.**
+- `public/legal.html` (static, linkable from forums): contact section (name + email, marked as private non-commercial hobby/learning project; the owner chose not to publish a postal address for now, aware that §18 MStV may require name + address once the game is promoted publicly, e.g. on forums; an HTML comment marks where to add it), Datenschutzerklärung (DE, binding) + English summary, licences (three.js MIT, fonts OFL).
 - Privacy by design, keep it that way: no cookies, no analytics, no third-party requests, fonts bundled; nginx `access_log off`; API keeps IPs only as a salted in-memory hash for rate limiting (cleared hourly); Docker logs capped (5 MB × 2); name prompt warns to use a nickname. Any new data flow (accounts, analytics, ads, external fonts/CDNs) requires updating `legal.html` first.
 
 ### 6.9 Ground worlds (forest trail)
