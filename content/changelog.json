@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.6.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New: Sunset glade, a golden evening trail under a purple and orange sky",
+        "New: Firefly night, a forest path under the moon with blinking fireflies and eyes watching from the bushes",
+        "Moonlit forest now has a moon and stars; fireflies blink"
+      ],
+      "de": [
+        "Neu: Lichtung im Abendrot, ein goldener Abendpfad unter lila-orangem Himmel",
+        "Neu: Glühwürmchennacht, ein Waldweg im Mondlicht mit blinkenden Glühwürmchen und Augen im Gebüsch",
+        "Der Mondscheinwald hat jetzt Mond und Sterne; Glühwürmchen blinken"
+      ],
+      "ru": [
+        "Новый мир: Поляна на закате, золотая вечерняя тропа под фиолетово-оранжевым небом",
+        "Новый мир: Ночь светлячков, лесная тропа под луной, мигающие светлячки и глаза из кустов",
+        "В Лунном лесу появились луна и звёзды, светлячки мигают"
+      ],
+      "uk": [
+        "Новий світ: Галявина на заході сонця, золота вечірня стежка під фіолетово-помаранчевим небом",
+        "Новий світ: Ніч світлячків, лісова стежка під місяцем, блимаючі світлячки й очі з кущів",
+        "У Місячному лісі з’явилися місяць і зорі, світлячки блимають"
+      ],
+      "es": [
+        "Nuevo: Claro al atardecer, un sendero dorado bajo un cielo morado y naranja",
+        "Nuevo: Noche de luciérnagas, un camino bajo la luna con luciérnagas que parpadean y ojos entre los arbustos",
+        "El Bosque de luna ahora tiene luna y estrellas; las luciérnagas parpadean"
+      ]
+    }
+  },
+  {
     "version": "1.5.0",
     "date": "2026-11-07",
     "notes": {

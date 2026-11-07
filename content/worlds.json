@@ -11,8 +11,10 @@
       "treetops",
       "brook",
       "autumn-canopy",
+      "snowy-pines",
+      "sunset-glade",
       "moonlit-forest",
-      "snowy-pines"
+      "firefly-night"
     ]
   },
   "worlds": [
@@ -363,6 +365,51 @@
       }
     },
     {
+      "id": "sunset-glade",
+      "name": "Sunset glade",
+      "length": 650,
+      "chaser": "hawk",
+      "caughtBy": "Snatched by the hawk",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#5b3d8f",
+        "sky": "#ff9e6b",
+        "fog": "#f7b48a",
+        "fogNear": 36,
+        "fogFar": 125,
+        "sun": "#ffc98a",
+        "sunIntensity": 2.3,
+        "hemiSky": "#ffd6b0",
+        "hemiGround": "#7a7a4a",
+        "abyss": "#8fb45a",
+        "abyssGlow": false,
+        "accent": "#ff7a59",
+        "ground": true,
+        "sunDisc": "#ffd27a"
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#f0c890",
+        "grout": "#c99060",
+        "body": "#a87a4a",
+        "curb": "#7fae4a"
+      },
+      "palette": {
+        "leaves": [
+          "#7fb84a",
+          "#b0cf55",
+          "#5f9a3f"
+        ],
+        "trunk": "#7a4a2f"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
       "id": "moonlit-forest",
       "name": "Moonlit forest",
       "length": 650,
@@ -382,7 +429,9 @@
         "abyss": "#16264a",
         "abyssGlow": false,
         "accent": "#ffe27a",
-        "night": true
+        "night": true,
+        "stars": true,
+        "moon": true
       },
       "path": {
         "style": "bark",
@@ -403,6 +452,53 @@
         "low": 3,
         "high": 3,
         "gap": 3,
+        "block": 3
+      }
+    },
+    {
+      "id": "firefly-night",
+      "name": "Firefly night",
+      "length": 650,
+      "chaser": "owl",
+      "caughtBy": "Caught by the owl",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#070f2a",
+        "sky": "#1d2f63",
+        "fog": "#1a2850",
+        "fogNear": 26,
+        "fogFar": 105,
+        "sun": "#c3d4ff",
+        "sunIntensity": 1.8,
+        "hemiSky": "#93a6e6",
+        "hemiGround": "#22304a",
+        "abyss": "#24504a",
+        "abyssGlow": false,
+        "accent": "#ffe27a",
+        "ground": true,
+        "night": true,
+        "stars": true,
+        "moon": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#c9b48e",
+        "grout": "#8f7a5a",
+        "body": "#6a5a44",
+        "curb": "#2f6a5a"
+      },
+      "palette": {
+        "leaves": [
+          "#22625e",
+          "#2f7a70",
+          "#1a4c4a"
+        ],
+        "trunk": "#4e3b3a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
         "block": 3
       }
     },

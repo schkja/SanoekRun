@@ -48,8 +48,8 @@ export class Engine {
 
     this.camera = new THREE.PerspectiveCamera(TUNING.camera.baseFov, 1, 0.1, 300);
 
-    this.skyCanvas.width = 2;
-    this.skyCanvas.height = 256;
+    this.skyCanvas.width = 256;
+    this.skyCanvas.height = 512;
     this.sky = new THREE.CanvasTexture(this.skyCanvas);
     this.sky.colorSpace = THREE.SRGBColorSpace;
     this.scene.background = this.sky;
@@ -82,13 +82,7 @@ export class Engine {
   }
 
   applyTheme(theme: WorldTheme): void {
-    const g = this.skyCanvas.getContext('2d')!;
-    const gradient = g.createLinearGradient(0, 0, 0, 256);
-    gradient.addColorStop(0, theme.skyTop);
-    gradient.addColorStop(0.55, theme.sky);
-    gradient.addColorStop(1, theme.fog);
-    g.fillStyle = gradient;
-    g.fillRect(0, 0, 2, 256);
+    paintSky(this.skyCanvas, theme);
     this.sky.needsUpdate = true;
     const fog = this.scene.fog as THREE.Fog;
     fog.color.set(theme.fog);
@@ -193,4 +187,74 @@ export class Engine {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
   };
+}
+
+/**
+ * The sky backdrop: a vertical gradient, plus stars, a moon or a low sun
+ * when the world asks for them. It is a screen-space backdrop, so they stay
+ * put while the forest turns around you, like a painted theatre sky.
+ */
+function paintSky(canvas: HTMLCanvasElement, theme: WorldTheme): void {
+  const g = canvas.getContext('2d')!;
+  const w = canvas.width;
+  const h = canvas.height;
+  const gradient = g.createLinearGradient(0, 0, 0, h);
+  gradient.addColorStop(0, theme.skyTop);
+  gradient.addColorStop(0.55, theme.sky);
+  gradient.addColorStop(1, theme.fog);
+  g.fillStyle = gradient;
+  g.fillRect(0, 0, w, h);
+
+  // Seeded, so the sky looks the same every time you enter the world.
+  let seed = 7;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+  if (theme.stars) {
+    for (let i = 0; i < 220; i++) {
+      const y = Math.pow(rand(), 1.6) * h * 0.6;
+      const r = rand() < 0.08 ? 1.6 : rand() * 0.9 + 0.3;
+      g.globalAlpha = 0.35 + rand() * 0.65 * (1 - y / (h * 0.6));
+      g.fillStyle = rand() < 0.15 ? '#ffe9b0' : '#ffffff';
+      g.beginPath();
+      g.arc(rand() * w, y, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+
+  if (theme.moon) {
+    const x = w * 0.74;
+    const y = h * 0.16;
+    const halo = g.createRadialGradient(x, y, 8, x, y, 70);
+    halo.addColorStop(0, 'rgba(255, 248, 220, 0.45)');
+    halo.addColorStop(1, 'rgba(255, 248, 220, 0)');
+    g.fillStyle = halo;
+    g.fillRect(x - 70, y - 70, 140, 140);
+    g.fillStyle = '#fff6d6';
+    g.beginPath();
+    g.arc(x, y, 22, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(200, 190, 160, 0.45)';
+    for (const [dx, dy, r] of [[-7, -5, 5], [6, 4, 4], [-2, 9, 3], [8, -9, 2.5]]) {
+      g.beginPath();
+      g.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  if (theme.sunDisc) {
+    // A big soft sun sitting low, just above the horizon haze.
+    const x = w * 0.3;
+    const y = h * 0.5;
+    const glow = g.createRadialGradient(x, y, 10, x, y, 120);
+    glow.addColorStop(0, theme.sunDisc);
+    glow.addColorStop(0.35, `${theme.sunDisc}88`);
+    glow.addColorStop(1, `${theme.sunDisc}00`);
+    g.fillStyle = glow;
+    g.fillRect(x - 120, y - 120, 240, 240);
+    g.fillStyle = theme.sunDisc;
+    g.beginPath();
+    g.arc(x, y, 34, 0, Math.PI * 2);
+    g.fill();
+  }
 }
