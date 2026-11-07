@@ -30,3 +30,11 @@ declare global {
   }
 }
 window.game = game;
+
+// Offline support and "add to home screen". Only on a real site (https or
+// localhost); skipped in previews where service workers aren't allowed.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  });
+}

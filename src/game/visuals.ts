@@ -45,6 +45,8 @@ const GEO = {
   portal: new THREE.TorusGeometry(2.9, 0.26, 10, 40),
   portalDisc: new THREE.CircleGeometry(2.75, 40),
   beam: new THREE.PlaneGeometry(1, 1),
+  /** Half a disc: a shelf mushroom growing out of bark, flat side against the tree. */
+  shelf: new THREE.CylinderGeometry(1, 1, 1, 14, 1, false, 0, Math.PI),
 };
 
 /** Soft shafts of sunlight slanting through the leaves. */
@@ -406,6 +408,14 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
     c.object = item;
   }
 
+  // --- Power-ups --------------------------------------------------------------------
+  for (const p of seg.powerups) {
+    const item = buildPowerup(p.kind);
+    item.position.set(p.x, 1.1, -p.s);
+    group.add(item);
+    p.object = item;
+  }
+
   // --- Portal ---------------------------------------------------------------------
   if (seg.portalAt !== null) {
     const ring = new THREE.Mesh(GEO.portal, kit.portal);
@@ -491,9 +501,17 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
           // Clouds of leaves along the branch, some hanging overhead.
           if (Math.random() < 0.25) add(GEO.blob, leaf(), out(rand(1.5, 4)), rand(5.5, 7.5), s, 2.6, 1.6, 2.4);
           if (Math.random() < 0.15) {
-            // A little twig sticking out with a leaf on it.
-            add(GEO.cyl, kit.trunk, out(1.2), 0.35, s, 0.14, 1.2, 0.14).rotation.z = side * 1.1;
-            add(GEO.blob, leaf(), out(1.9), 0.75, s, 0.45, 0.3, 0.45);
+            // A twig growing out of the side of the branch, with two leaves at its tip.
+            const angle = 0.6;
+            const len = 1.5;
+            const baseX = side * (W / 2 - 0.15);
+            const baseY = -0.45;
+            const tipX = baseX + side * Math.cos(angle) * len;
+            const tipY = baseY + Math.sin(angle) * len;
+            const twig = add(GEO.cyl, kit.trunk, (baseX + tipX) / 2, (baseY + tipY) / 2, s, 0.16, len, 0.16);
+            twig.rotation.z = -side * (Math.PI / 2 - angle);
+            add(GEO.blob, leaf(), tipX, tipY + 0.12, s - 0.2, 0.42, 0.18, 0.3).rotation.y = 0.5;
+            add(GEO.blob, leaf(), tipX + side * 0.15, tipY + 0.05, s + 0.25, 0.36, 0.16, 0.26).rotation.y = -0.4;
           }
           break;
         }
@@ -601,9 +619,18 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
         arm.rotation.z = side * 1.05;
         add(GEO.blob, leaf(), x - side * 2.8, top - 2.4, s, 2.2, 1.4, 2);
       }
-      // Shelf mushrooms on the bark, facing the path.
+      // Shelf mushrooms growing out of the bark on the path side: half discs
+      // with a pale rim, flat side sunk into the trunk, biggest at the bottom.
       if (Math.random() < 0.5) {
-        for (let i = 0; i < 2; i++) add(GEO.sphere, kit.fungus, x - side * r * 0.85, 1.4 + i * 0.7, s + i * 0.3, 0.9 - i * 0.2, 0.22, 0.7 - i * 0.15);
+        const face = side < 0 ? 0 : Math.PI;
+        const bark = x - side * r * 0.62;
+        for (let i = 0; i < 3; i++) {
+          const size = 0.62 - i * 0.14;
+          const y = 1.2 + i * 0.5;
+          const dz = (i - 1) * 0.28;
+          add(GEO.shelf, kit.white, bark, y - 0.07, s + dz, size * 1.06, 0.1, size * 1.06).rotation.y = face;
+          add(GEO.shelf, kit.fungus, bark, y, s + dz, size, 0.14, size).rotation.y = face;
+        }
       }
     }
   }
@@ -806,8 +833,8 @@ export interface RunnerModel {
   tail?: THREE.Group;
 }
 
-export function makeCharacterModel(character: 'lumberjack' | 'squirrel'): RunnerModel {
-  const model = character === 'squirrel' ? makeSquirrelModel() : makeLumberjackModel();
+export function makeCharacterModel(character: 'lumberjack' | 'squirrel', outfit = ''): RunnerModel {
+  const model = character === 'squirrel' ? makeSquirrelModel(outfit) : makeLumberjackModel(outfit);
   outline(model.root);
   return model;
 }
@@ -857,7 +884,7 @@ function plaidTexture(): THREE.Texture {
 }
 
 /** The lumberjack: check shirt, braces, beanie and a big beard. Faces -Z, origin at the feet. */
-export function makeLumberjackModel(): RunnerModel {
+export function makeLumberjackModel(outfit = 'beanie-orange'): RunnerModel {
   const { root, body, part, limb } = characterKit();
   const mat = (c: string, extra: THREE.MeshStandardMaterialParameters = {}) => std(c, { flatShading: false, roughness: 0.75, ...extra });
   const shirt = mat('#ffffff', { map: plaidTexture() });
@@ -865,7 +892,7 @@ export function makeLumberjackModel(): RunnerModel {
   const boots = mat('#5a3a22');
   const skin = mat('#f6c99a');
   const beard = mat('#8a4f22');
-  const beanie = mat('#ff9f1c');
+  const beanie = mat(outfit === 'beanie-blue' ? '#3b82f6' : '#ff9f1c');
   const braces = mat('#2b2b3d');
   const roll = mat('#3fa66a');
 
@@ -890,8 +917,7 @@ export function makeLumberjackModel(): RunnerModel {
   part(skin, body, GEO.sphere, 0, 1.68, -0.29, 0.12, 0.1, 0.1);
   part(braces, body, GEO.sphere, -0.12, 1.76, -0.26, 0.07, 0.07, 0.05);
   part(braces, body, GEO.sphere, 0.12, 1.76, -0.26, 0.07, 0.07, 0.05);
-  part(beanie, body, GEO.sphere, 0, 1.86, 0, 0.62, 0.38, 0.62);
-  part(beanie, body, GEO.cyl, 0, 1.82, 0, 0.64, 0.12, 0.64);
+  hat(outfit, body, part, mat, beanie);
   part(mat('#ffffff'), body, GEO.sphere, 0, 2.06, 0, 0.16, 0.16, 0.16);
 
   const armL = limb(-0.46, 1.36);
@@ -904,15 +930,47 @@ export function makeLumberjackModel(): RunnerModel {
   return { root, body, legL, legR, armL, armR };
 }
 
+type ModelPart = (m: THREE.Material, parent: THREE.Object3D, geo: THREE.BufferGeometry, x: number, y: number, z: number, sx: number, sy: number, sz: number) => THREE.Mesh;
+type MatFn = (c: string) => THREE.Material;
+
+/** The lumberjack's headwear: beanie (two colours), cap, viking helmet or crown. */
+function hat(outfit: string, body: THREE.Group, part: ModelPart, mat: MatFn, beanie: THREE.Material): void {
+  if (outfit === 'cap-green') {
+    const green = mat('#2fa84f');
+    part(green, body, GEO.sphere, 0, 1.86, 0, 0.62, 0.34, 0.62);
+    part(green, body, GEO.box, 0, 1.84, -0.36, 0.5, 0.05, 0.3);
+  } else if (outfit === 'viking') {
+    const steel = mat('#b9c6d6');
+    const horn = mat('#fff3d6');
+    part(steel, body, GEO.sphere, 0, 1.86, 0, 0.66, 0.44, 0.66);
+    for (const side of [-1, 1]) part(horn, body, GEO.cone, side * 0.38, 2.04, 0, 0.1, 0.36, 0.1).rotation.z = -side * 0.7;
+  } else if (outfit === 'crown-lumberjack') {
+    part(beanie, body, GEO.sphere, 0, 1.84, 0, 0.6, 0.3, 0.6);
+    crown(body, part, mat, 1.96, 0.4);
+  } else {
+    part(beanie, body, GEO.sphere, 0, 1.86, 0, 0.62, 0.38, 0.62);
+    part(beanie, body, GEO.cyl, 0, 1.82, 0, 0.64, 0.12, 0.64);
+  }
+}
+
+function crown(body: THREE.Group, part: ModelPart, mat: MatFn, y: number, r: number): void {
+  const gold = mat('#ffc93c');
+  part(gold, body, GEO.cyl, 0, y, 0, r * 2, 0.16, r * 2);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    part(gold, body, GEO.cone, Math.cos(a) * r * 0.85, y + 0.16, Math.sin(a) * r * 0.85, 0.08, 0.2, 0.08);
+  }
+}
+
 /** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
-export function makeSquirrelModel(): RunnerModel {
+export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
   const { root, body, part, limb } = characterKit();
   const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
   const fur = mat('#d06a2c');
   const tailFur = mat('#e2823a');
   const white = mat('#ffffff');
   const dark = mat('#2b2b3d');
-  const scarf = mat('#3ac6b0');
+  const scarf = mat(outfit === 'scarf-red' ? '#e8423a' : '#3ac6b0');
 
   const legL = limb(-0.17, 0.46);
   const legR = limb(0.17, 0.46);
@@ -953,7 +1011,63 @@ export function makeSquirrelModel(): RunnerModel {
   ];
   for (const [x, y, z, r] of puffs) part(tailFur, tail, GEO.sphere, x, y, z, r * 2, r * 2, r * 1.5);
 
+  // Accessories from the shop.
+  if (outfit === 'sunglasses') {
+    for (const x of [-0.14, 0.14]) part(dark, body, GEO.box, x, 1.55, -0.33, 0.2, 0.12, 0.04);
+    part(dark, body, GEO.box, 0, 1.57, -0.33, 0.12, 0.03, 0.03);
+  } else if (outfit === 'flower') {
+    const petal = mat('#ffffff');
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      part(petal, body, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 1.76 + Math.sin(a) * 0.1, -0.12, 0.12, 0.12, 0.06);
+    }
+    part(mat('#ffd23f'), body, GEO.sphere, 0.2, 1.76, -0.15, 0.1, 0.1, 0.06);
+  } else if (outfit === 'crown-squirrel') {
+    crown(body, part, mat, 1.74, 0.36);
+  }
+
   return { root, body, legL, legR, armL, armR, tail };
+}
+
+const BUBBLE = new THREE.MeshBasicMaterial({ color: '#d9f3ff', transparent: true, opacity: 0.35, depthWrite: false });
+const POWER = {
+  red: toon('#ef4444', { emissive: '#7a1010', emissiveIntensity: 0.4 }),
+  steel: toon('#e5edf5'),
+  blue: toon('#3b82f6', { emissive: '#10307a', emissiveIntensity: 0.4 }),
+  gold: COIN_MATERIAL,
+  white: toon('#ffffff'),
+};
+const HALF_TORUS = new THREE.TorusGeometry(0.26, 0.09, 8, 16, Math.PI);
+
+/** A power-up floating in a soap bubble: magnet, shield or double coins. */
+function buildPowerup(kind: 'magnet' | 'shield' | 'double'): THREE.Group {
+  const g = new THREE.Group();
+  g.userData.powerup = true;
+  g.userData.keep = true;
+  const icon = new THREE.Group();
+  g.add(icon);
+  const piece = (geo: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number) => {
+    const mesh = new THREE.Mesh(geo, m);
+    mesh.position.set(x, y, z);
+    mesh.scale.set(sx, sy, sz);
+    icon.add(mesh);
+    return mesh;
+  };
+  if (kind === 'magnet') {
+    piece(HALF_TORUS, POWER.red, 0, 0.05, 0, 1, 1, 1).rotation.z = Math.PI;
+    for (const x of [-0.26, 0.26]) piece(GEO.box, POWER.steel, x, 0.14, 0, 0.18, 0.16, 0.18);
+  } else if (kind === 'shield') {
+    piece(GEO.cyl, POWER.blue, 0, 0, 0, 0.62, 0.1, 0.62).rotation.x = Math.PI / 2;
+    piece(GEO.box, POWER.white, 0, 0, 0.06, 0.08, 0.34, 0.02);
+    piece(GEO.box, POWER.white, 0, 0.04, 0.06, 0.26, 0.08, 0.02);
+  } else {
+    for (const [x, y] of [[-0.1, -0.05], [0.12, 0.08]]) piece(GEO.coin, POWER.gold, x, y, 0, 1, 1, 1).rotation.x = Math.PI / 2;
+  }
+  outline(icon);
+  const bubble = new THREE.Mesh(GEO.sphere, BUBBLE);
+  bubble.scale.setScalar(1.15);
+  g.add(bubble);
+  return g;
 }
 
 /** Spin coins and flicker fire jets. Called once per frame with the visible segments. */
@@ -963,6 +1077,10 @@ export function animateSegment(group: THREE.Group, time: number): void {
       if (child.userData.spin === 'y') child.rotation.y = time * 3;
       else child.rotation.z = time * 4;
     } else if (child.userData.portal) child.rotation.z = time * 1.5;
+    else if (child.userData.powerup) {
+      child.children[0].rotation.y = time * 2.5;
+      child.position.y = 1.1 + Math.sin(time * 3 + child.id) * 0.12;
+    }
     else if (child.children.length) {
       for (const part of child.children) {
         if (part.userData.flicker) part.scale.y = 0.34 * (0.8 + Math.sin(time * 30 + part.id) * 0.25);

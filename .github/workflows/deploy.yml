@@ -27,6 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - run: node --check server/index.mjs
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -45,3 +46,13 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/sanoekrun:latest
             ghcr.io/${{ github.repository_owner }}/sanoekrun:${{ github.sha }}
+
+      - name: Build and push the leaderboard image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: server
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/sanoekrun-api:latest
+            ghcr.io/${{ github.repository_owner }}/sanoekrun-api:${{ github.sha }}

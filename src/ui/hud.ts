@@ -37,13 +37,14 @@ export class Hud {
         <div class="hud-chip hud-distance"><span class="hud-value" data-distance>0</span><span class="hud-unit" data-unit></span></div>
         <div class="hud-right">
           <div class="hud-chip hud-coins"><span class="hud-coin" aria-hidden="true"></span><span class="hud-value" data-coins>0</span></div>
-          <button class="hud-pause" aria-label="Pause"><span></span><span></span></button>
+          <button class="hud-pause" aria-label="Pause" title="Pause (Esc / P)"><span></span><span></span></button>
         </div>
       </div>
       <div class="hud-sub">
         <div class="hud-score"><span data-score>0</span></div>
         <div class="hud-multiplier" data-multiplier>x1</div>
       </div>
+      <div class="hud-powers" data-powers></div>
       <div class="hud-danger" data-danger>
         <span data-danger-label></span>
         <div class="hud-danger-bar"><div data-danger-fill></div></div>
@@ -68,6 +69,20 @@ export class Hud {
     this.relabel();
     q('.hud-pause').addEventListener('click', onPause);
     q('.hud-pause').addEventListener('pointerdown', (e) => e.stopPropagation());
+  }
+
+  /**
+   * The active power-ups, each with how much time is left (0..1).
+   * Drawn as little round badges with a draining ring.
+   */
+  setPowers(powers: Array<{ icon: string; left: number }>): void {
+    const el = this.root.querySelector<HTMLElement>('[data-powers]')!;
+    const key = powers.map((p) => p.icon).join('');
+    if (el.dataset.key !== key) {
+      el.dataset.key = key;
+      el.innerHTML = powers.map((p) => `<span class="hud-power" style="--left:1"><span>${p.icon}</span></span>`).join('');
+    }
+    el.querySelectorAll<HTMLElement>('.hud-power').forEach((badge, i) => badge.style.setProperty('--left', String(powers[i]?.left ?? 0)));
   }
 
   /** Refresh the fixed labels after the language changes. */

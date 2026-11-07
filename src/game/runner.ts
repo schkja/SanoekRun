@@ -43,8 +43,8 @@ export class Runner {
   private readonly before = new THREE.Vector3();
 
   /** Swap the character model. The caller puts the new `model.root` in the scene. */
-  setCharacter(character: Character): void {
-    this.model = makeCharacterModel(character);
+  setCharacter(character: Character, outfit: string): void {
+    this.model = makeCharacterModel(character, outfit);
   }
 
   get sliding(): boolean {

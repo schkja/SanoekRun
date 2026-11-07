@@ -58,6 +58,9 @@ export class Input {
 
   private handleKey = (e: KeyboardEvent): void => {
     if (e.repeat) return;
+    // Typing a nickname shouldn't make the runner jump.
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
     for (const [action, codes] of Object.entries(KEY_BINDINGS) as Array<[Action | 'pause', string[]]>) {
       if (!codes.includes(e.code)) continue;
       e.preventDefault();

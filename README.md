@@ -65,6 +65,42 @@ time.
   *close calls* for last-moment dodges. The end screen shows how close you came
   to your best distance.
 - The first two runs show hints just before each new kind of obstacle.
+- **Power-ups** float in bubbles on open stretches: 🧲 magnet (pulls in coins
+  for 10 s), 🛡️ shield (absorbs one stumble, 20 s) and ×2 (double coins, 10 s).
+  Timers in `TUNING.powerup`.
+
+## Progress: missions, levels, shop
+
+Kept on the device (`src/game/progress.ts`, localStorage `sanoekrun.profile`).
+
+- **Missions:** three at a time ("run 500 m", "jump 30 times", "3 perfect
+  turns in one run"...). Each one pays coins into the bank. Finish all three
+  and you level up, get a bonus and three harder missions.
+- **Bank:** every coin or acorn you pick up is added to it after the run.
+- **Shop:** outfits for each hero, bought with the bank. Nothing is sold for
+  real money and there are no random boxes.
+
+## Leaderboard
+
+A tiny server (`server/index.mjs`, Node, no dependencies) keeps the top 500 of
+all time and today's runs in `/data/scores.json`. When a run makes the board,
+the game asks for a nickname (1 to 12 letters, rude words filtered in all five
+languages). It rejects impossible runs (too far for the time taken, too many
+coins) and limits how often one device or address can submit. When the server
+can't be reached, the game simply doesn't show it.
+
+API: `GET /api/scores?period=all|today&device=…`, `POST /api/scores`,
+`GET /api/health`. In development, `npm run dev` proxies `/api` to
+`localhost:8080`; start the server with `node server/index.mjs`.
+
+## Install on a phone
+
+The game is a web app (manifest + offline service worker), so it can sit on
+the home screen like an app, with no store and no account. The title screen
+has an **Install** button: on Android and Chrome it opens the real install
+prompt, on iPhone it shows the three steps (Share → Add to Home Screen → Add).
+Icons are in `public/icons/`, rendered from `src/ui/logo.ts` with
+`node scripts/make-icons.mjs`.
 
 ---
 
@@ -122,8 +158,10 @@ translate it.
 
 ## Share card
 
-At the end of a run, **Share your run** makes a 1080×1350 picture (the last
-frame of the run, the distance, the world reached and "Can you beat me?") and
+At the end of a run, **Share your run** makes a tall 1080×1920 picture sized
+for TikTok and Stories: the last frame of the run, the logo, your distance in
+huge outlined letters on a comic burst, your hero, the world reached, a "new
+record" sticker and "Can you beat me?" with the link. It
 opens the phone's share sheet for WhatsApp, Instagram or TikTok. On a desktop
 it downloads the picture instead. The link printed on it is `VITE_SHARE_URL`.
 
@@ -136,9 +174,11 @@ Every push to `main` deploys itself:
 2. On the server, Watchtower checks for a new image every minute and restarts
    the game container with it.
 
-The server runs `deploy/docker-compose.yml`. The image is nginx serving the
-built game (`deploy/nginx.conf`), with the page itself never cached so players
-always get the latest version.
+The server runs `deploy/docker-compose.yml`: the game image (nginx serving
+the built game, `deploy/nginx.conf`) and the leaderboard image
+(`ghcr.io/schkja/sanoekrun-api`, data in `./data`). Traefik sends `/api` to
+the leaderboard and everything else to the game
+(`deploy/traefik-sanoekrun.yaml`).
 
 ## Tuning the feel
 
@@ -173,11 +213,7 @@ every model and its licence.
 
 ## Next steps
 
-- Real models and a running animation for the character
-- Music that adds layers as you speed up
-- A third world (ice temple) with the boulder chaser
-- Missions, daily rewards and unlockable characters
-- iOS and Android builds by wrapping the web build with Capacitor
+See [ROADMAP.md](ROADMAP.md).
 
 ## License
 

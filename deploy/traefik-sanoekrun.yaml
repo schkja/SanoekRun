@@ -1,0 +1,28 @@
+# Traefik route for the game and its leaderboard API.
+# Copy to /srv/traefik/conf.d/sanoekrun.sascha.iodatalabs.dev.yaml on the server.
+http:
+  routers:
+    sanoekrun:
+      rule: Host(`sanoekrun.sascha.iodatalabs.dev`)
+      entryPoints:
+        - websecure
+      service: sanoekrun
+      tls:
+        certResolver: letsencrypt
+    sanoekrun-api:
+      rule: Host(`sanoekrun.sascha.iodatalabs.dev`) && PathPrefix(`/api`)
+      priority: 100
+      entryPoints:
+        - websecure
+      service: sanoekrun-api
+      tls:
+        certResolver: letsencrypt
+  services:
+    sanoekrun:
+      loadBalancer:
+        servers:
+          - url: http://sanoekrun:80
+    sanoekrun-api:
+      loadBalancer:
+        servers:
+          - url: http://sanoekrun-api:8080

@@ -1,10 +1,23 @@
-# Runs the game on the server. GitHub builds the image on every push to main;
-# Watchtower sees the new image (it checks every minute) and restarts the game.
+# Runs the game and its leaderboard on the server. GitHub builds both images
+# on every push to main; Watchtower sees the new images (it checks every
+# minute) and restarts the containers.
 services:
   sanoekrun:
     image: ghcr.io/schkja/sanoekrun:latest
     container_name: sanoekrun
     restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  sanoekrun-api:
+    image: ghcr.io/schkja/sanoekrun-api:latest
+    container_name: sanoekrun-api
+    restart: unless-stopped
+    volumes:
+      # The leaderboard lives here and survives updates.
+      - ./data:/data
     networks:
       - proxy
     labels:
