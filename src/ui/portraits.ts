@@ -77,6 +77,6 @@ export const PORTRAITS = {
   <circle cx="39" cy="42" r="4" fill="#ffc23a" stroke="${INK}" stroke-width="2"/><circle cx="57" cy="42" r="4" fill="#ffc23a" stroke="${INK}" stroke-width="2"/>
   <circle cx="39" cy="42" r="1.6" fill="${INK}"/><circle cx="57" cy="42" r="1.6" fill="${INK}"/>
   <rect x="28" y="66" width="40" height="7" rx="3.5" fill="#ffd23f" stroke="${INK}" stroke-width="3"/>
-  <g transform="translate(78 74)"><circle r="8" fill="#7fd65a" stroke="${INK}" stroke-width="2.5"/><path d="M-5 -2 Q0 4 5 -2" stroke="#4fb54a" stroke-width="2.5" fill="none"/></g>
+  <g transform="translate(78 74)"><ellipse rx="10" ry="6" fill="#f2b45a" stroke="${INK}" stroke-width="2.5"/><ellipse cy="-2" rx="6" ry="3" fill="#e09a3a"/><circle cy="-3" r="2" fill="#e8423a"/></g>
 </svg>`,
 };

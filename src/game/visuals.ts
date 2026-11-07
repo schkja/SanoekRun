@@ -102,7 +102,7 @@ function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): M
 // ---------------------------------------------------------------------------
 
 /** What you collect: gold coins for the lumberjack, acorns for the squirrel, honey for the bear. */
-export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot' | 'cabbage';
+export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie';
 let collectible: Collectible = 'coin';
 
 export function setCollectible(kind: Collectible): void {
@@ -136,24 +136,26 @@ function makeHoney(): THREE.Group {
 const CARROT = toon('#ff8a1e', { emissive: '#a04000', emissiveIntensity: 0.4 });
 const CARROT_TOP = toon('#3fbf4a');
 
-const CABBAGE = toon('#7fd65a', { emissive: '#2f6a1a', emissiveIntensity: 0.35 });
-const CABBAGE_LEAF = toon('#4fb54a');
+const PIE_CRUST = toon('#f2b45a', { emissive: '#8a4a10', emissiveIntensity: 0.35 });
+const PIE_TOP = toon('#e09a3a');
+const PIE_JAM = toon('#e8423a');
 
-/** A round cabbage with a few outer leaves curling open. */
-function makeCabbage(): THREE.Group {
+/** A little round pie with a golden crust and a dab of jam, like the ones in the fairy tale basket. */
+function makePie(): THREE.Group {
   const g = new THREE.Group();
-  const heart = new THREE.Mesh(GEO.sphere, CABBAGE);
-  heart.scale.setScalar(0.62);
-  g.add(heart);
-  for (let i = 0; i < 4; i++) {
-    const leaf = new THREE.Mesh(GEO.sphere, CABBAGE_LEAF);
-    const a = (i / 4) * Math.PI * 2;
-    leaf.scale.set(0.5, 0.42, 0.16);
-    leaf.position.set(Math.cos(a) * 0.26, -0.05, Math.sin(a) * 0.26);
-    leaf.rotation.y = -a + Math.PI / 2;
-    leaf.rotation.x = 0.35;
-    g.add(leaf);
-  }
+  const base = new THREE.Mesh(GEO.sphere, PIE_CRUST);
+  base.scale.set(0.72, 0.36, 0.72);
+  g.add(base);
+  const top = new THREE.Mesh(GEO.sphere, PIE_TOP);
+  top.scale.set(0.56, 0.24, 0.56);
+  top.position.y = 0.1;
+  g.add(top);
+  const jam = new THREE.Mesh(GEO.sphere, PIE_JAM);
+  jam.scale.set(0.2, 0.1, 0.2);
+  jam.position.y = 0.2;
+  g.add(jam);
+  // Stand it on its edge a little so you can see the top while running.
+  g.rotation.x = 0.5;
   return g;
 }
 
@@ -513,8 +515,8 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
-    if (collectible === 'cabbage') {
-      item = makeCabbage();
+    if (collectible === 'pie') {
+      item = makePie();
       item.userData.spin = 'y';
     } else if (collectible === 'carrot') {
       item = makeCarrot();
@@ -1644,7 +1646,7 @@ export function makeHareModel(outfit = 'bow-red'): RunnerModel {
 
 /**
  * The wolf, on all fours: grey with a pale chest, a long snout, pointed ears
- * and a big bushy tail. A friendly vegetarian wolf with a yellow scarf.
+ * and a big bushy tail. A friendly wolf with a yellow scarf who has a sweet tooth for pies.
  * Same skeleton as the other animals, so it gallops the same way.
  */
 export function makeWolfModel(outfit = 'scarf-yellow'): RunnerModel {

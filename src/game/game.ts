@@ -482,7 +482,7 @@ export class Game {
 
   /** Swap in the chosen character (and what it collects) before a track is built. */
   private applyCharacter(): void {
-    const pickup = settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrot' : settings.character === 'wolf' ? 'cabbage' : 'coin';
+    const pickup = settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrot' : settings.character === 'wolf' ? 'pie' : 'coin';
     setCollectible(pickup);
     this.hud.setCollectible(pickup);
     this.audio.collect = pickup;
@@ -497,7 +497,7 @@ export class Game {
 
   /** "Coins" or "Nuts" in the current language, for stat rows. */
   private get collectibleLabel(): string {
-    return settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : settings.character === 'hare' ? t('stat.carrots') : settings.character === 'wolf' ? t('stat.cabbages') : t('stat.coins');
+    return settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : settings.character === 'hare' ? t('stat.carrots') : settings.character === 'wolf' ? t('stat.pies') : t('stat.coins');
   }
 
   /** Build a fresh track with the runner standing at the start. */
@@ -735,7 +735,7 @@ export class Game {
     const run: RunSummary = {
       distance,
       coins: this.coins,
-      collectible: settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrots' : settings.character === 'wolf' ? 'cabbages' : 'coins',
+      collectible: settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrots' : settings.character === 'wolf' ? 'pies' : 'coins',
       character: settings.character,
       world: worldName(this.furthestWorld),
       newBest: newBest && previousBest > 0,
@@ -1143,7 +1143,7 @@ export class Game {
       if (settings.effects.coinSparkle) {
         const at = this.track.position(r.seg, c.s, c.x, this.scratch);
         at.y = c.y;
-        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : settings.character === 'hare' ? '#ff8a1e' : settings.character === 'wolf' ? '#7fd65a' : '#ffd23f');
+        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : settings.character === 'hare' ? '#ff8a1e' : settings.character === 'wolf' ? '#f2b45a' : '#ffd23f');
       }
       const worth = this.powers.double > 0 ? 2 : 1;
       this.coins += worth;
