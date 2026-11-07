@@ -35,7 +35,7 @@ Endless 3D runner in the browser, Temple Run style, cartoon look (cel shading +
 thick outlines), bright forest. Portrait phone first, works on desktop.
 
 - **Two heroes, each with its own route of worlds** (`content/worlds.json` → `routes`):
-  - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
+  - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `evening-boardwalk` (sunset) → `lantern-night` (moon, stars, fireflies, lanterns on the railing) → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
   - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `brook` → `autumn-canopy` → `snowy-pines` → `sunset-glade` → `moonlit-forest` → `firefly-night` (day, water, autumn, winter, evening, night; the owner loves the night worlds). Collects **acorns**. Chased by a **hawk**, later a **snowball**.
 - Each world is 650 m, then a portal to the next; the route loops faster.
 - **Controls:** swipe left/right = turn at a corner or change lane; up = jump; down = slide (or slam mid-air). Keyboard: arrows/WASD, Space = jump, **Esc or P = pause**.
@@ -210,7 +210,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 ### 6.7 PWA / install
 - `public/manifest.webmanifest` (fullscreen, portrait, sky-blue theme, icons incl. maskable).
 - `public/sw.js`: network-first, cache fallback, skips `/api` and non-GET. Cache name `sanoekrun-v1` (bump to force cleanup). Registered only in production on https/localhost.
-- Install screen: uses the captured `beforeinstallprompt` when available, otherwise shows Android and iPhone steps. Hidden when already installed (`display-mode: standalone/fullscreen` or `navigator.standalone`).
+- Install screen: `detectPlatform()` (ios / android / mac Safari / chromium desktop / firefox; iPads report as Mac, so touch is checked) puts this device's steps first: iPhone (Share → Add to Home Screen), Android, Mac Safari (File/Share → Add to Dock), Chrome/Edge/Brave (install icon or menu), Firefox (can't install, use another browser). The captured `beforeinstallprompt` becomes an "Install now" button. Hidden when already installed (`display-mode: standalone/fullscreen` or `navigator.standalone`).
 - Icons: change `ICON_SVG` in `src/ui/logo.ts`, then `node scripts/make-icons.mjs` (needs Playwright), and regenerate `public/favicon.ico` (16/32/48 from `icon-512.png`, e.g. with Pillow). The tab favicon is linked as .ico first, then PNG 32/16, then SVG (Safari ignores SVG favicons). nginx returns 404 for missing static files instead of the game page.
 - Why it matters: kids often can't install store apps; home-screen web app needs no account.
 

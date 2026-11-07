@@ -60,6 +60,17 @@ const TUTORIAL_RUNS = 2;
 const isTouch = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;
 
 /** True when the game was opened from its home-screen icon. */
+/** Which install steps fit this device and browser. iPads report as Macs, so check touch. */
+function detectPlatform(): 'ios' | 'android' | 'mac' | 'chrome' | 'firefox' {
+  const ua = navigator.userAgent;
+  if (/iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/android/i.test(ua)) return 'android';
+  if (/firefox|fxios/i.test(ua)) return 'firefox';
+  const chromium = /Chrome\/|Chromium|Edg\//.test(ua);
+  if (/Macintosh/.test(ua) && !chromium) return 'mac';
+  return 'chrome';
+}
+
 const isInstalled = () =>
   (window.matchMedia?.('(display-mode: standalone)').matches || window.matchMedia?.('(display-mode: fullscreen)').matches) ??
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
@@ -211,7 +222,7 @@ export class Game {
         { label: t('tool.missions'), onClick: () => this.showMissions(toTitle) },
         { label: t('tool.shop'), onClick: () => this.showShop(toTitle) },
         { label: t('tool.settings'), onClick: () => this.showSettings(toTitle) },
-        ...(isInstalled() ? [] : [{ label: t('tool.install'), onClick: () => void this.install(toTitle) }]),
+        ...(isInstalled() ? [] : [{ label: t('tool.install'), onClick: () => this.install(toTitle) }]),
         { label: t('tool.info'), onClick: () => this.showInfo(toTitle) },
       ],
       note: isTouch() ? undefined : t('title.keys'),
@@ -396,22 +407,49 @@ export class Game {
   }
 
   /** Install to the home screen: the browser's own prompt where there is one, otherwise how-to steps. */
-  private async install(back: () => void): Promise<void> {
-    if (this.installPrompt) {
-      await this.installPrompt.prompt();
-      this.installPrompt = null;
-      return back();
-    }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const step = (label: string) => ({ label, onClick: () => undefined });
-    const ios_ = { title: t('install.iosTitle'), rows: [step(t('install.ios1')), step(t('install.ios2')), step(t('install.ios3'))] };
-    const android = { title: t('install.androidTitle'), rows: [step(t('install.android1')), step(t('install.android2'))] };
+  /**
+   * How to put the game on this device, with this device's steps first.
+   * Where the browser offers its own install prompt (Chrome, Edge, Android),
+   * there's an "Install now" button for it.
+   */
+  private install(back: () => void): void {
+    const platform = detectPlatform();
+    const step = (label: string) => ({ label });
+    const guides = {
+      ios: { title: t('install.iosTitle'), rows: [step(t('install.ios1')), step(t('install.ios2')), step(t('install.ios3'))] },
+      android: { title: t('install.androidTitle'), rows: [step(t('install.android1')), step(t('install.android2'))] },
+      mac: { title: t('install.macTitle'), rows: [step(t('install.mac1')), step(t('install.mac2')), step(t('install.mac3'))] },
+      chrome: { title: t('install.chromeTitle'), rows: [step(t('install.chrome1')), step(t('install.chrome2'))] },
+      firefox: { title: t('install.firefoxTitle'), rows: [step(t('install.firefox1'))] },
+    };
+    const order: Array<keyof typeof guides> =
+      platform === 'ios' ? ['ios', 'android', 'mac', 'chrome']
+      : platform === 'android' ? ['android', 'ios', 'chrome', 'mac']
+      : platform === 'mac' ? ['mac', 'chrome', 'ios', 'android']
+      : platform === 'firefox' ? ['firefox', 'chrome', 'mac', 'ios', 'android']
+      : ['chrome', 'mac', 'ios', 'android'];
+    const [mine, ...rest] = order.map((key) => guides[key]);
+    const desktop = platform === 'mac' || platform === 'chrome' || platform === 'firefox';
+    const prompt = this.installPrompt;
     this.menus.show({
-      title: t('install.title'),
-      body: isInstalled() ? t('install.done') : t('install.body'),
+      title: desktop ? t('install.titleDesktop') : t('install.title'),
+      body: isInstalled() ? t('install.done') : desktop ? t('install.bodyDesktop') : t('install.body'),
       variant: 'is-settings',
-      sections: ios ? [ios_, android] : [android, ios_],
-      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
+      sections: [mine, ...rest.map((g, i) => ({ ...g, title: i === 0 ? `${t('install.other')}: ${g.title}` : g.title }))],
+      buttons: [
+        ...(prompt
+          ? [{
+              label: t('install.now'),
+              primary: true,
+              onClick: async () => {
+                await prompt.prompt();
+                this.installPrompt = null;
+                back();
+              },
+            }]
+          : []),
+        { label: t('button.back'), primary: !prompt, onClick: back },
+      ],
     });
   }
 

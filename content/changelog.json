@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.7.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Lumberjack: two new worlds, Evening boardwalk at sunset and Lantern night under the moon",
+        "Install guide shows the steps for your device: Mac (add to Dock), Chrome, Edge, iPhone, Android; one-tap install where the browser allows it"
+      ],
+      "de": [
+        "Holzfäller: zwei neue Welten, Abendlicher Steg im Sonnenuntergang und Laternennacht unter dem Mond",
+        "Die Installationsanleitung zeigt die Schritte für dein Gerät: Mac (zum Dock), Chrome, Edge, iPhone, Android; Installation mit einem Tipp, wo der Browser es erlaubt"
+      ],
+      "ru": [
+        "Лесоруб: два новых мира, Вечерние мостки на закате и Ночь фонарей под луной",
+        "Инструкция по установке показывает шаги для твоего устройства: Mac (в Dock), Chrome, Edge, iPhone, Android; установка в одно касание, где браузер это позволяет"
+      ],
+      "uk": [
+        "Лісоруб: два нові світи, Вечірні містки на заході сонця й Ніч ліхтарів під місяцем",
+        "Інструкція зі встановлення показує кроки для твого пристрою: Mac (у Dock), Chrome, Edge, iPhone, Android; встановлення одним дотиком, де браузер це дозволяє"
+      ],
+      "es": [
+        "Leñador: dos mundos nuevos, Pasarela al atardecer y Noche de faroles bajo la luna",
+        "La guía de instalación muestra los pasos para tu dispositivo: Mac (al Dock), Chrome, Edge, iPhone, Android; instalación con un toque donde el navegador lo permite"
+      ]
+    }
+  },
+  {
     "version": "1.6.0",
     "date": "2026-11-07",
     "notes": {

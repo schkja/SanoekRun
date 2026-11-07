@@ -716,6 +716,21 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
 function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
   const W = TUNING.pathWidth;
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  if (seg.world.decor === 'boardwalk') {
+    // The lumberjack's boardwalk at night: lanterns on the railing, both sides
+    // in turn, so the path glows ahead of you.
+    let side = 1;
+    for (let s = W / 2 + 3; s < seg.length - W / 2 - 1; s += 7) {
+      side = -side;
+      if (blocked(side, s)) continue;
+      const x = side * (W / 2 + 0.18);
+      add(GEO.box, kit.woodDark, x, 1.2, s, 0.12, 0.5, 0.12);
+      add(GEO.box, kit.woodDark, x - side * 0.18, 1.42, s, 0.42, 0.06, 0.06);
+      add(GEO.box, kit.woodDark, x - side * 0.34, 1.3, s, 0.3, 0.06, 0.3);
+      add(GEO.box, NIGHT.lantern, x - side * 0.34, 1.12, s, 0.22, 0.3, 0.22).castShadow = false;
+      add(GEO.box, kit.woodDark, x - side * 0.34, 0.95, s, 0.28, 0.05, 0.28);
+    }
+  }
   for (let s = seg.index === 0 ? -10 : W / 2; s < seg.length + W / 2; s += rand(1.5, 3.5)) {
     const side = Math.random() < 0.5 ? -1 : 1;
     if (blocked(side, s)) continue;
@@ -728,7 +743,7 @@ function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number,
       add(GEO.blob, kit.leaves[2], bx, by, s, 1.1, 0.9, 1.0);
       for (const e of [-0.18, 0.18]) add(GEO.sphere, NIGHT.eyes, bx + e, by + 0.15, s - 0.95, 0.14, 0.18, 0.06).castShadow = false;
     }
-    if (Math.random() < 0.25) {
+    if (seg.world.decor !== 'boardwalk' && Math.random() < 0.25) {
       const x = side * (W / 2 + 0.05);
       add(GEO.trunk, kit.white, x, 0.15, s, 0.22, 0.3, 0.22);
       add(GEO.dome, NIGHT.glowCap, x, 0.28, s, 0.5, 0.36, 0.5).castShadow = false;
@@ -741,6 +756,7 @@ const NIGHT = {
   fireflies: [0, 1, 2].map(() => new THREE.MeshBasicMaterial({ color: '#fff27a' })),
   glowCap: new THREE.MeshBasicMaterial({ color: '#6ff3ff' }),
   eyes: new THREE.MeshBasicMaterial({ color: '#ffe066' }),
+  lantern: new THREE.MeshBasicMaterial({ color: '#ffc85a' }),
 };
 const FIREFLY_DIM = new THREE.Color('#5a5a2a');
 const FIREFLY_BRIGHT = new THREE.Color('#fff27a');
