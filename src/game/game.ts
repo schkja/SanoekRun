@@ -16,6 +16,7 @@ import { Menus } from '../ui/menus';
 import { SpeedLines } from '../ui/speed-lines';
 import { PORTRAITS } from '../ui/portraits';
 import { outfitIcon } from '../ui/outfit-icons';
+import { APP_VERSION, AUTHOR, CHANGELOG, LEGAL_URL } from '../about';
 import { drawShareCard, shareRun, type RunSummary } from '../ui/share-card';
 import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
@@ -39,7 +40,7 @@ import {
   updateSettings,
   type Character,
 } from './settings';
-import { LANGUAGE_NAMES, formatNumber, setLanguage, t, type StringKey } from '../i18n';
+import { LANGUAGE_NAMES, formatNumber, language, setLanguage, t, type StringKey } from '../i18n';
 
 /** A world's name in the current language. */
 const worldName = (w: WorldDef) => t(`world.${w.id}` as StringKey);
@@ -210,9 +211,49 @@ export class Game {
         { label: t('tool.shop'), onClick: () => this.showShop(toTitle) },
         { label: t('tool.settings'), onClick: () => this.showSettings(toTitle) },
         ...(isInstalled() ? [] : [{ label: t('tool.install'), onClick: () => void this.install(toTitle) }]),
+        { label: t('tool.info'), onClick: () => this.showInfo(toTitle) },
       ],
       note: isTouch() ? undefined : t('title.keys'),
       variant: 'is-title',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Info: version, what's new, who made it, how to report a bug, legal page.
+
+  private showInfo(back: () => void): void {
+    const lang = language();
+    const open = (url: string) => () => {
+      window.open(url, '_blank', 'noopener');
+    };
+    const date = (iso: string) => {
+      try {
+        return new Date(`${iso}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch {
+        return iso;
+      }
+    };
+    this.menus.show({
+      eyebrow: t('info.version', { v: APP_VERSION }),
+      title: t('info.title'),
+      body: t('info.body'),
+      variant: 'is-settings',
+      sections: [
+        {
+          title: t('info.about'),
+          rows: [
+            { label: t('info.madeBy'), value: AUTHOR.name, onClick: open(AUTHOR.site) },
+            { label: t('info.bug'), hint: AUTHOR.email, value: '✉️', onClick: () => (location.href = `mailto:${AUTHOR.email}?subject=${encodeURIComponent(`${GAME_NAME} ${APP_VERSION}`)}`) },
+            { label: t('info.site'), value: AUTHOR.site.replace(/^https?:\/\//, '').replace(/\/$/, ''), onClick: open(AUTHOR.site) },
+            { label: t('info.legal'), value: '', onClick: open(LEGAL_URL) },
+          ],
+        },
+        ...CHANGELOG.slice(0, 4).map((entry, i) => ({
+          title: `${i === 0 ? `${t('info.news')} · ` : ''}${entry.version} · ${date(entry.date)}`,
+          rows: (entry.notes[lang] ?? entry.notes.en).map((note) => ({ label: `• ${note}` })),
+        })),
+      ],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
     });
   }
 
@@ -655,6 +696,7 @@ export class Game {
       title: t('name.title'),
       body: t('name.body'),
       input: { placeholder: t('name.placeholder'), value: profile.name, maxLength: 12, error },
+      note: t('name.privacy'),
       buttons: [
         {
           label: t('name.save'),

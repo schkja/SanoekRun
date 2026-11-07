@@ -46,7 +46,6 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-  touch-action: none;
 }
 
 /* Full screen, sized by CSS. On an iPhone home-screen app with a translucent
@@ -439,7 +438,12 @@ body {
   position: absolute;
   inset: 0;
   display: grid;
-  place-items: center;
+  /* Cards taller than the screen scroll with a finger; shorter ones stay
+     centred (auto margins on the card). */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px))
     calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
   background: rgba(20, 50, 80, 0.28);
@@ -454,6 +458,7 @@ body {
 }
 
 .menu-card {
+  margin: auto;
   width: min(380px, 100%);
   padding: 26px 22px 24px;
   text-align: center;
@@ -790,8 +795,6 @@ body {
 
 /* Settings: grouped lists with switches, like a phone's own settings. */
 .menu.is-settings .menu-card {
-  max-height: calc(100% - 20px);
-  overflow-y: auto;
   text-align: left;
 }
 
@@ -926,6 +929,7 @@ body {
 }
 
 .menu.is-intro .menu-card {
+  margin: 0 auto;
   width: auto;
   padding: 0;
   background: transparent;
