@@ -966,8 +966,10 @@ export interface RunnerModel {
   armR: THREE.Group;
   /** The squirrel's tail, which sways as it runs. */
   tail?: THREE.Group;
-  /** How it runs: 'run' (left, right, like a person) or 'bound' (all four paws together, like a squirrel). */
-  gait?: 'run' | 'bound';
+  /** The squirrel's head, which bobs as it gallops. */
+  head?: THREE.Group;
+  /** How it runs: 'run' (on two legs, like a person) or 'quad' (on all fours, galloping). */
+  gait?: 'run' | 'quad';
 }
 
 export function makeCharacterModel(character: 'lumberjack' | 'squirrel', outfit = ''): RunnerModel {
@@ -1140,84 +1142,93 @@ function squirrelTailGeometry(): THREE.BufferGeometry {
   return geo;
 }
 
-/** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
+/**
+ * Sanök the squirrel, on all fours: a long low body, big haunches, white legs
+ * and belly, a head held up on a short neck with tufted ears, and a bushy S
+ * tail. Faces -Z, origin at the feet. Runs with a gallop (see runner.ts).
+ */
 export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
-  const { root, body, part, limb } = characterKit();
+  const { root, body, part } = characterKit();
   const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
   const fur = mat('#c8561f');
   const tailTip = mat('#ffe2b8');
   const white = mat('#ffffff');
   const dark = mat('#2b2b3d');
   const tuft = mat('#7a3414');
+  const pink = mat('#ff9aa8');
   const scarf = mat(outfit === 'scarf-red' ? '#e8423a' : '#3ac6b0');
 
-  const legL = limb(-0.17, 0.46);
-  const legR = limb(0.17, 0.46);
+  // Long, low body with a pale belly.
+  part(fur, body, GEO.sphere, 0, 0.78, 0.02, 0.74, 0.62, 1.3);
+  part(white, body, GEO.sphere, 0, 0.64, -0.28, 0.5, 0.42, 0.78);
+
+  // Legs. Each pivots at the hip or shoulder; the runner swings them.
+  const pivot = (x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    body.add(g);
+    return g;
+  };
+  // Hind legs: big furry haunches, white shins, long feet.
+  const legL = pivot(-0.24, 0.82, 0.36);
+  const legR = pivot(0.24, 0.82, 0.36);
   for (const leg of [legL, legR]) {
-    part(white, leg, GEO.box, 0, -0.22, 0, 0.18, 0.44, 0.2);
-    part(white, leg, GEO.box, 0, -0.44, -0.08, 0.2, 0.08, 0.32);
+    part(fur, leg, GEO.sphere, 0, -0.08, 0.02, 0.36, 0.52, 0.56);
+    part(white, leg, GEO.box, 0, -0.48, 0.08, 0.14, 0.44, 0.16);
+    part(white, leg, GEO.box, 0, -0.76, -0.08, 0.16, 0.08, 0.36);
+  }
+  // Front legs: slim and white, little paws.
+  const armL = pivot(-0.2, 0.72, -0.48);
+  const armR = pivot(0.2, 0.72, -0.48);
+  for (const arm of [armL, armR]) {
+    part(white, arm, GEO.box, 0, -0.33, 0, 0.12, 0.66, 0.13);
+    part(white, arm, GEO.box, 0, -0.68, -0.06, 0.15, 0.07, 0.2);
   }
 
-  // A pear-shaped body, leaning forward a little like a running squirrel.
-  part(fur, body, GEO.sphere, 0, 0.82, 0.04, 0.74, 0.86, 0.8);
-  part(white, body, GEO.sphere, 0, 0.84, -0.24, 0.44, 0.6, 0.34);
-  part(scarf, body, GEO.cyl, 0, 1.2, -0.02, 0.6, 0.1, 0.58);
-
-  // Head with a short snout, cream cheeks and big dark eyes.
-  part(fur, body, GEO.sphere, 0, 1.46, -0.1, 0.6, 0.54, 0.58);
-  part(white, body, GEO.sphere, -0.14, 1.38, -0.32, 0.22, 0.18, 0.18);
-  part(white, body, GEO.sphere, 0.14, 1.38, -0.32, 0.22, 0.18, 0.18);
-  part(dark, body, GEO.sphere, 0, 1.43, -0.42, 0.08, 0.07, 0.07);
-  part(dark, body, GEO.sphere, -0.15, 1.55, -0.32, 0.1, 0.12, 0.06);
-  part(dark, body, GEO.sphere, 0.15, 1.55, -0.32, 0.1, 0.12, 0.06);
-  // Round ears with the dark tufts squirrels have, which a cat doesn't.
+  // Head up on a short neck, so it shows over the back from behind.
+  const head = pivot(0, 1.06, -0.62);
+  part(fur, head, GEO.sphere, 0, 0.02, 0.12, 0.42, 0.44, 0.5);
+  part(scarf, head, GEO.cyl, 0, -0.08, 0.14, 0.5, 0.12, 0.5);
+  part(fur, head, GEO.sphere, 0, 0.26, -0.08, 0.56, 0.5, 0.58);
+  part(white, head, GEO.sphere, -0.13, 0.17, -0.3, 0.22, 0.18, 0.2);
+  part(white, head, GEO.sphere, 0.13, 0.17, -0.3, 0.22, 0.18, 0.2);
+  part(pink, head, GEO.sphere, 0, 0.22, -0.39, 0.08, 0.07, 0.07);
+  part(dark, head, GEO.sphere, -0.17, 0.33, -0.27, 0.1, 0.12, 0.08);
+  part(dark, head, GEO.sphere, 0.17, 0.33, -0.27, 0.1, 0.12, 0.08);
+  // Rounded ears with the dark tufts squirrels have.
   for (const side of [-1, 1]) {
-    part(fur, body, GEO.sphere, side * 0.17, 1.74, -0.04, 0.16, 0.24, 0.1);
-    const t = part(tuft, body, new THREE.ConeGeometry(0.06, 0.2, 5), side * 0.19, 1.92, -0.04, 1, 1, 1);
+    part(fur, head, GEO.sphere, side * 0.16, 0.54, -0.02, 0.15, 0.24, 0.1);
+    const t = part(tuft, head, new THREE.ConeGeometry(0.06, 0.2, 5), side * 0.18, 0.71, -0.02, 1, 1, 1);
     t.rotation.z = -side * 0.25;
   }
 
-  const armL = limb(-0.26, 1.04, -0.12);
-  const armR = limb(0.26, 1.04, -0.12);
-  part(white, armL, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
-  part(white, armR, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
-
-  // The signature: a big bushy tail, one smooth fluffy S rising from the
-  // back and curling over at the top, orange fading to a cream tip. It
-  // leans out to the right so the head and tufted ears stay visible.
-  const tail = new THREE.Group();
-  tail.position.set(0.16, 0.5, 0.4);
-  body.add(tail);
+  // The bushy S tail rises from the rump and leans out to the right, so the
+  // head stays visible from behind. Compact: about head height.
+  const tail = pivot(0.12, 0.86, 0.66);
   const plume = new THREE.Group();
-  // Kept compact (about head height) so it doesn't hide the path ahead,
-  // and fat so it still reads as a squirrel's tail.
-  plume.rotation.z = -0.5;
-  plume.scale.set(0.82, 0.68, 0.82);
+  plume.rotation.set(0.25, 0, -0.62);
+  plume.scale.set(0.8, 0.66, 0.8);
   tail.add(plume);
   part(TAIL_MATERIAL, plume, squirrelTailGeometry(), 0, 0, 0, 1, 1, 1);
-  // A round tuft closes the tip.
   part(tailTip, plume, GEO.sphere, 0, 1.47, -0.42, 0.36, 0.34, 0.36);
   part(tailTip, plume, GEO.sphere, 0.02, 1.6, -0.25, 0.3, 0.26, 0.3);
 
-  // Strong haunches: from behind, squirrels are all thighs and tail.
-  for (const side of [-1, 1]) part(fur, body, GEO.sphere, side * 0.24, 0.5, 0.12, 0.36, 0.42, 0.46);
-
-  // Accessories from the shop.
+  // Accessories from the shop sit on the head.
   if (outfit === 'sunglasses') {
-    for (const x of [-0.14, 0.14]) part(dark, body, GEO.box, x, 1.55, -0.33, 0.2, 0.12, 0.04);
-    part(dark, body, GEO.box, 0, 1.57, -0.33, 0.12, 0.03, 0.03);
+    for (const x of [-0.15, 0.15]) part(dark, head, GEO.box, x, 0.33, -0.31, 0.2, 0.12, 0.04);
+    part(dark, head, GEO.box, 0, 0.35, -0.31, 0.12, 0.03, 0.03);
   } else if (outfit === 'flower') {
     const petal = mat('#ffffff');
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      part(petal, body, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 1.76 + Math.sin(a) * 0.1, -0.12, 0.12, 0.12, 0.06);
+      part(petal, head, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 0.52 + Math.sin(a) * 0.1, -0.14, 0.12, 0.12, 0.06);
     }
-    part(mat('#ffd23f'), body, GEO.sphere, 0.2, 1.76, -0.15, 0.1, 0.1, 0.06);
+    part(mat('#ffd23f'), head, GEO.sphere, 0.2, 0.52, -0.17, 0.1, 0.1, 0.06);
   } else if (outfit === 'crown-squirrel') {
-    crown(body, part, mat, 1.74, 0.36);
+    crown(head, part, mat, 0.52, 0.32);
   }
 
-  return { root, body, legL, legR, armL, armR, tail, gait: 'bound' };
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad' };
 }
 
 const BUBBLE = new THREE.MeshBasicMaterial({ color: '#d9f3ff', transparent: true, opacity: 0.35, depthWrite: false });
