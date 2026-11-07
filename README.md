@@ -1,8 +1,15 @@
 # SanökRun
 
-An endless runner in the spirit of Temple Run. The path twists through jungle
-ruins and lava caves; swipe to turn at corners, jump gaps and logs, slide under
-branches and fire jets, and stay ahead of whatever is chasing you.
+An endless runner in the spirit of Temple Run, set high in the forest. Pick
+who you play:
+
+- **Lumberjack** — runs wooden boardwalks above the treetops, through autumn
+  woods, the temple ruins and the lava cave, chased by a grumpy bear (and worse).
+- **Squirrel** — runs along the branches of giant trees and through snowy pines,
+  chased by a hawk and a runaway snowball, collecting acorns.
+
+Swipe to turn at corners, jump gaps and logs, slide under branches, and stay
+ahead of whatever is chasing you.
 
 Built with **Three.js**, **Vite** and **TypeScript**. Runs in any phone or
 desktop browser. Everything you see is built from simple shapes for now, so it
@@ -128,12 +135,19 @@ ramps up, jump height, slide length, how early a turn is accepted, the perfect
 turn window, how long the chaser stays close after a stumble, obstacle spacing
 (in seconds of running, so it stays fair at high speed), and the camera.
 
-## Adding a world
+## Worlds
 
-Add an entry to `content/worlds.json`. Reusing an existing `decor`
-(`jungle` / `lava`) and `chaser` (`monster` / `lava`) needs no code. A new look
-means a new case in `visuals.ts` (scenery and obstacles) and, for a new chaser,
-in `chaser.ts`.
+`content/worlds.json` holds every world and, under `routes`, the order each
+character plays them in. A world picks:
+
+- `decor` — the scenery and obstacles: `boardwalk`, `branch`, `snow`, `jungle` (temple) or `lava`
+- `path.style` — the running surface: `planks`, `bark`, `snow` or `stone`
+- `chaser` — `bear`, `hawk`, `snowball`, `monster` or `lava`
+- `theme` — sky, fog, sun and the colours far below
+
+Adding a world that reuses those needs no code: add it and put its id in a
+route. Add `?world=snowy-pines` to the address to start a run in that world,
+which is handy for testing.
 
 ## Real 3D models
 

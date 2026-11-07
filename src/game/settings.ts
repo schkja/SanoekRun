@@ -12,7 +12,7 @@ export const GAME_NAME = 'SanökRun';
 /** The link printed on share cards. */
 export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.sascha.iodatalabs.dev';
 
-export type Character = 'explorer' | 'squirrel';
+export type Character = 'lumberjack' | 'squirrel';
 export type MusicStyle = 'chase' | 'hop' | 'menu' | 'off';
 
 export interface Effects {
@@ -50,7 +50,7 @@ export const EFFECT_LABELS: Record<keyof Effects, string> = {
 };
 
 export const CHARACTER_LABELS: Record<Character, string> = {
-  explorer: 'Explorer',
+  lumberjack: 'Lumberjack',
   squirrel: 'Squirrel',
 };
 
@@ -76,7 +76,7 @@ function envChoice<T extends string>(name: string, options: readonly T[], fallba
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  character: envChoice('VITE_CHARACTER', ['explorer', 'squirrel'] as const, 'explorer'),
+  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
   effects: {
@@ -110,6 +110,9 @@ function load(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return base;
     const saved = JSON.parse(raw) as Partial<Settings>;
+    // The explorer became the lumberjack.
+    if ((saved.character as string) === 'explorer') saved.character = 'lumberjack';
+    if (saved.character && !(saved.character in CHARACTER_LABELS)) delete saved.character;
     return {
       ...base,
       ...saved,

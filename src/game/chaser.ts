@@ -6,8 +6,11 @@
  * and it lunges right up behind you; stumble again before it falls back and
  * it catches you.
  *
- *   monster — the jungle beast, a hulking thing with glowing eyes
- *   lava    — a wall of molten rock rolling down the path
+ *   monster  — the temple beast, a hulking thing with glowing eyes
+ *   bear     — a grumpy brown bear on the forest boardwalk
+ *   hawk     — swoops down out of the sky over the treetops
+ *   snowball — a giant snowball rolling down the snowy branch
+ *   lava     — a wave of molten rock
  */
 
 import * as THREE from 'three';
@@ -15,37 +18,38 @@ import type { ChaserKind } from './worlds';
 import { TUNING } from './tuning';
 import { headingYaw, type Segment, type Track } from './track';
 
+interface Body {
+  root: THREE.Group;
+  /** Called every frame with the running pace, to animate legs, wings or spin. */
+  animate: (pace: number, time: number) => void;
+}
+
 export class Chaser {
   readonly root = new THREE.Group();
   /** Current distance behind the runner, along the track. */
   gap: number = TUNING.chaser.restGap;
 
   private kind: ChaserKind = 'monster';
-  private readonly monster: THREE.Group;
-  private readonly lava: THREE.Group;
-  private readonly light: THREE.PointLight;
-  private readonly blobs: THREE.Mesh[] = [];
-  private readonly arms: THREE.Object3D[] = [];
+  private readonly bodies: Record<ChaserKind, Body>;
   private readonly target = new THREE.Vector3();
   private yaw = 0;
   private time = 0;
 
   constructor() {
-    this.monster = buildMonster(this.arms);
-    this.lava = buildLavaWall(this.blobs);
-    this.light = new THREE.PointLight('#ff6a2a', 40, 16, 1.6);
-    this.light.position.set(0, 2.2, -1);
-    // Kept a little smaller than life so it never hides the runner.
-    this.monster.scale.setScalar(0.62);
-    this.root.add(this.monster, this.lava, this.light);
+    this.bodies = {
+      monster: buildBeast({ hide: '#5a1e2b', dark: '#2e0f16', eyes: '#ffd23f', horns: true }),
+      bear: buildBeast({ hide: '#7a4a2a', dark: '#4a2a16', eyes: '#2b2b3d', horns: false }),
+      hawk: buildHawk(),
+      snowball: buildSnowball(),
+      lava: buildLavaWave(),
+    };
+    for (const body of Object.values(this.bodies)) this.root.add(body.root);
     this.setKind('monster');
   }
 
   setKind(kind: ChaserKind): void {
     this.kind = kind;
-    this.monster.visible = kind === 'monster';
-    this.lava.visible = kind === 'lava';
-    this.light.visible = kind === 'lava';
+    for (const [name, body] of Object.entries(this.bodies)) body.root.visible = name === kind;
   }
 
   /** Snap into place behind the runner, e.g. at the start of a run. */
@@ -70,62 +74,142 @@ export class Chaser {
     // Out of sight when it's far behind the camera.
     this.root.visible = this.gap < TUNING.camera.distance + 4;
 
-    const pace = this.time * (6 + speed * 0.5);
-    if (this.kind === 'monster') {
-      this.monster.position.y = Math.abs(Math.sin(pace)) * 0.18;
-      this.arms[0].rotation.x = Math.sin(pace) * 1.1 - 0.4;
-      this.arms[1].rotation.x = -Math.sin(pace) * 1.1 - 0.4;
-    } else {
-      this.blobs.forEach((b, i) => {
-        b.position.y = 1.9 + Math.sin(this.time * 5 + i * 1.7) * 0.35;
-      });
-      this.light.intensity = 36 + Math.sin(this.time * 13) * 8;
-    }
+    // The hawk flies: higher when far, diving lower as it closes in.
+    const hawk = this.bodies.hawk.root;
+    // It stays off to one side so it never hides the runner.
+    hawk.position.set(1.5, 3.3 + Math.max(0, this.gap - 3) * 0.3, 0);
+
+    this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
   }
 }
 
-function buildMonster(arms: THREE.Object3D[]): THREE.Group {
+type PartFn = (geo: THREE.BufferGeometry, m: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, sx: number, sy: number, sz: number) => THREE.Mesh;
+
+const part: PartFn = (geo, m, parent, x, y, z, sx, sy, sz) => {
+  const mesh = new THREE.Mesh(geo, m);
+  mesh.position.set(x, y, z);
+  mesh.scale.set(sx, sy, sz);
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+};
+
+const mat = (color: string) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true });
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const SPHERE = new THREE.SphereGeometry(0.5, 14, 10);
+
+/** The temple beast and the bear share one shape: hide colour, eyes, horns or round ears. */
+function buildBeast(o: { hide: string; dark: string; eyes: string; horns: boolean }): Body {
+  const outer = new THREE.Group();
   const g = new THREE.Group();
-  const hide = new THREE.MeshStandardMaterial({ color: '#5a1e2b', roughness: 0.9, flatShading: true });
-  const dark = new THREE.MeshStandardMaterial({ color: '#2e0f16', roughness: 0.9, flatShading: true });
-  const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
-  const horn = new THREE.MeshStandardMaterial({ color: '#e8dcc0', roughness: 0.6, flatShading: true });
-  const box = new THREE.BoxGeometry(1, 1, 1);
+  outer.add(g);
+  // Kept a little smaller than life so it never hides the runner.
+  g.scale.setScalar(0.62);
+  const hide = mat(o.hide);
+  const dark = mat(o.dark);
+  const eye = new THREE.MeshBasicMaterial({ color: o.eyes });
 
-  const part = (geo: THREE.BufferGeometry, m: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, sx: number, sy: number, sz: number) => {
-    const mesh = new THREE.Mesh(geo, m);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(sx, sy, sz);
-    mesh.castShadow = true;
-    parent.add(mesh);
-    return mesh;
-  };
-
-  part(box, hide, g, 0, 1.7, 0, 2.0, 1.7, 1.4);
-  part(box, dark, g, 0, 0.55, 0, 1.4, 1.1, 1.0);
+  part(BOX, hide, g, 0, 1.7, 0, 2.0, 1.7, 1.4);
+  part(BOX, dark, g, 0, 0.55, 0, 1.4, 1.1, 1.0);
   const head = new THREE.Group();
   head.position.set(0, 2.85, -0.45);
   g.add(head);
-  part(box, hide, head, 0, 0, 0, 1.25, 0.95, 1.05);
-  part(box, eye, head, -0.3, 0.12, -0.53, 0.24, 0.16, 0.05).castShadow = false;
-  part(box, eye, head, 0.3, 0.12, -0.53, 0.24, 0.16, 0.05).castShadow = false;
-  part(box, dark, head, 0, -0.3, -0.53, 0.8, 0.12, 0.05);
-  const cone = new THREE.ConeGeometry(0.16, 0.6, 5);
-  part(cone, horn, head, -0.45, 0.7, 0, 1, 1, 1).rotation.z = 0.4;
-  part(cone, horn, head, 0.45, 0.7, 0, 1, 1, 1).rotation.z = -0.4;
+  part(BOX, hide, head, 0, 0, 0, 1.25, 0.95, 1.05);
+  part(BOX, eye, head, -0.3, 0.12, -0.53, 0.24, 0.16, 0.05).castShadow = false;
+  part(BOX, eye, head, 0.3, 0.12, -0.53, 0.24, 0.16, 0.05).castShadow = false;
+  if (o.horns) {
+    part(BOX, dark, head, 0, -0.3, -0.53, 0.8, 0.12, 0.05);
+    const cone = new THREE.ConeGeometry(0.16, 0.6, 5);
+    const horn = mat('#e8dcc0');
+    part(cone, horn, head, -0.45, 0.7, 0, 1, 1, 1).rotation.z = 0.4;
+    part(cone, horn, head, 0.45, 0.7, 0, 1, 1, 1).rotation.z = -0.4;
+  } else {
+    // Round ears and a pale snout.
+    part(SPHERE, hide, head, -0.5, 0.55, 0.1, 0.42, 0.42, 0.25);
+    part(SPHERE, hide, head, 0.5, 0.55, 0.1, 0.42, 0.42, 0.25);
+    part(BOX, mat('#d9b48a'), head, 0, -0.18, -0.6, 0.6, 0.4, 0.3);
+    part(BOX, dark, head, 0, -0.06, -0.76, 0.24, 0.14, 0.05);
+  }
 
+  const arms: THREE.Group[] = [];
   for (const side of [-1, 1]) {
     const pivot = new THREE.Group();
     pivot.position.set(side * 1.25, 2.3, 0);
     g.add(pivot);
-    part(box, hide, pivot, 0, -0.85, -0.1, 0.55, 1.7, 0.6);
-    part(box, dark, pivot, 0, -1.8, -0.2, 0.7, 0.35, 0.8);
+    part(BOX, hide, pivot, 0, -0.85, -0.1, 0.55, 1.7, 0.6);
+    part(BOX, dark, pivot, 0, -1.8, -0.2, 0.7, 0.35, 0.8);
     arms.push(pivot);
   }
-  return g;
+  return {
+    root: outer,
+    animate: (pace) => {
+      g.position.y = Math.abs(Math.sin(pace)) * 0.18;
+      arms[0].rotation.x = Math.sin(pace) * 1.1 - 0.4;
+      arms[1].rotation.x = -Math.sin(pace) * 1.1 - 0.4;
+    },
+  };
 }
 
-function buildLavaWall(blobs: THREE.Mesh[]): THREE.Group {
+function buildHawk(): Body {
+  const root = new THREE.Group();
+  const g = new THREE.Group();
+  root.add(g);
+  g.scale.setScalar(0.55);
+  const feathers = mat('#7a5232');
+  const light = mat('#f2e6d0');
+  const beak = mat('#ffb020');
+  const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
+
+  part(SPHERE, feathers, g, 0, 0, 0, 0.9, 0.7, 1.7);
+  part(SPHERE, light, g, 0, -0.12, -0.25, 0.7, 0.5, 1.1);
+  part(SPHERE, feathers, g, 0, 0.25, -0.9, 0.6, 0.55, 0.6);
+  part(new THREE.ConeGeometry(0.12, 0.35, 5), beak, g, 0, 0.18, -1.25, 1, 1, 1).rotation.x = -Math.PI / 2;
+  part(SPHERE, eye, g, -0.2, 0.35, -1.1, 0.12, 0.12, 0.08).castShadow = false;
+  part(SPHERE, eye, g, 0.2, 0.35, -1.1, 0.12, 0.12, 0.08).castShadow = false;
+  part(BOX, feathers, g, 0, 0.05, 1.05, 0.7, 0.08, 0.6);
+
+  const wings: THREE.Group[] = [];
+  for (const side of [-1, 1]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * 0.35, 0.15, -0.1);
+    g.add(pivot);
+    part(BOX, feathers, pivot, side * 1.1, 0, 0, 2.2, 0.08, 0.9);
+    part(BOX, light, pivot, side * 2.1, 0, 0.1, 0.5, 0.06, 0.6);
+    wings.push(pivot);
+  }
+  return {
+    root,
+    animate: (_pace, time) => {
+      const flap = Math.sin(time * 9) * 0.6;
+      wings[0].rotation.z = flap;
+      wings[1].rotation.z = -flap;
+      g.position.y = Math.sin(time * 9) * 0.12;
+      g.rotation.x = 0.15;
+    },
+  };
+}
+
+function buildSnowball(): Body {
+  const root = new THREE.Group();
+  const ball = new THREE.Group();
+  ball.position.y = 1.6;
+  root.add(ball);
+  const snow = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.7, flatShading: true });
+  const sticks = mat('#6b4a35');
+  part(new THREE.IcosahedronGeometry(1, 1), snow, ball, 0, 0, 0, 1.75, 1.7, 1.75);
+  // Twigs and pine needles caught in the snow, so you can see it roll.
+  for (const [x, y, z] of [[0.9, 0.9, 0.6], [-1.1, 0.2, -0.9], [0.3, -1.2, 0.9], [-0.5, 1.3, -0.4]]) {
+    part(BOX, sticks, ball, x, y, z, 0.12, 0.12, 0.8).lookAt(0, 0, 0);
+  }
+  return {
+    root,
+    animate: (_pace, time) => {
+      ball.rotation.x = -time * 6;
+    },
+  };
+}
+
+function buildLavaWave(): Body {
   const g = new THREE.Group();
   const width = TUNING.pathWidth + 2.5;
   const hot = new THREE.MeshBasicMaterial({ color: '#ff6a2a' });
@@ -139,6 +223,7 @@ function buildLavaWall(blobs: THREE.Mesh[]): THREE.Group {
   back.position.set(0, 0.2, 1.8);
   g.add(front, back);
 
+  const blobs: THREE.Mesh[] = [];
   const sphere = new THREE.SphereGeometry(0.8, 10, 8);
   for (let i = 0; i < 5; i++) {
     const b = new THREE.Mesh(sphere, i % 2 ? hot : bright);
@@ -147,5 +232,14 @@ function buildLavaWall(blobs: THREE.Mesh[]): THREE.Group {
     g.add(b);
     blobs.push(b);
   }
-  return g;
+  const light = new THREE.PointLight('#ff6a2a', 40, 16, 1.6);
+  light.position.set(0, 2.2, -1);
+  g.add(light);
+  return {
+    root: g,
+    animate: (_pace, time) => {
+      blobs.forEach((b, i) => (b.position.y = 1.9 + Math.sin(time * 5 + i * 1.7) * 0.35));
+      light.intensity = 36 + Math.sin(time * 13) * 8;
+    },
+  };
 }

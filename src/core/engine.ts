@@ -19,6 +19,9 @@ export class Engine {
   private readonly hemi: THREE.HemisphereLight;
   private readonly abyss: THREE.Mesh;
   private readonly abyssMaterial: THREE.MeshBasicMaterial;
+  /** The sky: a vertical gradient painted on a tiny canvas. */
+  private readonly skyCanvas = document.createElement('canvas');
+  private readonly sky: THREE.CanvasTexture;
   private readonly sunOffset = new THREE.Vector3(14, 26, 8);
   private readonly forward = new THREE.Vector3();
   private readonly look = new THREE.Vector3();
@@ -36,14 +39,21 @@ export class Engine {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    // Filmic tone mapping: brighter, richer colours without blowing out.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
     container.appendChild(this.renderer.domElement);
 
     this.camera = new THREE.PerspectiveCamera(TUNING.camera.baseFov, 1, 0.1, 300);
 
-    this.scene.background = new THREE.Color('#8fd1b5');
+    this.skyCanvas.width = 2;
+    this.skyCanvas.height = 256;
+    this.sky = new THREE.CanvasTexture(this.skyCanvas);
+    this.sky.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = this.sky;
     this.scene.fog = new THREE.Fog('#8fd1b5', 30, 110);
 
-    this.hemi = new THREE.HemisphereLight('#ffffff', '#3b5a40', 1.5);
+    this.hemi = new THREE.HemisphereLight('#ffffff', '#3b5a40', 1.9);
     this.scene.add(this.hemi);
 
     this.sun = new THREE.DirectionalLight('#fff1d6', 2.4);
@@ -66,12 +76,20 @@ export class Engine {
   }
 
   applyTheme(theme: WorldTheme): void {
-    (this.scene.background as THREE.Color).set(theme.sky);
+    const g = this.skyCanvas.getContext('2d')!;
+    const gradient = g.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, theme.skyTop);
+    gradient.addColorStop(0.55, theme.sky);
+    gradient.addColorStop(1, theme.fog);
+    g.fillStyle = gradient;
+    g.fillRect(0, 0, 2, 256);
+    this.sky.needsUpdate = true;
     const fog = this.scene.fog as THREE.Fog;
     fog.color.set(theme.fog);
     fog.near = theme.fogNear;
     fog.far = theme.fogFar;
     this.sun.color.set(theme.sun);
+    this.sun.intensity = theme.sunIntensity;
     this.hemi.color.set(theme.hemiSky);
     this.hemi.groundColor.set(theme.hemiGround);
     this.abyssMaterial.color.set(theme.abyss);

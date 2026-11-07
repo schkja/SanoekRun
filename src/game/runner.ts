@@ -28,7 +28,7 @@ export class Runner {
   /** Stops all movement (used while being caught). */
   frozen = false;
 
-  model: RunnerModel = makeCharacterModel('explorer');
+  model: RunnerModel = makeCharacterModel('lumberjack');
   /** Logical position on the track. */
   readonly position = new THREE.Vector3();
   /** Where the model is drawn: the logical position, smoothed through turns. */

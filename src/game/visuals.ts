@@ -3,11 +3,17 @@
  *
  * Every mesh here is a placeholder made of boxes, cylinders and spheres so the
  * game runs with zero asset files. Geometry and materials are shared and
- * reused, which keeps it fast on cheap phones.
+ * reused, and repeated bits (railing posts) are instanced, which keeps it fast
+ * on cheap phones.
+ *
+ * Each world's `decor` picks the scenery and obstacles, and `path.style` picks
+ * the running surface:
+ *
+ *   decor:  jungle (temple) · lava · boardwalk (forest) · branch (treetops) · snow
+ *   style:  stone · planks · bark · snow
  *
  * Swapping in real models later (Kenney, Quaternius, KayKit — all CC0) means
- * replacing the body of one builder at a time: `makeRunnerModel`, the obstacle
- * builders, or the decor builders. Nothing outside this file cares what the
+ * replacing one builder at a time. Nothing outside this file cares what the
  * meshes look like.
  */
 
@@ -15,7 +21,7 @@ import * as THREE from 'three';
 import { TUNING } from './tuning';
 import type { Segment } from './track';
 import { headingYaw } from './track';
-import type { WorldDef } from './worlds';
+import type { DecorKind, PathStyle, WorldDef } from './worlds';
 
 // ---------------------------------------------------------------------------
 // Shared geometry
@@ -23,19 +29,31 @@ import type { WorldDef } from './worlds';
 
 const GEO = {
   box: new THREE.BoxGeometry(1, 1, 1),
-  cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 8),
-  trunk: new THREE.CylinderGeometry(0.32, 0.5, 1, 6),
+  cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 10),
+  trunk: new THREE.CylinderGeometry(0.32, 0.5, 1, 7),
+  /** Unit cylinder lying along Z — the round underside of a branch. */
+  log: new THREE.CylinderGeometry(1, 1, 1, 14).rotateX(Math.PI / 2),
   canopy: new THREE.IcosahedronGeometry(1, 0),
+  blob: new THREE.IcosahedronGeometry(1, 1),
   rock: new THREE.DodecahedronGeometry(1, 0),
+  cone: new THREE.ConeGeometry(1, 1, 7),
   spire: new THREE.ConeGeometry(1, 1, 5),
   crystal: new THREE.OctahedronGeometry(1, 0),
-  coin: new THREE.CylinderGeometry(0.36, 0.36, 0.1, 16),
-  sphere: new THREE.SphereGeometry(0.5, 14, 10),
+  coin: new THREE.CylinderGeometry(0.36, 0.36, 0.1, 18),
+  sphere: new THREE.SphereGeometry(0.5, 16, 12),
   portal: new THREE.TorusGeometry(2.9, 0.26, 10, 40),
   portalDisc: new THREE.CircleGeometry(2.75, 40),
 };
 
-/** What you collect: gold coins for the explorer, acorns for the squirrel. */
+function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0, flatShading: true, ...extra });
+}
+
+// ---------------------------------------------------------------------------
+// Collectibles
+// ---------------------------------------------------------------------------
+
+/** What you collect: gold coins for the lumberjack, acorns for the squirrel. */
 export type Collectible = 'coin' | 'acorn';
 let collectible: Collectible = 'coin';
 
@@ -43,8 +61,15 @@ export function setCollectible(kind: Collectible): void {
   collectible = kind;
 }
 
-const ACORN_NUT = new THREE.MeshStandardMaterial({ color: '#b0702e', roughness: 0.55, emissive: '#5a2e08', emissiveIntensity: 0.35 });
-const ACORN_CAP = new THREE.MeshStandardMaterial({ color: '#5a3d24', roughness: 0.9, flatShading: true });
+const ACORN_NUT = new THREE.MeshStandardMaterial({ color: '#c47a35', roughness: 0.5, emissive: '#6a3608', emissiveIntensity: 0.45 });
+const ACORN_CAP = std('#6b4325', { roughness: 0.9 });
+const COIN_MATERIAL = new THREE.MeshStandardMaterial({
+  color: '#ffd23f',
+  emissive: '#c99a00',
+  emissiveIntensity: 0.6,
+  metalness: 0.5,
+  roughness: 0.3,
+});
 
 function makeAcorn(): THREE.Group {
   const g = new THREE.Group();
@@ -61,99 +86,150 @@ function makeAcorn(): THREE.Group {
   return g;
 }
 
-const COIN_MATERIAL = new THREE.MeshStandardMaterial({
-  color: '#ffd23f',
-  emissive: '#b88a00',
-  emissiveIntensity: 0.55,
-  metalness: 0.6,
-  roughness: 0.3,
-});
-
 // ---------------------------------------------------------------------------
 // Per-world materials ("kits")
 // ---------------------------------------------------------------------------
 
 interface Kit {
+  decor: DecorKind;
   floorTop: THREE.MeshStandardMaterial;
   floorBody: THREE.MeshStandardMaterial;
   curb: THREE.MeshStandardMaterial;
-  a: THREE.MeshStandardMaterial;
-  b: THREE.MeshStandardMaterial;
-  c: THREE.MeshStandardMaterial;
-  d: THREE.MeshStandardMaterial;
+  leaves: [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial, THREE.MeshStandardMaterial];
+  trunk: THREE.MeshStandardMaterial;
+  wood: THREE.MeshStandardMaterial;
+  woodDark: THREE.MeshStandardMaterial;
+  stone: THREE.MeshStandardMaterial;
+  rock: THREE.MeshStandardMaterial;
+  rockDark: THREE.MeshStandardMaterial;
+  hot: THREE.MeshStandardMaterial;
   glow: THREE.MeshBasicMaterial;
+  snow: THREE.MeshStandardMaterial;
+  ice: THREE.MeshStandardMaterial;
+  mushroom: THREE.MeshStandardMaterial;
+  white: THREE.MeshStandardMaterial;
+  carrot: THREE.MeshStandardMaterial;
+  dark: THREE.MeshStandardMaterial;
   portal: THREE.MeshStandardMaterial;
   portalDisc: THREE.MeshBasicMaterial;
 }
 
 const kits = new Map<string, Kit>();
 
-function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, flatShading: true, ...extra });
-}
-
 function kitFor(world: WorldDef): Kit {
-  let kit = kits.get(world.id);
-  if (kit) return kit;
-
-  const texture = makeSlabTexture(world.path.slab, world.path.grout);
+  const cached = kits.get(world.id);
+  if (cached) return cached;
+  const p = world.path;
   const accent = world.theme.accent;
-  if (world.decor === 'lava') {
-    kit = {
-      floorTop: std('#ffffff', { map: texture, flatShading: false }),
-      floorBody: std(world.path.body),
-      curb: std(world.path.curb),
-      a: std('#3b2a30'), // rock
-      b: std('#2a1c22'), // dark rock
-      c: std('#ff7a2a', { emissive: '#ff4a10', emissiveIntensity: 1.2 }), // glowing
-      d: std('#59434c'),
-      glow: new THREE.MeshBasicMaterial({ color: '#ffc04a' }),
-      portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
-      portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
-    };
-  } else {
-    kit = {
-      floorTop: std('#ffffff', { map: texture, flatShading: false }),
-      floorBody: std(world.path.body),
-      curb: std(world.path.curb),
-      a: std('#6b4a2b'), // wood / trunk
-      b: std('#2f8f4e'), // leaves
-      c: std('#3aa35a'), // leaves light
-      d: std('#9c8a66'), // ruin stone
-      glow: new THREE.MeshBasicMaterial({ color: '#ffd23f' }),
-      portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
-      portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
-    };
-  }
+  const kit: Kit = {
+    decor: world.decor,
+    floorTop: std('#ffffff', { map: makeFloorTexture(p.style, p.slab, p.grout), flatShading: false, roughness: 0.9 }),
+    floorBody: std(p.body),
+    curb: std(p.curb),
+    leaves: world.palette.leaves.map((c) => std(c, { roughness: 0.7 })) as Kit['leaves'],
+    trunk: std(world.palette.trunk),
+    wood: std('#b07a45'),
+    woodDark: std('#7a4e2c'),
+    stone: std('#d9c08a'),
+    rock: std('#3b2a30'),
+    rockDark: std('#2a1c22'),
+    hot: std('#ff7a2a', { emissive: '#ff4a10', emissiveIntensity: 1.2 }),
+    glow: new THREE.MeshBasicMaterial({ color: world.decor === 'lava' ? '#ffc04a' : '#ffe066' }),
+    snow: std('#ffffff', { roughness: 0.6 }),
+    ice: std('#bfe8ff', { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.9, flatShading: false }),
+    mushroom: std('#ff4d4d', { flatShading: false, roughness: 0.5 }),
+    white: std('#fff8f0', { flatShading: false }),
+    carrot: std('#ff8a1e'),
+    dark: std('#2b2b3d'),
+    portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
+    portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
+  };
   kits.set(world.id, kit);
   return kit;
 }
 
-/** A stone-slab floor pattern drawn on a canvas — no image files needed. */
-function makeSlabTexture(slab: string, grout: string): THREE.Texture {
+// ---------------------------------------------------------------------------
+// Floor textures, drawn on a canvas — no image files needed
+// ---------------------------------------------------------------------------
+
+/** One texture tile covers the full path width and the same distance along it. */
+function makeFloorTexture(style: PathStyle, main: string, line: string): THREE.Texture {
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const g = canvas.getContext('2d')!;
-  g.fillStyle = grout;
-  g.fillRect(0, 0, size, size);
+  const base = new THREE.Color(main);
+  const shade = (spread: number) => `#${base.clone().offsetHSL(0, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * spread).getHexString()}`;
 
-  const base = new THREE.Color(slab);
-  const rows = 4;
-  const rowH = size / rows;
-  for (let r = 0; r < rows; r++) {
-    const offset = (r % 2) * (size / 4);
-    for (let col = -1; col < 3; col++) {
-      const x = col * (size / 2) + offset;
-      const shade = base.clone().offsetHSL(0, (Math.random() - 0.5) * 0.06, (Math.random() - 0.5) * 0.1);
-      g.fillStyle = `#${shade.getHexString()}`;
-      g.fillRect(x + 4, r * rowH + 4, size / 2 - 8, rowH - 8);
+  if (style === 'planks') {
+    // Boards laid across the path, with nails at both ends.
+    g.fillStyle = line;
+    g.fillRect(0, 0, size, size);
+    const boards = 10;
+    const h = size / boards;
+    for (let i = 0; i < boards; i++) {
+      g.fillStyle = shade(0.12);
+      g.fillRect(0, i * h + 2, size, h - 4);
+      g.strokeStyle = 'rgba(0,0,0,0.12)';
+      g.lineWidth = 1;
+      for (let k = 0; k < 3; k++) {
+        const y = i * h + 6 + Math.random() * (h - 12);
+        g.beginPath();
+        g.moveTo(0, y);
+        g.bezierCurveTo(size * 0.3, y + 2, size * 0.6, y - 2, size, y + 1);
+        g.stroke();
+      }
+      g.fillStyle = 'rgba(40,25,15,0.55)';
+      for (const x of [14, size - 18]) g.fillRect(x, i * h + h / 2 - 2, 4, 4);
     }
-  }
-  // Speckles so the floor reads as stone and shows speed.
-  for (let i = 0; i < 500; i++) {
-    g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)';
-    g.fillRect(Math.random() * size, Math.random() * size, 2 + Math.random() * 3, 2 + Math.random() * 3);
+  } else if (style === 'bark') {
+    // Grooves running along the branch, with lighter ridges between.
+    g.fillStyle = main;
+    g.fillRect(0, 0, size, size);
+    for (let i = 0; i < 26; i++) {
+      const x = Math.random() * size;
+      g.strokeStyle = Math.random() < 0.6 ? line : `#${base.clone().offsetHSL(0, 0, 0.08).getHexString()}`;
+      g.lineWidth = 2 + Math.random() * 4;
+      g.beginPath();
+      g.moveTo(x, 0);
+      for (let y = 0; y <= size; y += 32) g.lineTo(x + Math.sin(y * 0.05 + i) * 4, y);
+      g.stroke();
+    }
+    // Patches of moss.
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle = 'rgba(110,190,80,0.35)';
+      g.beginPath();
+      g.ellipse(Math.random() * size, Math.random() * size, 10 + Math.random() * 18, 6 + Math.random() * 10, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+  } else if (style === 'snow') {
+    // Fresh snow on a branch: bark peeks out at the edges.
+    g.fillStyle = main;
+    g.fillRect(0, 0, size, size);
+    g.fillStyle = line;
+    g.fillRect(0, 0, 10, size);
+    g.fillRect(size - 10, 0, 10, size);
+    for (let i = 0; i < 400; i++) {
+      g.fillStyle = Math.random() < 0.6 ? 'rgba(150,190,230,0.18)' : 'rgba(255,255,255,0.9)';
+      g.fillRect(12 + Math.random() * (size - 24), Math.random() * size, 2 + Math.random() * 4, 2 + Math.random() * 3);
+    }
+  } else {
+    // Stone slabs.
+    g.fillStyle = line;
+    g.fillRect(0, 0, size, size);
+    const rows = 4;
+    const rowH = size / rows;
+    for (let r = 0; r < rows; r++) {
+      const offset = (r % 2) * (size / 4);
+      for (let col = -1; col < 3; col++) {
+        g.fillStyle = shade(0.1);
+        g.fillRect(col * (size / 2) + offset + 4, r * rowH + 4, size / 2 - 8, rowH - 8);
+      }
+    }
+    for (let i = 0; i < 500; i++) {
+      g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.08)';
+      g.fillRect(Math.random() * size, Math.random() * size, 2 + Math.random() * 3, 2 + Math.random() * 3);
+    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -167,6 +243,18 @@ function makeSlabTexture(slab: string, grout: string): THREE.Texture {
 // Segment mesh
 // ---------------------------------------------------------------------------
 
+type AddFn = (
+  geo: THREE.BufferGeometry,
+  mat: THREE.Material,
+  x: number,
+  y: number,
+  s: number,
+  sx: number,
+  sy: number,
+  sz: number,
+  shadow?: boolean,
+) => THREE.Mesh;
+
 /**
  * Build everything visible on one segment. The group is placed at the segment
  * start and rotated to its heading, so inside it "forward" is always -Z and
@@ -174,22 +262,13 @@ function makeSlabTexture(slab: string, grout: string): THREE.Texture {
  */
 export function buildSegmentMesh(seg: Segment): THREE.Group {
   const kit = kitFor(seg.world);
+  const style = seg.world.path.style;
   const W = TUNING.pathWidth;
   const group = new THREE.Group();
   group.position.copy(seg.start);
   group.rotation.y = headingYaw(seg.heading);
 
-  const add = (
-    geo: THREE.BufferGeometry,
-    mat: THREE.Material,
-    x: number,
-    y: number,
-    s: number,
-    sx: number,
-    sy: number,
-    sz: number,
-    shadow = false,
-  ): THREE.Mesh => {
+  const add: AddFn = (geo, mat, x, y, s, sx, sy, sz, shadow = false) => {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, y, -s);
     mesh.scale.set(sx, sy, sz);
@@ -198,52 +277,96 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
     group.add(mesh);
     return mesh;
   };
+  const posts: THREE.Matrix4[] = [];
+  const post = (x: number, y: number, s: number, sx: number, sy: number, sz: number) =>
+    posts.push(new THREE.Matrix4().compose(new THREE.Vector3(x, y, -s), new THREE.Quaternion(), new THREE.Vector3(sx, sy, sz)));
 
   // --- Floor ----------------------------------------------------------------
   // The first stretch after a corner is covered by the previous segment's
   // floor, so visually each segment starts at the edge of the corner square.
   const visualStart = seg.index === 0 ? -16 : W / 2;
   const end = seg.length + W / 2;
-  const sides: Array<-1 | 1> = [-1, 1];
 
   for (const [from, to] of seg.floor) {
     const a = Math.max(from, visualStart);
     const b = to;
     if (b - a <= 0.01) continue;
     const len = b - a;
+    const mid = (a + b) / 2;
 
     const top = new THREE.PlaneGeometry(W, len);
     top.rotateX(-Math.PI / 2);
     const uv = top.attributes.uv as THREE.BufferAttribute;
     for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * (len / W) + a / W);
     const topMesh = new THREE.Mesh(top, kit.floorTop);
-    topMesh.position.set(0, 0, -(a + b) / 2);
+    topMesh.position.set(0, 0, -mid);
     topMesh.receiveShadow = true;
     topMesh.userData.unique = true;
     group.add(topMesh);
 
-    add(GEO.box, kit.floorBody, 0, -0.75, (a + b) / 2, W, 1.48, len);
+    if (style === 'bark' || style === 'snow') {
+      // A round branch under the walking surface.
+      const r = W / 2 + 0.35;
+      add(GEO.log, kit.floorBody, 0, -r + 0.02, mid, r, r * 0.8, len);
+    } else if (style === 'planks') {
+      // A thin deck on beams, with posts reaching down to the forest floor.
+      add(GEO.box, kit.floorBody, 0, -0.3, mid, W, 0.56, len);
+      for (const side of [-1, 1]) add(GEO.box, kit.woodDark, side * (W / 2 - 0.2), -0.75, mid, 0.3, 0.5, len);
+      for (let s = a + 3; s < b - 1; s += 9) {
+        for (const side of [-1, 1]) add(GEO.cyl, kit.woodDark, side * (W / 2 - 0.3), -15.5, s, 0.45, 30, 0.45);
+      }
+    } else {
+      add(GEO.box, kit.floorBody, 0, -0.75, mid, W, 1.48, len);
+    }
 
-    // Curbs along both edges. At the corner, the side the path turns towards
-    // stays open; the far side and an end wall close the corner off.
-    for (const side of sides) {
-      const curbEnd = b >= end - 0.01 && side === seg.turn ? seg.length - W / 2 : b;
-      if (curbEnd - a > 0.2) {
-        add(GEO.box, kit.curb, side * (W / 2 + 0.18), 0.12, (a + curbEnd) / 2, 0.36, 0.5, curbEnd - a);
+    // Edges. At the corner the side the path turns towards stays open; the far
+    // side and an end piece close the corner off so you can see the turn coming.
+    for (const side of [-1, 1] as const) {
+      const edgeEnd = b >= end - 0.01 && side === seg.turn ? seg.length - W / 2 : b;
+      const run = edgeEnd - a;
+      if (run <= 0.2) continue;
+      const x = side * (W / 2 + 0.18);
+      if (style === 'planks') {
+        // A wooden railing: posts and a rail.
+        add(GEO.box, kit.curb, x, 0.95, (a + edgeEnd) / 2, 0.16, 0.14, run);
+        for (let s = a + 0.4; s < edgeEnd; s += 2.6) post(x, 0.48, s, 0.18, 0.96, 0.18);
+      } else if (style === 'bark') {
+        add(GEO.box, kit.curb, x - side * 0.1, 0.06, (a + edgeEnd) / 2, 0.42, 0.2, run);
+      } else if (style === 'snow') {
+        add(GEO.log, kit.curb, x - side * 0.1, 0.05, (a + edgeEnd) / 2, 0.3, 0.26, run);
+      } else {
+        add(GEO.box, kit.curb, x, 0.12, (a + edgeEnd) / 2, 0.36, 0.5, run);
       }
     }
-    if (b >= end - 0.01) add(GEO.box, kit.curb, 0, 0.12, end + 0.18, W + 0.72, 0.5, 0.36);
+    if (b >= end - 0.01) {
+      if (style === 'planks') {
+        add(GEO.box, kit.curb, 0, 0.95, end + 0.18, W + 0.5, 0.14, 0.16);
+        for (let x = -W / 2; x <= W / 2 + 0.01; x += W / 3) post(x, 0.48, end + 0.18, 0.18, 0.96, 0.18);
+      } else if (style === 'bark' || style === 'snow') {
+        add(GEO.blob, style === 'snow' ? kit.snow : kit.leaves[0], 0, 0.2, end + 0.4, W / 2 + 0.4, 0.7, 0.7, true);
+      } else {
+        add(GEO.box, kit.curb, 0, 0.12, end + 0.18, W + 0.72, 0.5, 0.36);
+      }
+    }
+  }
+
+  if (posts.length) {
+    const inst = new THREE.InstancedMesh(GEO.box, kit.curb, posts.length);
+    posts.forEach((m, i) => inst.setMatrixAt(i, m));
+    inst.castShadow = true;
+    inst.userData.unique = true;
+    group.add(inst);
   }
 
   // --- Obstacles --------------------------------------------------------------
   for (const o of seg.obstacles) {
     if (o.kind === 'gap') continue;
-    o.object = buildObstacle(o.kind, o.lanes, seg.world, kit);
+    o.object = buildObstacle(o.kind, o.lanes, kit);
     o.object.position.set(0, 0, -(o.s0 + o.s1) / 2);
     group.add(o.object);
   }
 
-  // --- Coins --------------------------------------------------------------------
+  // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
     if (collectible === 'acorn') {
@@ -277,61 +400,111 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
 export function disposeSegmentMesh(group: THREE.Group): void {
   group.traverse((child) => {
     const mesh = child as THREE.Mesh;
-    if (mesh.isMesh && mesh.userData.unique) mesh.geometry.dispose();
+    if (!mesh.isMesh || !mesh.userData.unique) return;
+    if ((mesh as THREE.InstancedMesh).isInstancedMesh) (mesh as THREE.InstancedMesh).dispose();
+    else mesh.geometry.dispose();
   });
 }
 
-type AddFn = (
-  geo: THREE.BufferGeometry,
-  mat: THREE.Material,
-  x: number,
-  y: number,
-  s: number,
-  sx: number,
-  sy: number,
-  sz: number,
-  shadow?: boolean,
-) => THREE.Mesh;
+// ---------------------------------------------------------------------------
+// Scenery beside the path
+// ---------------------------------------------------------------------------
 
-/** Scenery beside the path. Kept clear of where the next and previous paths run. */
 function decorate(seg: Segment, kit: Kit, add: AddFn): void {
   const W = TUNING.pathWidth;
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  const leaf = () => kit.leaves[Math.floor(Math.random() * 3)];
+  // Keep clear of where the next and previous paths run.
   const blocked = (side: number, s: number) =>
     (side === seg.turn && s > seg.length - W / 2 - 4) ||
     (seg.arrivedBy !== null && side === seg.arrivedBy && s < W / 2 + 4) ||
     s > seg.length + W / 2;
 
+  // Branch worlds: the branch grows out of a giant trunk behind each corner.
+  if (kit.decor === 'branch' || kit.decor === 'snow') {
+    const r = 2.6;
+    const s = seg.length + W / 2 + r;
+    const x = -seg.turn * (W / 2 + r * 0.6);
+    add(GEO.trunk, kit.trunk, x, -6, s, r * 2, 40, r * 2);
+    if (kit.decor === 'snow') {
+      for (let i = 0; i < 3; i++) add(GEO.cone, kit.leaves[0], x, 14 - i * 3.2, s, 5 - i * 1.1, 5, 5 - i * 1.1);
+      add(GEO.cone, kit.snow, x, 16.4, s, 2.4, 2.2, 2.4);
+    } else {
+      add(GEO.blob, kit.leaves[0], x, 16, s, 7, 5, 7);
+      add(GEO.blob, kit.leaves[1], x - 3, 13, s + 2, 5, 4, 5);
+    }
+  }
+
   for (const side of [-1, 1]) {
-    for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += 4 + Math.random() * 5) {
+    for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += rand(4, 8.5)) {
       if (blocked(side, s)) continue;
-      const out = side * (W / 2 + 2.4 + Math.random() * 6);
+      const out = (d: number) => side * (W / 2 + d);
 
-      if (seg.world.decor === 'jungle') {
-        if (Math.random() < 0.72) {
-          // A tree growing up out of the abyss.
-          const h = 3 + Math.random() * 4;
-          add(GEO.trunk, kit.a, out, (h - 14) / 2, s, 1, h + 14, 1);
-          const r = 1.6 + Math.random() * 1.4;
-          add(GEO.canopy, Math.random() < 0.5 ? kit.b : kit.c, out, h + r * 0.4, s, r, r * 0.9, r, true);
-        } else {
-          // A broken ruin column.
-          const h = 1.5 + Math.random() * 3.5;
-          add(GEO.box, kit.d, out, (h - 10) / 2, s, 1.1, h + 10, 1.1);
-          add(GEO.box, kit.d, out, h + 0.15, s, 1.4, 0.3, 1.4);
+      switch (kit.decor) {
+        case 'boardwalk': {
+          // Treetops all around and below the boardwalk.
+          const r = rand(2.2, 3.8);
+          const x = out(rand(2.8, 9));
+          add(GEO.blob, leaf(), x, rand(-4.5, -0.5), s, r, r * 0.8, r, true);
+          if (Math.random() < 0.3) {
+            // A taller tree whose crown rises above the path.
+            const h = rand(4, 7);
+            const tx = out(rand(4, 8));
+            add(GEO.trunk, kit.trunk, tx, (h - 20) / 2, s, 1.1, h + 20, 1.1);
+            add(GEO.blob, leaf(), tx, h + 1.4, s, 2.6, 2.2, 2.6, true);
+          }
+          break;
         }
-      } else {
-        // Rock spires, some tipped with glowing crystals.
-        const h = 2 + Math.random() * 6;
-        const r = 0.8 + Math.random() * 1.2;
-        add(GEO.spire, Math.random() < 0.5 ? kit.a : kit.b, out, (h - 12) / 2, s, r, h + 12, r);
-        if (Math.random() < 0.35) add(GEO.crystal, kit.c, out, h + 0.6, s, 0.4, 0.7, 0.4);
-      }
-
-      // Every so often, a ruin pillar right on the edge of the path.
-      if (Math.random() < 0.22) {
-        const edge = side * (W / 2 + 0.85);
-        const h = 1.2 + Math.random() * 2.2;
-        add(GEO.box, kit.d, edge, h / 2 - 0.3, s, 0.7, h + 0.6, 0.7, true);
+        case 'branch': {
+          // Clouds of leaves along the branch, some hanging overhead.
+          // Mostly below the branch, so they frame the path without hiding it.
+          const r = rand(1.4, 2.6);
+          add(GEO.blob, leaf(), out(rand(2.4, 7)), rand(-3.6, -0.6), s, r, r * 0.75, r, true);
+          if (Math.random() < 0.25) add(GEO.blob, leaf(), out(rand(1.5, 4)), rand(5.5, 7.5), s, 2.6, 1.6, 2.4);
+          if (Math.random() < 0.15) {
+            // A little twig sticking out with a leaf on it.
+            add(GEO.cyl, kit.trunk, out(1.2), 0.35, s, 0.14, 1.2, 0.14).rotation.z = side * 1.1;
+            add(GEO.blob, leaf(), out(1.9), 0.75, s, 0.45, 0.3, 0.45);
+          }
+          break;
+        }
+        case 'snow': {
+          // Snowy pine trees rising from far below.
+          const x = out(rand(3, 9));
+          const h = rand(2, 6);
+          add(GEO.trunk, kit.trunk, x, (h - 18) / 2, s, 0.9, h + 18, 0.9);
+          for (let i = 0; i < 3; i++) {
+            add(GEO.cone, kit.leaves[i === 2 ? 1 : 0], x, h - 1 + i * 1.4, s, 2.4 - i * 0.6, 2, 2.4 - i * 0.6, i === 0);
+            add(GEO.cone, kit.snow, x, h - 0.4 + i * 1.4, s, 1.3 - i * 0.35, 0.8, 1.3 - i * 0.35);
+          }
+          if (Math.random() < 0.3) add(GEO.blob, kit.snow, out(rand(0.9, 1.3)), 0.05, s, 0.6, 0.3, 0.7);
+          break;
+        }
+        case 'lava': {
+          const h = rand(2, 8);
+          const r = rand(0.8, 2);
+          add(GEO.spire, Math.random() < 0.5 ? kit.rock : kit.rockDark, out(rand(2.4, 8)), (h - 12) / 2, s, r, h + 12, r);
+          if (Math.random() < 0.35) add(GEO.crystal, kit.hot, out(rand(2.4, 8)), h + 0.6, s, 0.4, 0.7, 0.4);
+          break;
+        }
+        default: {
+          // Temple ruins: trees and broken columns.
+          const x = out(rand(2.4, 8.4));
+          if (Math.random() < 0.7) {
+            const h = rand(3, 7);
+            add(GEO.trunk, kit.trunk, x, (h - 14) / 2, s, 1, h + 14, 1);
+            const r = rand(1.6, 3);
+            add(GEO.canopy, leaf(), x, h + r * 0.4, s, r, r * 0.9, r, true);
+          } else {
+            const h = rand(1.5, 5);
+            add(GEO.box, kit.stone, x, (h - 10) / 2, s, 1.1, h + 10, 1.1);
+            add(GEO.box, kit.stone, x, h + 0.15, s, 1.4, 0.3, 1.4);
+          }
+          if (Math.random() < 0.2) {
+            const h = rand(1.2, 3.4);
+            add(GEO.box, kit.stone, out(0.85), h / 2 - 0.3, s, 0.7, h + 0.6, 0.7, true);
+          }
+        }
       }
     }
   }
@@ -341,7 +514,7 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
 // Obstacles
 // ---------------------------------------------------------------------------
 
-function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], world: WorldDef, kit: Kit): THREE.Object3D {
+function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Kit): THREE.Object3D {
   const W = TUNING.pathWidth;
   const g = new THREE.Group();
   const part = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number) => {
@@ -353,50 +526,89 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], world: 
     g.add(m);
     return m;
   };
-  const lava = world.decor === 'lava';
+  const laneXs = [0, 1, 2].filter((i) => lanes[i]).map((i) => (i - 1) * TUNING.laneOffset);
+  const d = kit.decor;
 
   if (kind === 'low') {
-    if (lava) {
-      // A ridge of rock with a glowing seam: jump it.
-      part(GEO.box, kit.b, 0, 0.4, 0, W + 0.4, 0.8, 0.8);
-      part(GEO.box, kit.c, 0, 0.82, 0, W + 0.2, 0.06, 0.5);
+    // Something across the path to jump.
+    if (d === 'lava') {
+      part(GEO.box, kit.rockDark, 0, 0.4, 0, W + 0.4, 0.8, 0.8);
+      part(GEO.box, kit.hot, 0, 0.82, 0, W + 0.2, 0.06, 0.5);
+    } else if (d === 'snow') {
+      part(GEO.blob, kit.snow, 0, 0.18, 0, W / 2 + 0.3, 0.62, 0.7);
+    } else if (d === 'branch') {
+      // A knobbly twig lying across the branch.
+      part(GEO.cyl, kit.trunk, 0, 0.36, 0, 0.6, W + 0.4, 0.6).rotation.z = Math.PI / 2;
+      part(GEO.blob, kit.leaves[1], -W / 2 + 0.3, 0.7, 0, 0.5, 0.4, 0.5);
+      part(GEO.blob, kit.leaves[0], W / 2 - 0.5, 0.65, 0.1, 0.45, 0.35, 0.45);
     } else {
-      // A fallen log: jump it.
-      const log = part(GEO.cyl, kit.a, 0, 0.42, 0, 0.84, W + 0.6, 0.84);
-      log.rotation.z = Math.PI / 2;
+      // A fallen log.
+      part(GEO.cyl, d === 'boardwalk' ? kit.trunk : kit.woodDark, 0, 0.42, 0, 0.84, W + 0.6, 0.84).rotation.z = Math.PI / 2;
+      part(GEO.cyl, kit.wood, W / 2 + 0.3, 0.42, 0, 0.7, 0.05, 0.7).rotation.z = Math.PI / 2;
     }
   } else if (kind === 'high') {
-    if (lava) {
-      // A fire jet between two posts: slide under it.
-      part(GEO.box, kit.b, -W / 2 - 0.25, 1.1, 0, 0.5, 2.6, 0.5);
-      part(GEO.box, kit.b, W / 2 + 0.25, 1.1, 0, 0.5, 2.6, 0.5);
-      const jet = part(GEO.box, kit.c, 0, 1.55, 0, W, 0.34, 0.34);
+    // Something overhead to slide under.
+    if (d === 'lava') {
+      part(GEO.box, kit.rockDark, -W / 2 - 0.25, 1.1, 0, 0.5, 2.6, 0.5);
+      part(GEO.box, kit.rockDark, W / 2 + 0.25, 1.1, 0, 0.5, 2.6, 0.5);
+      const jet = part(GEO.box, kit.hot, 0, 1.55, 0, W, 0.34, 0.34);
       jet.castShadow = false;
       jet.userData.flicker = true;
-      const core = part(GEO.box, kit.glow, 0, 1.55, 0, W, 0.14, 0.4);
-      core.castShadow = false;
-    } else {
-      // A low branch hung with leaves: slide under it.
-      const branch = part(GEO.cyl, kit.a, 0, 1.6, 0, 0.4, W + 1.6, 0.4);
-      branch.rotation.z = Math.PI / 2 + 0.04;
-      for (let i = 0; i < 4; i++) {
-        part(GEO.canopy, i % 2 ? kit.b : kit.c, -W / 2 + 0.6 + i * 1.15, 1.85, 0, 0.55, 0.4, 0.5);
+      part(GEO.box, kit.glow, 0, 1.55, 0, W, 0.14, 0.4).castShadow = false;
+    } else if (d === 'boardwalk') {
+      // A low wooden beam with a warning sign.
+      part(GEO.box, kit.woodDark, -W / 2 - 0.2, 1.1, 0, 0.3, 2.4, 0.3);
+      part(GEO.box, kit.woodDark, W / 2 + 0.2, 1.1, 0, 0.3, 2.4, 0.3);
+      part(GEO.box, kit.wood, 0, 1.6, 0, W + 0.6, 0.36, 0.36);
+      part(GEO.box, kit.glow, 0, 1.6, 0.19, 1.1, 0.24, 0.02).castShadow = false;
+    } else if (d === 'snow') {
+      // An icy branch dripping icicles.
+      part(GEO.cyl, kit.trunk, 0, 1.75, 0, 0.36, W + 1.6, 0.36).rotation.z = Math.PI / 2;
+      part(GEO.box, kit.snow, 0, 1.95, 0, W + 1.2, 0.14, 0.4);
+      for (let i = 0; i < 7; i++) {
+        const icicle = part(GEO.cone, kit.ice, -W / 2 + 0.35 + i * ((W - 0.7) / 6), 1.38, 0, 0.12, 0.55, 0.12);
+        icicle.rotation.x = Math.PI;
       }
+    } else {
+      // A low branch hung with leaves.
+      part(GEO.cyl, kit.trunk, 0, 1.6, 0, 0.4, W + 1.6, 0.4).rotation.z = Math.PI / 2 + 0.04;
+      for (let i = 0; i < 5; i++) part(GEO.blob, kit.leaves[i % 3], -W / 2 + 0.4 + i * 0.95, 1.85, 0, 0.55, 0.4, 0.5);
     }
   } else if (kind === 'block') {
     // Lane blockers: change lanes around them.
-    for (let i = 0; i < 3; i++) {
-      if (!lanes[i]) continue;
-      const x = (i - 1) * TUNING.laneOffset;
-      if (lava) {
-        part(GEO.rock, kit.a, x, 1.0, 0, 0.75, 1.15, 0.7);
-        part(GEO.crystal, kit.c, x, 2.15, 0, 0.3, 0.55, 0.3);
+    for (const x of laneXs) {
+      if (d === 'lava') {
+        part(GEO.rock, kit.rock, x, 1.0, 0, 0.75, 1.15, 0.7);
+        part(GEO.crystal, kit.hot, x, 2.15, 0, 0.3, 0.55, 0.3);
+      } else if (d === 'boardwalk') {
+        // A stack of wooden crates.
+        part(GEO.box, kit.wood, x, 0.6, 0, 1.2, 1.2, 1.2);
+        part(GEO.box, kit.woodDark, x, 0.6, -0.61, 1.0, 0.16, 0.02);
+        part(GEO.box, kit.wood, x + 0.05, 1.7, 0, 0.95, 0.95, 0.95).rotation.y = 0.3;
+      } else if (d === 'branch') {
+        // A big spotty toadstool.
+        part(GEO.cyl, kit.white, x, 0.7, 0, 0.55, 1.4, 0.55);
+        const cap = part(GEO.sphere, kit.mushroom, x, 1.5, 0, 1.4, 0.9, 1.4);
+        cap.castShadow = true;
+        for (const [dx, dy, dz] of [[-0.3, 1.78, -0.45], [0.32, 1.7, -0.5], [0, 1.92, -0.25], [-0.45, 1.6, -0.25]]) {
+          part(GEO.sphere, kit.white, x + dx, dy, dz, 0.2, 0.12, 0.2);
+        }
+      } else if (d === 'snow') {
+        // A snowman.
+        part(GEO.sphere, kit.snow, x, 0.5, 0, 1.15, 1.05, 1.15);
+        part(GEO.sphere, kit.snow, x, 1.3, 0, 0.85, 0.8, 0.85);
+        part(GEO.sphere, kit.snow, x, 1.95, 0, 0.62, 0.6, 0.62);
+        part(GEO.cone, kit.carrot, x, 1.95, -0.42, 0.08, 0.36, 0.08).rotation.x = -Math.PI / 2;
+        part(GEO.sphere, kit.dark, x - 0.12, 2.05, -0.27, 0.08, 0.08, 0.06);
+        part(GEO.sphere, kit.dark, x + 0.12, 2.05, -0.27, 0.08, 0.08, 0.06);
+        part(GEO.cyl, kit.dark, x, 2.32, 0, 0.5, 0.06, 0.5);
+        part(GEO.cyl, kit.dark, x, 2.48, 0, 0.32, 0.32, 0.32);
       } else {
-        part(GEO.box, kit.d, x, 1.1, 0, 1.25, 2.2, 1.2);
+        // A temple statue with glowing eyes.
+        part(GEO.box, kit.stone, x, 1.1, 0, 1.25, 2.2, 1.2);
         part(GEO.box, kit.curb, x, 2.32, 0, 1.4, 0.25, 1.35);
-        // Glowing eyes on the statue, just for character.
-        part(GEO.box, kit.glow, x - 0.25, 1.65, 0.61, 0.16, 0.1, 0.04).castShadow = false;
-        part(GEO.box, kit.glow, x + 0.25, 1.65, 0.61, 0.16, 0.1, 0.04).castShadow = false;
+        part(GEO.box, kit.glow, x - 0.25, 1.65, -0.61, 0.16, 0.1, 0.04).castShadow = false;
+        part(GEO.box, kit.glow, x + 0.25, 1.65, -0.61, 0.16, 0.1, 0.04).castShadow = false;
       }
     }
   }
@@ -404,7 +616,7 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], world: 
 }
 
 // ---------------------------------------------------------------------------
-// The runner
+// Characters
 // ---------------------------------------------------------------------------
 
 export interface RunnerModel {
@@ -418,24 +630,17 @@ export interface RunnerModel {
   tail?: THREE.Group;
 }
 
-export function makeCharacterModel(character: 'explorer' | 'squirrel'): RunnerModel {
-  return character === 'squirrel' ? makeSquirrelModel() : makeRunnerModel();
+export function makeCharacterModel(character: 'lumberjack' | 'squirrel'): RunnerModel {
+  return character === 'squirrel' ? makeSquirrelModel() : makeLumberjackModel();
 }
 
-/** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
-export function makeSquirrelModel(): RunnerModel {
+type PartFn = (m: THREE.Material, parent: THREE.Object3D, geo: THREE.BufferGeometry, x: number, y: number, z: number, sx: number, sy: number, sz: number) => THREE.Mesh;
+
+function characterKit(): { root: THREE.Group; body: THREE.Group; part: PartFn; limb: (x: number, y: number, z?: number) => THREE.Group } {
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-
-  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
-  const fur = mat('#c8642a');
-  const tailFur = mat('#d9772f');
-  const white = mat('#ffffff');
-  const dark = mat('#2b2b3d');
-  const scarf = mat('#3ac6b0');
-
-  const part = (m: THREE.Material, parent: THREE.Object3D, geo: THREE.BufferGeometry, x: number, y: number, z: number, sx: number, sy: number, sz: number) => {
+  const part: PartFn = (m, parent, geo, x, y, z, sx, sy, sz) => {
     const mesh = new THREE.Mesh(geo, m);
     mesh.position.set(x, y, z);
     mesh.scale.set(sx, sy, sz);
@@ -449,8 +654,88 @@ export function makeSquirrelModel(): RunnerModel {
     body.add(pivot);
     return pivot;
   };
+  return { root, body, part, limb };
+}
 
-  // White legs and feet.
+/** A red-and-black check pattern for the lumberjack's shirt. */
+function plaidTexture(): THREE.Texture {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 64;
+  const g = canvas.getContext('2d')!;
+  g.fillStyle = '#d8342c';
+  g.fillRect(0, 0, 64, 64);
+  g.fillStyle = 'rgba(30,20,30,0.55)';
+  g.fillRect(0, 0, 64, 22);
+  g.fillRect(0, 0, 22, 64);
+  g.fillStyle = 'rgba(30,20,30,0.35)';
+  g.fillRect(40, 0, 6, 64);
+  g.fillRect(0, 40, 64, 6);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.NearestFilter;
+  return texture;
+}
+
+/** The lumberjack: check shirt, braces, beanie and a big beard. Faces -Z, origin at the feet. */
+export function makeLumberjackModel(): RunnerModel {
+  const { root, body, part, limb } = characterKit();
+  const mat = (c: string, extra: THREE.MeshStandardMaterialParameters = {}) => std(c, { flatShading: false, roughness: 0.75, ...extra });
+  const shirt = mat('#ffffff', { map: plaidTexture() });
+  const jeans = mat('#3d5a9e');
+  const boots = mat('#5a3a22');
+  const skin = mat('#f6c99a');
+  const beard = mat('#8a4f22');
+  const beanie = mat('#ff9f1c');
+  const braces = mat('#2b2b3d');
+  const roll = mat('#3fa66a');
+
+  const legL = limb(-0.18, 0.74);
+  const legR = limb(0.18, 0.74);
+  for (const leg of [legL, legR]) {
+    part(jeans, leg, GEO.box, 0, -0.34, 0, 0.28, 0.7, 0.3);
+    part(boots, leg, GEO.box, 0, -0.7, -0.06, 0.32, 0.16, 0.42);
+  }
+
+  part(shirt, body, GEO.box, 0, 1.08, 0, 0.74, 0.7, 0.46);
+  part(jeans, body, GEO.box, 0, 0.78, 0, 0.72, 0.14, 0.44);
+  for (const x of [-0.18, 0.18]) {
+    part(braces, body, GEO.box, x, 1.1, -0.235, 0.07, 0.62, 0.02);
+    part(braces, body, GEO.box, x, 1.1, 0.235, 0.07, 0.62, 0.02);
+  }
+  // A rolled sleeping mat on his back, so you can tell which way he faces.
+  part(roll, body, GEO.cyl, 0, 1.3, 0.32, 0.26, 0.62, 0.26).rotation.z = Math.PI / 2;
+
+  part(skin, body, GEO.sphere, 0, 1.66, 0, 0.6, 0.6, 0.6);
+  part(beard, body, GEO.sphere, 0, 1.52, -0.14, 0.5, 0.44, 0.4);
+  part(skin, body, GEO.sphere, 0, 1.68, -0.29, 0.12, 0.1, 0.1);
+  part(braces, body, GEO.sphere, -0.12, 1.76, -0.26, 0.07, 0.07, 0.05);
+  part(braces, body, GEO.sphere, 0.12, 1.76, -0.26, 0.07, 0.07, 0.05);
+  part(beanie, body, GEO.sphere, 0, 1.86, 0, 0.62, 0.38, 0.62);
+  part(beanie, body, GEO.cyl, 0, 1.82, 0, 0.64, 0.12, 0.64);
+  part(mat('#ffffff'), body, GEO.sphere, 0, 2.06, 0, 0.16, 0.16, 0.16);
+
+  const armL = limb(-0.46, 1.36);
+  const armR = limb(0.46, 1.36);
+  for (const arm of [armL, armR]) {
+    part(shirt, arm, GEO.box, 0, -0.28, 0, 0.2, 0.6, 0.22);
+    part(skin, arm, GEO.box, 0, -0.62, 0, 0.19, 0.15, 0.19);
+  }
+
+  return { root, body, legL, legR, armL, armR };
+}
+
+/** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
+export function makeSquirrelModel(): RunnerModel {
+  const { root, body, part, limb } = characterKit();
+  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
+  const fur = mat('#d06a2c');
+  const tailFur = mat('#e2823a');
+  const white = mat('#ffffff');
+  const dark = mat('#2b2b3d');
+  const scarf = mat('#3ac6b0');
+
   const legL = limb(-0.17, 0.46);
   const legR = limb(0.17, 0.46);
   for (const leg of [legL, legR]) {
@@ -471,18 +756,16 @@ export function makeSquirrelModel(): RunnerModel {
   part(fur, body, ear, -0.16, 1.78, -0.02, 1, 1, 1);
   part(fur, body, ear, 0.16, 1.78, -0.02, 1, 1, 1);
 
-  // Little white forepaws.
   const armL = limb(-0.26, 1.04, -0.12);
   const armR = limb(0.26, 1.04, -0.12);
   part(white, armL, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
   part(white, armR, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
 
-  // The tail curls up behind and a little to the side, so it never hides the path.
+  // The tail curls up behind and out to the side, so it never hides the path.
   const tail = new THREE.Group();
   tail.position.set(0.18, 0.6, 0.36);
   tail.rotation.z = -0.3;
   body.add(tail);
-  // [x, y, z, radius] — a plume sweeping up and out to the right.
   const puffs: Array<[number, number, number, number]> = [
     [0.05, 0.05, 0.1, 0.2],
     [0.2, 0.32, 0.26, 0.24],
@@ -495,68 +778,13 @@ export function makeSquirrelModel(): RunnerModel {
   return { root, body, legL, legR, armL, armR, tail };
 }
 
-/** A little explorer built from boxes, facing -Z. Origin is at the feet. */
-export function makeRunnerModel(): RunnerModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-
-  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.7 });
-  const shirt = mat('#f5a623');
-  const pants = mat('#4b4f8f');
-  const skin = mat('#ffd9a0');
-  const hat = mat('#8a5a2b');
-  const pack = mat('#c4741a');
-  const dark = mat('#2b2b3d');
-
-  const box = (m: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, sx: number, sy: number, sz: number, geo: THREE.BufferGeometry = GEO.box) => {
-    const mesh = new THREE.Mesh(geo, m);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(sx, sy, sz);
-    mesh.castShadow = true;
-    parent.add(mesh);
-    return mesh;
-  };
-
-  const limb = (x: number, y: number) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(x, y, 0);
-    body.add(pivot);
-    return pivot;
-  };
-
-  const legL = limb(-0.17, 0.74);
-  const legR = limb(0.17, 0.74);
-  box(pants, legL, 0, -0.36, 0, 0.26, 0.72, 0.28);
-  box(pants, legR, 0, -0.36, 0, 0.26, 0.72, 0.28);
-  box(dark, legL, 0, -0.7, -0.06, 0.28, 0.12, 0.38);
-  box(dark, legR, 0, -0.7, -0.06, 0.28, 0.12, 0.38);
-
-  box(shirt, body, 0, 1.06, 0, 0.66, 0.66, 0.42);
-  box(pack, body, 0, 1.1, 0.3, 0.5, 0.52, 0.2);
-  box(skin, body, 0, 1.62, 0, 0.62, 0.62, 0.62, GEO.sphere);
-  box(dark, body, 0, 1.64, -0.27, 0.4, 0.12, 0.08);
-  box(hat, body, 0, 1.88, 0, 0.86, 0.06, 0.86, GEO.cyl);
-  box(hat, body, 0, 1.98, 0, 0.5, 0.22, 0.5, GEO.cyl);
-
-  const armL = limb(-0.42, 1.34);
-  const armR = limb(0.42, 1.34);
-  box(shirt, armL, 0, -0.28, 0, 0.18, 0.6, 0.2);
-  box(shirt, armR, 0, -0.28, 0, 0.18, 0.6, 0.2);
-  box(skin, armL, 0, -0.62, 0, 0.18, 0.14, 0.18);
-  box(skin, armR, 0, -0.62, 0, 0.18, 0.14, 0.18);
-
-  return { root, body, legL, legR, armL, armR };
-}
-
 /** Spin coins and flicker fire jets. Called once per frame with the visible segments. */
 export function animateSegment(group: THREE.Group, time: number): void {
   for (const child of group.children) {
     if (child.userData.coin) {
       if (child.userData.spin === 'y') child.rotation.y = time * 3;
       else child.rotation.z = time * 4;
-    }
-    else if (child.userData.portal) child.rotation.z = time * 1.5;
+    } else if (child.userData.portal) child.rotation.z = time * 1.5;
     else if (child.children.length) {
       for (const part of child.children) {
         if (part.userData.flicker) part.scale.y = 0.34 * (0.8 + Math.sin(time * 30 + part.id) * 0.25);

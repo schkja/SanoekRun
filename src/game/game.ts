@@ -19,7 +19,7 @@ import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
 import { Chaser } from './chaser';
 import { TUNING, speedAt } from './tuning';
-import { WORLDS, type WorldDef } from './worlds';
+import { WORLDS, distanceOfWorld, route, type WorldDef } from './worlds';
 import { animateSegment, setCollectible } from './visuals';
 import { Sparkles } from './sparkles';
 import {
@@ -61,7 +61,7 @@ export class Game {
   private readonly music: Music;
   private readonly speedLines: SpeedLines;
   private readonly sparkles = new Sparkles();
-  private character: Character = 'explorer';
+  private character: Character = 'lumberjack';
   /** Below 1 during a slow-motion close call. */
   private timeScale = 1;
   private slowTimer = 0;
@@ -141,6 +141,15 @@ export class Game {
       badge: this.best.distance > 0 ? `Your best: ${Math.floor(this.best.distance)} m` : undefined,
       buttons: [
         { label: 'Run', primary: true, onClick: () => this.newRun() },
+        {
+          label: `Play as: ${CHARACTER_LABELS[settings.character]}`,
+          onClick: () => {
+            const all = Object.keys(CHARACTER_LABELS) as Character[];
+            updateSettings((s) => (s.character = all[(all.indexOf(s.character) + 1) % all.length]));
+            this.prepareTrack();
+            this.showTitle();
+          },
+        },
         { label: 'Settings', onClick: () => this.showSettings(() => this.showTitle()) },
       ],
     });
@@ -167,7 +176,11 @@ export class Game {
     this.sparkles.clear();
     this.slowTimer = 0;
     this.timeScale = 1;
-    this.track.reset();
+    // Each character runs its own route of worlds. `?world=snowy-pines` in the
+    // address starts the run in a given world — handy for testing.
+    const worlds = route(settings.character);
+    const startAt = new URLSearchParams(location.search).get('world');
+    this.track.reset(worlds, startAt ? distanceOfWorld(worlds, startAt) : 0);
     this.runner.reset(this.track, this.track.first);
     this.runner.frozen = true;
     this.setWorld(this.track.first.world);
@@ -197,7 +210,7 @@ export class Game {
     this.phase = 'playing';
     this.audio.play('start');
     this.menus.show({
-      eyebrow: 'World 1',
+      eyebrow: `World ${this.track.first.worldNumber}`,
       title: this.world.name,
       body: 'Run!',
       variant: 'is-intro',
@@ -453,7 +466,8 @@ export class Game {
     this.updateHints(dt);
 
     if (r.falling && r.y < -1) {
-      this.die(this.world.decor === 'lava' ? 'Into the lava' : 'Into the abyss', false);
+      const decor = this.world.decor;
+      this.die(decor === 'lava' ? 'Into the lava' : decor === 'jungle' ? 'Into the abyss' : 'Fell out of the treetops', false);
     }
   }
 

@@ -16,7 +16,7 @@
 
 import * as THREE from 'three';
 import { TUNING, difficultyAt, speedAt } from './tuning';
-import { worldForDistance, type ObstacleKind, type WorldDef } from './worlds';
+import { WORLDS, worldForDistance, type ObstacleKind, type WorldDef } from './worlds';
 import { buildSegmentMesh, disposeSegmentMesh } from './visuals';
 
 /** 0 = north (-Z), 1 = east (+X), 2 = south, 3 = west. */
@@ -99,10 +99,16 @@ export class Track {
   readonly segments: Segment[] = [];
   readonly root = new THREE.Group();
   private readonly scratch = new THREE.Vector3();
+  /** The worlds this run passes through, in order (the chosen character's route). */
+  private worlds: WorldDef[] = WORLDS;
+  /** Start the run part-way along the route — used by the `?world=` shortcut. */
+  private worldOffset = 0;
 
-  reset(): void {
+  reset(worlds: WorldDef[] = this.worlds, worldOffset = 0): void {
     for (const seg of this.segments) this.dropMesh(seg);
     this.segments.length = 0;
+    this.worlds = worlds;
+    this.worldOffset = worldOffset;
     this.generate();
   }
 
@@ -188,7 +194,7 @@ export class Track {
     // North can turn either way; east and west must turn back north.
     const turn: TurnDir = heading === 0 ? (Math.random() < 0.5 ? -1 : 1) : heading === 1 ? -1 : 1;
 
-    const slot = worldForDistance(startDistance);
+    const slot = worldForDistance(this.worlds, startDistance + this.worldOffset);
     const portalAt = prev && slot.number !== prev.worldNumber ? 7 : null;
 
     const seg: Segment = {
