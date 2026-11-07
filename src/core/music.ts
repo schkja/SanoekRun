@@ -1,11 +1,11 @@
 /**
  * Music, generated in code: no audio files, no licences to worry about.
  *
- * A tiny studio in Web Audio: warm pads, a round plucked bass, a soft
- * marimba-like lead (FM synthesis), gentle drums, all through a shared
- * reverb and an echo, so it sounds like a modern indie game rather than an
- * 8-bit console. Each style is a 4-bar song: four chords, a bass line and a
- * 64-step melody.
+ * A tiny studio in Web Audio: pumping pads, a punchy bass, a bright
+ * supersaw or sparkly marimba lead (FM synthesis), driving drums, all through
+ * a compressor, a short reverb and an echo, so it sounds energetic and modern
+ * rather than like an 8-bit console. Each style is a 4-bar song: four chords,
+ * a bass line and a 64-step hook.
  *
  * The game raises the number of layers as the run speeds up:
  *   1 pads and kick · 2 bass · 3 drums and arpeggio · 4 melody
@@ -17,7 +17,7 @@
 import type { Audio } from './audio';
 import type { MusicStyle } from '../game/settings';
 
-type Drums = 'full' | 'light' | 'none';
+type Drums = 'drive' | 'bounce' | 'soft';
 
 interface Song {
   bpm: number;
@@ -32,65 +32,71 @@ interface Song {
   /** 64 steps (4 bars) of melody, semitones above the root; -1 is a rest. */
   melody: number[];
   drums: Drums;
+  /** Lead sound: a bright detuned "supersaw" or a sparkly marimba pluck. */
+  lead: 'saw' | 'pluck';
+  /** Arpeggio speed in 16ths (1 = every 16th, 2 = every 8th). */
+  arp: 1 | 2;
   /** Swing amount for off-beat 16ths, 0..0.3. */
   swing: number;
-  /** How bright the lead is (FM depth). */
-  shine: number;
 }
 
 const _ = -1;
 
 export const SONGS: Record<Exclude<MusicStyle, 'off'>, Song> = {
-  // Upbeat and adventurous, A minor: Am F C G.
+  // Driving chase, A minor: Am F C G at 150 bpm. Four-on-the-floor kick,
+  // rolling bass, 16th arpeggio and a bright supersaw hook.
   chase: {
-    bpm: 124,
+    bpm: 150,
     root: 57,
     chords: [[0, 3, 7, 12], [-4, 0, 3, 8], [-9, -5, -2, 3], [-2, 2, 5, 10]],
     bass: [0, -4, 3, -2],
-    bassSteps: [0, 3, 6, 8, 11, 14],
+    bassSteps: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14],
     melody: [
-      7, _, 12, _, 10, _, 7, _, 3, _, 5, 7, _, _, _, _,
-      8, _, 12, _, 15, _, 12, _, 10, _, 8, _, 7, _, _, _,
-      7, _, 10, _, 15, _, 14, 12, 10, _, 7, _, 3, _, _, _,
-      5, _, 7, _, 10, _, 14, _, 12, _, 10, _, 7, _, 5, _,
+      12, _, 10, _, 7, _, 10, _, 12, _, 15, _, 12, _, 10, _,
+      12, _, 8, _, 7, _, 8, _, 12, _, 15, _, 17, _, 15, _,
+      15, _, 14, _, 10, _, 7, _, 10, _, 14, _, 15, _, 14, _,
+      14, _, 12, _, 10, _, 7, _, 5, _, 7, _, 10, _, 14, _,
     ],
-    drums: 'full',
-    swing: 0.08,
-    shine: 1.6,
+    drums: 'drive',
+    lead: 'saw',
+    arp: 1,
+    swing: 0,
   },
-  // Bouncy and cheerful, C major: C G Am F.
+  // Bouncy and cheerful, C major: C G Am F at 132 bpm, shuffled.
   hop: {
-    bpm: 112,
+    bpm: 132,
     root: 60,
     chords: [[0, 4, 7, 12], [-5, -1, 2, 7], [-3, 0, 4, 9], [-7, -3, 0, 5]],
     bass: [0, -5, -3, -7],
-    bassSteps: [0, 6, 8, 12],
+    bassSteps: [0, 3, 6, 8, 11, 14],
     melody: [
-      12, _, 7, _, 9, _, 12, _, 16, _, 14, 12, _, _, 7, _,
-      11, _, 7, _, 14, _, 11, _, 19, _, 17, _, 14, _, _, _,
-      12, _, 16, _, 21, _, 19, _, 16, _, 12, _, 9, _, 11, _,
-      12, _, 9, _, 5, _, 9, _, 12, _, 14, _, 16, _, _, _,
+      12, _, 7, _, 9, 12, _, 14, 16, _, 14, 12, _, 9, 7, _,
+      11, _, 7, _, 14, _, 11, 14, 19, _, 17, _, 14, _, 11, _,
+      12, _, 16, _, 21, _, 19, 16, _, 16, 12, _, 9, _, 11, 12,
+      12, _, 9, _, 5, _, 9, 12, _, 14, 16, _, 19, _, 17, 16,
     ],
-    drums: 'light',
-    swing: 0.16,
-    shine: 1.2,
+    drums: 'bounce',
+    lead: 'pluck',
+    arp: 2,
+    swing: 0.14,
   },
-  // Dreamy and calm, C major sevenths: Fmaj7 Em7 Dm7 Cmaj7.
+  // Title screen: friendly and moving, but not hectic. Fmaj7 Em7 Dm7 Cmaj7.
   menu: {
-    bpm: 80,
+    bpm: 104,
     root: 60,
     chords: [[5, 9, 12, 16], [4, 7, 11, 14], [2, 5, 9, 12], [0, 4, 7, 11]],
     bass: [5, 4, 2, 0],
-    bassSteps: [0, 10],
+    bassSteps: [0, 6, 8, 14],
     melody: [
-      16, _, _, _, 14, _, 12, _, _, _, _, _, _, _, _, _,
-      14, _, _, _, 12, _, 11, _, _, _, _, _, _, _, _, _,
-      12, _, _, _, 14, _, 16, _, _, _, 19, _, _, _, _, _,
-      16, _, _, _, _, _, 14, _, _, _, _, _, _, _, _, _,
+      16, _, 14, _, 12, _, 9, _, 12, _, _, _, 16, _, _, _,
+      14, _, 12, _, 11, _, 7, _, 11, _, _, _, 14, _, _, _,
+      12, _, 14, _, 16, _, 17, _, 19, _, _, _, 16, _, _, _,
+      16, _, 14, _, 12, _, 11, _, 12, _, _, _, _, _, _, _,
     ],
-    drums: 'none',
-    swing: 0,
-    shine: 0.8,
+    drums: 'soft',
+    lead: 'pluck',
+    arp: 2,
+    swing: 0.08,
   },
 };
 
@@ -165,12 +171,12 @@ export class Music {
     }
     room.buffer = impulse;
     this.reverb = ctx.createGain();
-    this.reverb.gain.value = 0.35;
+    this.reverb.gain.value = 0.18;
     this.reverb.connect(room).connect(glue);
 
     // Echo: a dotted-eighth delay that feeds back softly, darker each repeat.
     const delay = ctx.createDelay(1);
-    delay.delayTime.value = (60 / 112) * 0.75;
+    delay.delayTime.value = (60 / 150) * 0.75;
     const feedback = ctx.createGain();
     feedback.gain.value = 0.32;
     const tone = ctx.createBiquadFilter();
@@ -206,51 +212,94 @@ export class Music {
     const bar = Math.floor(i / 16);
     const inBar = i % 16;
     const chord = s.chords[bar];
-    const barLength = sixteenth * 16;
+    const beat = sixteenth * 4;
 
-    // 1: pads and kick.
-    if (inBar === 0) for (const n of chord) this.pad(ctx, t, hz(s.root + n), barLength * 1.05);
-    if (s.drums === 'full' && (inBar === 0 || inBar === 8 || inBar === 10)) this.kick(ctx, t, inBar === 10 ? 0.5 : 0.85);
-    if (s.drums === 'light' && (inBar === 0 || inBar === 8)) this.kick(ctx, t, 0.6);
+    // 1: pads (pumping with the kick) and the kick.
+    if (inBar === 0) for (const n of chord) this.pad(ctx, t, hz(s.root + n), beat * 4.02, beat, s.drums !== 'soft');
+    if (s.drums === 'drive' && inBar % 4 === 0) this.kick(ctx, t, 0.95);
+    if (s.drums === 'bounce' && (inBar === 0 || inBar === 6 || inBar === 8 || inBar === 14)) this.kick(ctx, t, inBar % 8 === 0 ? 0.9 : 0.55);
+    if (s.drums === 'soft' && (inBar === 0 || inBar === 8)) this.kick(ctx, t, 0.6);
 
-    // 2: bass.
+    // 2: bass, jumping an octave on the off-beats.
     if (L >= 2 && s.bassSteps.includes(inBar)) {
-      const octave = inBar === 6 || inBar === 14 ? 12 : 0;
-      this.bassNote(ctx, t, hz(s.root - 24 + s.bass[bar] + octave), s.drums === 'none' ? sixteenth * 8 : sixteenth * 2.2);
+      const octave = inBar % 4 === 2 || inBar % 4 === 3 ? 12 : 0;
+      this.bassNote(ctx, t, hz(s.root - 24 + s.bass[bar] + octave), sixteenth * 1.6);
     }
 
-    // 3: drums and a soft arpeggio.
+    // 3: drums and the arpeggio.
     if (L >= 3) {
-      if (s.drums === 'full') {
-        if (inBar === 4 || inBar === 12) this.clap(ctx, t);
-        if (inBar % 2 === 0) this.hat(ctx, t, inBar % 4 === 2 ? 0.16 : 0.07);
-      } else if (s.drums === 'light') {
-        if (inBar % 2 === 1) this.hat(ctx, t, inBar % 4 === 3 ? 0.12 : 0.05);
-        if (inBar === 12) this.clap(ctx, t, 0.5);
-      }
-      if (inBar % 2 === 0) {
-        const n = chord[(inBar / 2) % chord.length] + 12;
-        this.pluck(ctx, t, hz(s.root + n), 0.05, 0.6, sixteenth * 3);
+      if (s.drums !== 'soft' && (inBar === 4 || inBar === 12)) this.clap(ctx, t, s.drums === 'drive' ? 0.9 : 0.7);
+      if (s.drums === 'drive') this.hat(ctx, t, inBar % 4 === 2 ? 0.2 : inBar % 2 === 0 ? 0.06 : 0.1);
+      else if (inBar % 2 === 1) this.hat(ctx, t, inBar % 4 === 3 ? 0.14 : 0.06);
+      if (inBar % s.arp === 0) {
+        const k = (inBar / s.arp) % 8;
+        const n = chord[[0, 1, 2, 3, 2, 1, 2, 3][k] % chord.length] + 12;
+        this.pluck(ctx, t, hz(s.root + n), s.arp === 1 ? 0.045 : 0.06, 1.4, sixteenth * 2.5);
       }
     }
 
-    // 4: the melody.
+    // 4: the hook.
     if (L >= 4) {
       const m = s.melody[i];
-      if (m >= 0) this.pluck(ctx, t, hz(s.root + 12 + m), 0.16, s.shine, s.drums === 'none' ? 1.6 : 0.5, true);
+      if (m >= 0) {
+        if (s.lead === 'saw') this.supersaw(ctx, t, hz(s.root + 12 + m), sixteenth * 1.8);
+        else this.pluck(ctx, t, hz(s.root + 12 + m), 0.17, 2.2, 0.45, true);
+      }
     }
   }
 
-  /** Warm pad: two slightly detuned saws through a soft low-pass, slow swell. */
-  private pad(ctx: AudioContext, t: number, f: number, d: number): void {
+  /**
+   * Bright lead: three detuned saws through a filter that opens on each
+   * note, so it cuts through with energy. A touch of echo.
+   */
+  private supersaw(ctx: AudioContext, t: number, f: number, d: number): void {
     const g = ctx.createGain();
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 900;
-    filter.Q.value = 0.5;
+    filter.Q.value = 2;
+    filter.frequency.setValueAtTime(5200, t);
+    filter.frequency.exponentialRampToValueAtTime(1600, t + d);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.022, t + Math.min(0.6, d * 0.3));
-    g.gain.setValueAtTime(0.022, t + d * 0.75);
+    g.gain.exponentialRampToValueAtTime(0.055, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.03, t + d * 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.08);
+    for (const cents of [-14, 0, 14]) {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      o.detune.value = cents;
+      o.connect(filter);
+      o.start(t);
+      o.stop(t + d + 0.12);
+    }
+    filter.connect(g);
+    g.connect(this.bus!);
+    g.connect(this.echo!);
+    g.connect(this.reverb!);
+  }
+
+  /**
+   * Warm pad: two slightly detuned saws through a soft low-pass. With `pump`
+   * it ducks on every beat and swells back, the "breathing" of dance music.
+   */
+  private pad(ctx: AudioContext, t: number, f: number, d: number, beat: number, pump: boolean): void {
+    const g = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1100;
+    filter.Q.value = 0.5;
+    const level = 0.02;
+    g.gain.setValueAtTime(0.0001, t);
+    if (pump) {
+      for (let k = 0; k * beat < d - 0.01; k++) {
+        const b = t + k * beat;
+        g.gain.setValueAtTime(level * 0.15, b);
+        g.gain.linearRampToValueAtTime(level, b + beat * 0.6);
+      }
+    } else {
+      g.gain.linearRampToValueAtTime(level, t + 0.3);
+    }
+    g.gain.setValueAtTime(level, t + d - 0.08);
     g.gain.linearRampToValueAtTime(0.0001, t + d);
     for (const cents of [-8, 8]) {
       const o = ctx.createOscillator();
@@ -319,14 +368,14 @@ export class Music {
     mod.stop(t + d + 0.05);
   }
 
-  /** Soft kick: a sine dropping fast in pitch. */
+  /** Punchy kick: a sine dropping fast in pitch. */
   private kick(ctx: AudioContext, t: number, v: number): void {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
-    o.frequency.setValueAtTime(130, t);
-    o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-    g.gain.setValueAtTime(v * 0.9, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.frequency.setValueAtTime(170, t);
+    o.frequency.exponentialRampToValueAtTime(45, t + 0.1);
+    g.gain.setValueAtTime(v, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
     o.connect(g).connect(this.bus!);
     o.start(t);
     o.stop(t + 0.35);
