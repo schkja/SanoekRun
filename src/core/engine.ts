@@ -34,6 +34,8 @@ export class Engine {
   /** Extra field of view on tall portrait screens, so all three lanes stay in view. */
   private portraitFov = 0;
 
+  private container: HTMLElement | null = null;
+
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -73,6 +75,10 @@ export class Engine {
 
     this.resize();
     window.addEventListener('resize', this.resize);
+    // The container's size can change without a window resize (iOS home-screen
+    // apps settle their real height a moment after launch).
+    if ('ResizeObserver' in window) new ResizeObserver(this.resize).observe(container);
+    this.container = container;
   }
 
   applyTheme(theme: WorldTheme): void {
@@ -176,13 +182,15 @@ export class Engine {
   }
 
   private resize = (): void => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    // Measure the container (sized by CSS to the real screen), not the window.
+    const box = this.container ?? this.renderer.domElement.parentElement;
+    const width = box?.clientWidth || window.innerWidth;
+    const height = box?.clientHeight || window.innerHeight;
     this.camera.aspect = width / height;
     // Phones in portrait see less to the sides; widen the view to compensate.
     this.portraitFov = Math.max(0, Math.min(16, (1 - this.camera.aspect) * 26));
     this.camera.fov = TUNING.camera.baseFov + this.portraitFov;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(width, height, false);
   };
 }
