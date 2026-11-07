@@ -2,28 +2,44 @@
  * Sound.
  *
  * Out of the box this synthesises short blips with the Web Audio API, so the
- * template ships with no audio files and still has feedback. When you want real
+ * game ships with no audio files and still has feedback. When you want real
  * sounds, drop .mp3/.ogg files into `public/sounds/` and list them in
  * `SOUND_FILES` below — the file wins over the synthesised blip automatically.
  */
 
-type SoundKey = 'coin' | 'gem' | 'jump' | 'stomp' | 'hurt' | 'power' | 'goal' | 'die';
+export type SoundKey =
+  | 'coin'
+  | 'jump'
+  | 'slide'
+  | 'lane'
+  | 'turn'
+  | 'perfect'
+  | 'close'
+  | 'stumble'
+  | 'portal'
+  | 'caught'
+  | 'fall'
+  | 'start';
 
 /** Map a sound key to a file in public/sounds/. Leave blank to use the blip. */
 const SOUND_FILES: Partial<Record<SoundKey, string>> = {
   // coin: 'coin.mp3',
 };
 
-/** Synthesised fallbacks: [start Hz, end Hz, seconds, waveform]. */
-const BLIPS: Record<SoundKey, [number, number, number, OscillatorType]> = {
-  coin: [880, 1320, 0.09, 'square'],
-  gem: [660, 1760, 0.22, 'triangle'],
-  jump: [320, 620, 0.12, 'sine'],
-  stomp: [420, 120, 0.14, 'square'],
-  hurt: [300, 90, 0.26, 'sawtooth'],
-  power: [440, 1200, 0.3, 'triangle'],
-  goal: [520, 1040, 0.4, 'sine'],
-  die: [400, 60, 0.6, 'sawtooth'],
+/** Synthesised fallbacks: [start Hz, end Hz, seconds, waveform, volume]. */
+const BLIPS: Record<SoundKey, [number, number, number, OscillatorType, number]> = {
+  coin: [1046, 1568, 0.08, 'square', 0.35],
+  jump: [300, 640, 0.13, 'sine', 0.7],
+  slide: [500, 160, 0.16, 'triangle', 0.6],
+  lane: [420, 520, 0.05, 'sine', 0.35],
+  turn: [260, 780, 0.16, 'triangle', 0.6],
+  perfect: [660, 1760, 0.26, 'triangle', 0.7],
+  close: [880, 1320, 0.14, 'sawtooth', 0.3],
+  stumble: [220, 70, 0.3, 'sawtooth', 0.8],
+  portal: [300, 1400, 0.6, 'sine', 0.8],
+  caught: [180, 40, 0.8, 'sawtooth', 0.9],
+  fall: [600, 80, 0.9, 'sine', 0.8],
+  start: [392, 784, 0.25, 'triangle', 0.6],
 };
 
 export class Audio {
@@ -34,7 +50,7 @@ export class Audio {
 
   /**
    * Browsers block audio until the user interacts with the page, so this is
-   * called from the first click/keypress rather than at start-up.
+   * called from the first tap/keypress rather than at start-up.
    */
   unlock(): void {
     if (this.ctx) {
@@ -56,32 +72,30 @@ export class Audio {
     return this.muted;
   }
 
-  play(key: string | undefined): void {
-    if (!key || !this.ctx || !this.master || this.muted) return;
-    const sound = key as SoundKey;
+  /** `pitch` scales the blip's frequency — coin streaks climb with it. */
+  play(key: SoundKey, pitch = 1): void {
+    if (!this.ctx || !this.master || this.muted) return;
 
-    const buffer = this.buffers.get(sound);
+    const buffer = this.buffers.get(key);
     if (buffer) {
       const source = this.ctx.createBufferSource();
       source.buffer = buffer;
+      source.playbackRate.value = pitch;
       source.connect(this.master);
       source.start();
       return;
     }
 
-    const blip = BLIPS[sound];
-    if (!blip) return;
-    const [from, to, duration, type] = blip;
+    const [from, to, duration, type, volume] = BLIPS[key];
     const now = this.ctx.currentTime;
-
     const osc = this.ctx.createOscillator();
     osc.type = type;
-    osc.frequency.setValueAtTime(from, now);
-    osc.frequency.exponentialRampToValueAtTime(Math.max(to, 1), now + duration);
+    osc.frequency.setValueAtTime(from * pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(to * pitch, 1), now + duration);
 
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.6, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     osc.connect(gain).connect(this.master);

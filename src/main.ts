@@ -1,9 +1,9 @@
 /**
  * Entry point. Finds the two containers in index.html and starts the game.
- * Everything interesting happens in src/core/game.ts.
+ * Everything interesting happens in src/game/game.ts.
  */
 
-import { Game } from './core/game';
+import { Game } from './game/game';
 
 const canvasContainer = document.getElementById('game');
 const uiContainer = document.getElementById('ui');

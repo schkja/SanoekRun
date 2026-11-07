@@ -1,0 +1,48 @@
+{
+  "worlds": [
+    {
+      "id": "jungle",
+      "name": "Jungle ruins",
+      "length": 650,
+      "chaser": "monster",
+      "caughtBy": "Caught by the jungle beast",
+      "decor": "jungle",
+      "theme": {
+        "sky": "#8fd1b5",
+        "fog": "#a3dcc3",
+        "fogNear": 30,
+        "fogFar": 115,
+        "sun": "#fff1d6",
+        "hemiSky": "#e4fff0",
+        "hemiGround": "#3b5a40",
+        "abyss": "#14402d",
+        "abyssGlow": false,
+        "accent": "#5ce1a0"
+      },
+      "path": { "slab": "#c4a46e", "grout": "#86704c", "body": "#6b5a40", "curb": "#8c7651" },
+      "obstacles": { "low": 3, "high": 2, "gap": 2, "block": 3 }
+    },
+    {
+      "id": "lava",
+      "name": "Lava cave",
+      "length": 650,
+      "chaser": "lava",
+      "caughtBy": "Swallowed by the lava flood",
+      "decor": "lava",
+      "theme": {
+        "sky": "#2b1220",
+        "fog": "#5e2018",
+        "fogNear": 24,
+        "fogFar": 95,
+        "sun": "#ffc08a",
+        "hemiSky": "#ffcfa8",
+        "hemiGround": "#3a1010",
+        "abyss": "#ff5a1f",
+        "abyssGlow": true,
+        "accent": "#ffb03a"
+      },
+      "path": { "slab": "#5e4a54", "grout": "#2a1d24", "body": "#2e2228", "curb": "#463640" },
+      "obstacles": { "low": 2, "high": 3, "gap": 3, "block": 2 }
+    }
+  ]
+}

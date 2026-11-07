@@ -1,6 +1,5 @@
 /**
- * Full-screen overlays: title, level intro, pause, level complete, game over
- * and the win screen.
+ * Full-screen overlays: title, world intro, pause and the end-of-run screen.
  *
  * One class renders all of them from a small description object, so adding a
  * new screen is a matter of calling `show()` with different content.
@@ -14,9 +13,13 @@ export interface MenuButton {
 }
 
 export interface MenuScreen {
-  /** Small line above the title, e.g. "LEVEL 2". */
+  /** Small line above the title, e.g. "World 2". */
   eyebrow?: string;
   title: string;
+  /** A big number under the title, e.g. the distance run. */
+  hero?: string;
+  /** A highlighted pill, e.g. "Only 37 m from your best". */
+  badge?: string;
   body?: string;
   /** Rows of "label: value" shown as a results table. */
   stats?: Array<[string, string]>;
@@ -49,6 +52,8 @@ export class Menus {
       <div class="menu-card">
         ${screen.eyebrow ? `<p class="menu-eyebrow">${escapeHtml(screen.eyebrow)}</p>` : ''}
         <h1 class="menu-title">${escapeHtml(screen.title)}</h1>
+        ${screen.hero ? `<p class="menu-hero">${escapeHtml(screen.hero)}</p>` : ''}
+        ${screen.badge ? `<p class="menu-badge">${escapeHtml(screen.badge)}</p>` : ''}
         ${screen.body ? `<p class="menu-body">${escapeHtml(screen.body)}</p>` : ''}
         ${renderStats(screen.stats)}
         <div class="menu-buttons"></div>

@@ -1,10 +1,12 @@
-# Arcade Template — a 3D browser platformer you can build on
+# Sanoek Run
 
-A small, complete arcade game: run, jump, collect, stomp enemies, reach the portal.
-Three levels ship with it. It exists to be taken apart and turned into your game.
+An endless runner in the spirit of Temple Run. The path twists through jungle
+ruins and lava caves; swipe to turn at corners, jump gaps and logs, slide under
+branches and fire jets, and stay ahead of whatever is chasing you.
 
-Built with **Three.js**, **Vite** and **TypeScript**. No game engine, no build
-ceremony, no asset pipeline to learn.
+Built with **Three.js**, **Vite** and **TypeScript**. Runs in any phone or
+desktop browser. Everything you see is built from simple shapes for now, so it
+ships with zero asset files.
 
 ---
 
@@ -15,256 +17,109 @@ npm install
 npm run dev
 ```
 
-That opens `http://localhost:5173`. Edit any file and the browser updates instantly.
+That opens `http://localhost:5173`. On a phone on the same Wi-Fi, open the
+`Network:` address Vite prints.
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server with hot reload |
 | `npm run build` | Production build into `dist/` |
+| `npm run build:single` | The whole game as one HTML file in `dist-single/` (easy to share) |
 | `npm run preview` | Serve the production build locally |
 | `npm run typecheck` | Type-check without building |
 
-To publish: run `npm run build` and upload the `dist/` folder anywhere static —
-GitHub Pages, Netlify, itch.io. It's configured with a relative base path, so it
-works from a subfolder too.
-
 ### Controls
 
-Third-person camera: click the game once to capture the mouse, then look around
-freely — the camera orbits a full 360° around your character and tilts up and down.
+| | Phone | Keyboard |
+| --- | --- | --- |
+| Turn at a corner / change lane | Swipe left or right | ← → or A D |
+| Jump | Swipe up | ↑, W or Space |
+| Slide (or slam down mid-air) | Swipe down | ↓ or S |
+| Pause | Pause button | Esc or P |
 
-| | |
-| --- | --- |
-| Move | `WASD` or arrow keys (always relative to the camera) |
-| Jump | `Space` (hold for a higher jump) |
-| Look around | Move the mouse |
-| Zoom in / out | Mouse wheel |
-| Camera without a mouse | `Q` / `E` to turn, `R` / `F` to tilt |
-| Pause | `Esc` or `P` |
-| Mobile | Left stick moves, drag the right side of the screen to look, pinch to zoom |
-
-Pressing `Esc` (or clicking away) releases the mouse and pauses, as in most games.
-Click the game to pick up where you left off.
+A sideways swipe means **turn** when a corner is coming up and **change lane**
+the rest of the time. A turn swiped slightly early is remembered and fires in
+time.
 
 ---
 
-## The idea: content is data, not code
+## How it plays
 
-The thing that makes this scale is that **levels, items and enemies are JSON**.
-Adding content does not mean touching game logic.
+- **The track** is a chain of straight segments joined by 90° corners. Miss a
+  corner and you run off the edge.
+- **Obstacles:** logs and rock ridges (jump), branches and fire jets (slide),
+  statues and boulders blocking lanes (dodge), and gaps (jump).
+- **The chaser** depends on the world: a jungle beast in the ruins, a flood of
+  lava in the caves. Stumble once and it's right behind you for a few seconds;
+  stumble again in that time and it catches you.
+- **Worlds** change through a portal every 650 m and then loop, faster each time.
+- **Rewards:** coins (rising pitch on streaks), *perfect turns* (swipe late,
+  near the corner's centre) which raise the score multiplier up to x5, and
+  *close calls* for last-moment dodges. The end screen shows how close you came
+  to your best distance.
+- The first two runs show hints just before each new kind of obstacle.
+
+---
+
+## Where things live
 
 ```
-content/            ← what you edit most
-  levels/
-    level1.json     a level: platforms, pickups, enemies, goal
-    level2.json
-    level3.json
-    index.ts        the level order — one line per level
-  items.json        every collectable in the game
-  enemies.json      every enemy type in the game
-  registry.ts       the only code file here: effects and AI behaviours
+content/
+  worlds.json        every world: colours, chaser, scenery, obstacle mix
 
-src/                ← the machine that reads the above
-  main.ts           entry point
+src/
+  main.ts            entry point
+  game/
+    game.ts          the rules: swipes, turns, obstacles, coins, scoring, screens
+    track.ts         endless track generation (segments, corners, gaps, coins)
+    runner.ts        running, jumping, sliding, falling, character animation
+    chaser.ts        the jungle beast and the lava flood
+    visuals.ts       every mesh: path, scenery, obstacles, coins, portal, runner
+    tuning.ts        every number that sets the feel and difficulty
+    worlds.ts        loads worlds.json
   core/
-    game.ts         state machine, scoring, the frame loop
-    engine.ts       renderer, lights, follow camera
-    input.ts        keyboard + touch, all in one place
-    assets.ts       model loading, with placeholder fallback
-    audio.ts        sound (synthesised until you add files)
-    events.ts       the event bus entities talk through
-    types.ts        the shape of every JSON file above
-  entities/
-    entity.ts       base class — extend this for new things
-    player.ts       movement, jumping, stomping
-    enemy.ts        runs whichever behaviour its JSON names
-    pickup.ts       floats, spins, gets collected
-    platform.ts     solid box, optionally moving
-    goal.ts         the portal
-  systems/
-    physics.ts      gravity and box collision (~100 readable lines)
-    world.ts        holds entities and colliders
-    level-loader.ts turns level JSON into live entities
+    engine.ts        renderer, lights, the chase camera that swings at corners
+    input.ts         swipes and keys → left / right / up / down
+    audio.ts         synthesised sounds (drop in real files any time)
+    assets.ts        .glb model loading with placeholder fallback (for later)
   ui/
-    hud.ts          score, lives, coins, timer, toasts
-    menus.ts        every full-screen overlay
-    style.css       all UI styling; CSS variables at the top
-
-public/
-  models/           drop .glb files here
-  sounds/           drop .mp3 / .ogg files here
+    hud.ts           distance, coins, score, multiplier, chaser meter, hints
+    menus.ts         title, pause and end-of-run screens
+    style.css        all UI styling; CSS variables at the top
 ```
 
----
+## Tuning the feel
 
-## How to add things
+Almost everything is in **`src/game/tuning.ts`**: running speed and how fast it
+ramps up, jump height, slide length, how early a turn is accepted, the perfect
+turn window, how long the chaser stays close after a stumble, obstacle spacing
+(in seconds of running, so it stays fair at high speed), and the camera.
 
-### Add a level
+## Adding a world
 
-1. Copy `content/levels/level3.json` to `level4.json`.
-2. Edit the platforms, pickups and enemies.
-3. Register it in `content/levels/index.ts`:
+Add an entry to `content/worlds.json`. Reusing an existing `decor`
+(`jungle` / `lava`) and `chaser` (`monster` / `lava`) needs no code. A new look
+means a new case in `visuals.ts` (scenery and obstacles) and, for a new chaser,
+in `chaser.ts`.
 
-```ts
-import level4 from './level4.json';
-export const LEVELS: LevelDef[] = [level1, level2, level3, level4] as LevelDef[];
-```
+## Real 3D models
 
-That's it. Menus, level numbering, progression and the win screen all follow.
+All meshes are placeholders built in `src/game/visuals.ts` and
+`src/game/chaser.ts`. Free CC0 packs that fit this style:
+[Kenney](https://kenney.nl/assets), [Quaternius](https://quaternius.com/) and
+KayKit. Put `.glb` files in `public/models/`, load them with
+`Assets.model('file.glb')` from `src/core/assets.ts`, and replace one builder at
+a time (the runner first, then obstacles, then scenery). Keep a credits list of
+every model and its licence.
 
-**Two conventions that make placing things easy:**
+## Next steps
 
-- A platform's `position` is the centre of its **top face**. Write the height you
-  want to stand on.
-- An enemy's `position` y is the **surface it stands on** — use the same y as the
-  platform underneath, and it will rest neatly on top.
-
-A minimal level:
-
-```json
-{
-  "name": "My Level",
-  "subtitle": "Shown on the intro card.",
-  "spawn": [0, 2, 0],
-  "killY": -15,
-  "cameraYaw": -1.5708,
-  "timeLimit": 90,
-  "theme": { "sky": "#8fd3f4", "fog": "#a8dcf7", "fogDistance": 70 },
-  "platforms": [
-    { "position": [0, 0, 0], "size": [16, 1, 16] },
-    { "position": [12, 2, 0], "size": [6, 1, 6], "surface": "ice" },
-    {
-      "position": [20, 2, 0],
-      "size": [4, 0.8, 4],
-      "move": { "offset": [0, 0, 8], "duration": 5 }
-    }
-  ],
-  "pickups": [
-    { "item": "coin", "position": [-4, 2, 0], "repeat": { "count": 5, "to": [4, 2, 0] } },
-    { "item": "gem", "position": [12, 4, 0] }
-  ],
-  "enemies": [
-    { "enemy": "walker", "position": [3, 0, -4], "patrolTo": [-3, 0, -4] }
-  ],
-  "goal": { "position": [20, 2, 0], "requires": 4 }
-}
-```
-
-`repeat` places a whole row of coins from three lines of JSON.
-Platform `surface` can be `normal`, `ice` (slippery), `bounce` (trampoline) or
-`hurt` (damages on touch).
-`cameraYaw` is the direction the camera faces when the level opens, in radians —
-`-1.5708` (−90°) looks along +X, which is the way all three shipped levels run.
-
-### Add an item
-
-Add an entry to `content/items.json`:
-
-```json
-{
-  "id": "star",
-  "label": "Star",
-  "effect": "score",
-  "value": 500,
-  "color": "#ffe66d",
-  "shape": "gem",
-  "scale": 1.4
-}
-```
-
-Use it in any level with `{ "item": "star", "position": [0, 3, 0] }`.
-
-Existing effects: `score`, `life`, `time`, `speed`, `jump`.
-
-### Add a model
-
-1. Drop `hero.glb` into `public/models/`.
-2. Reference it: `"model": "hero.glb"` on any item, enemy or platform.
-
-Missing or broken models fall back to a coloured placeholder shape and log a
-warning — the game never crashes over a missing asset. That means you can build
-everything with placeholder boxes and swap in real art one file at a time.
-
-Free GLTF/GLB models: [Kenney](https://kenney.nl/assets),
-[Quaternius](https://quaternius.com/), [Poly Pizza](https://poly.pizza/).
-Or export your own from Blender (File → Export → glTF 2.0).
-
-### Add a sound
-
-Drop the file into `public/sounds/` and list it in `SOUND_FILES` in
-`src/core/audio.ts`. Until you do, the game synthesises blips with the Web Audio
-API, so there is always feedback.
-
-### Add new *behaviour* (the only place you write code)
-
-`content/registry.ts` holds two lookup tables. A new enemy movement pattern:
-
-```ts
-// 1. In src/core/types.ts, add 'dasher' to EnemyBehaviorName.
-// 2. In content/registry.ts:
-export const enemyBehaviors: Record<EnemyBehaviorName, EnemyBehavior> = {
-  // ...existing ones...
-  dasher: (enemy, dt) => {
-    const target = enemy.playerPosition;
-    if (!target) return;
-    // your movement here — set enemy.position
-  },
-};
-// 3. In content/enemies.json, use "behavior": "dasher".
-```
-
-TypeScript fails the build if you add the name and forget the handler, so a level
-can never reference a behaviour that doesn't exist.
-
-New item effects work the same way via `itemEffects`.
-
-### Add a whole new kind of thing
-
-Extend `Entity` (see `src/entities/pickup.ts` for the shortest example), then
-spawn it in `src/systems/level-loader.ts`. Updating, rendering and cleanup are
-handled for you.
-
----
-
-## Tuning how it feels
-
-Almost all of the "game feel" lives in two places:
-
-**`src/systems/physics.ts` → `PHYSICS`** — gravity, acceleration, friction,
-coyote time (grace period for jumping after leaving a ledge), jump buffering
-(a jump pressed just before landing still fires).
-
-**`src/entities/player.ts` → `BASE`** — move speed, jump height, stomp bounce,
-how long you're invulnerable after a hit.
-
-**`src/core/game.ts` → `RUN_DEFAULTS`** — starting lives, level and time bonuses.
-
-**`src/core/engine.ts` → `cameraRig`** — the third-person camera: default
-distance and zoom limits, how far up and down it can tilt (`minPitch` /
-`maxPitch`), follow smoothing, and how it pulls in when geometry gets between
-the camera and the character.
-
-**`src/core/input.ts` → `LOOK_SETTINGS`** — mouse sensitivity, touch drag
-sensitivity, zoom speed, and `invertY` for anyone who prefers inverted look.
-
-**`src/ui/style.css` → `:root`** — re-skin the entire UI from a handful of
-CSS variables.
-
----
-
-## Where to go next
-
-- **Physics engine.** If you outgrow box collision (slopes, ragdolls, stacking),
-  add [Rapier](https://rapier.rs/) (`npm i @dimforge/rapier3d-compat`). Only
-  `Player` calls into `physics.ts`, so the swap is contained.
-- **Save progress.** Write score and unlocked level to `localStorage` in
-  `game.ts`.
-- **A level editor.** Levels are JSON, so a simple editor that writes JSON is a
-  realistic weekend project.
-- **Different genre.** The data-driven structure is genre-agnostic. An endless
-  runner or an arena shooter reuses the loader, entities and UI — mostly it means
-  a different `Player` and camera rig.
+- Real models and a running animation for the character
+- Music that adds layers as you speed up
+- A third world (ice temple) with the boulder chaser
+- Missions, daily rewards and unlockable characters
+- iOS and Android builds by wrapping the web build with Capacitor
 
 ## License
 
-MIT — do whatever you like with it.
+MIT.
