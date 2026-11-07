@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.4.7",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New look for the squirrel, like in old hand-drawn cartoons: chubby, big head, cream bib, tall tufted ears",
+        "Short furry legs that bend and alternate: a real run, no more robot legs",
+        "The bushy tail streams out behind while running"
+      ],
+      "de": [
+        "Neuer Look fürs Eichhörnchen wie aus alten Zeichentrickfilmen: pummelig, großer Kopf, cremefarbenes Lätzchen, hohe Ohrpinsel",
+        "Kurze, pelzige Beine, die einknicken und abwechseln: ein echter Lauf statt Roboterbeine",
+        "Der buschige Schwanz weht beim Laufen hinterher"
+      ],
+      "ru": [
+        "Белка как в старых рисованных мультфильмах: пухлая, большая голова, светлая грудка, высокие уши с кисточками",
+        "Короткие пушистые лапы сгибаются и работают по очереди: настоящий бег, а не ноги робота",
+        "Пушистый хвост на бегу развевается позади"
+      ],
+      "uk": [
+        "Білка як у старих мальованих мультфільмах: пухка, велика голова, світла грудка, високі вуха з китицями",
+        "Короткі пухнасті лапи згинаються й працюють почергово: справжній біг, а не ноги робота",
+        "Пухнастий хвіст на бігу майорить позаду"
+      ],
+      "es": [
+        "Nueva ardilla, como en los dibujos animados clásicos: regordeta, cabeza grande, pechera clara y orejas altas con pincel",
+        "Patas cortas y peludas que se doblan y se alternan: una carrera de verdad",
+        "La cola tupida ondea detrás al correr"
+      ]
+    }
+  },
+  {
     "version": "1.4.6",
     "date": "2026-11-07",
     "notes": {

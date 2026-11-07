@@ -966,6 +966,8 @@ export interface RunnerModel {
   armR: THREE.Group;
   /** The squirrel's tail, which sways as it runs. */
   tail?: THREE.Group;
+  /** Knees and elbows (the lower half of each leg), for legs that bend. */
+  joints?: { legL: THREE.Group; legR: THREE.Group; armL: THREE.Group; armR: THREE.Group };
   /** The squirrel's head, which bobs as it gallops. */
   head?: THREE.Group;
   /** How it runs: 'run' (on two legs, like a person) or 'quad' (on all fours, galloping). */
@@ -1101,6 +1103,9 @@ function crown(body: THREE.Group, part: ModelPart, mat: MatFn, y: number, r: num
   }
 }
 
+/** A unit capsule (radius 1, length 1 along Y) for rounded legs. */
+const LIMB = new THREE.CapsuleGeometry(1, 1, 4, 10);
+
 const TAIL_MATERIAL = std('#d9692a', { flatShading: false, roughness: 0.8 });
 let tailGeometry: THREE.BufferGeometry | null = null;
 
@@ -1155,12 +1160,14 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
   const white = mat('#ffffff');
   const dark = mat('#2b2b3d');
   const tuft = mat('#7a3414');
-  const pink = mat('#ff9aa8');
+  const paws = mat('#fff1dc');
   const scarf = mat(outfit === 'scarf-red' ? '#e8423a' : '#3ac6b0');
 
   // Long, low body with a pale belly.
-  part(fur, body, GEO.sphere, 0, 0.78, 0.02, 0.74, 0.62, 1.3);
-  part(white, body, GEO.sphere, 0, 0.64, -0.28, 0.5, 0.42, 0.78);
+  // Chubby, round body with a big cream bib, like the squirrels in old
+  // hand-drawn cartoons.
+  part(fur, body, GEO.sphere, 0, 0.66, 0.06, 0.82, 0.68, 1.12);
+  part(paws, body, GEO.sphere, 0, 0.6, -0.3, 0.62, 0.56, 0.62);
 
   // Legs. Each pivots at the hip or shoulder; the runner swings them.
   const pivot = (x: number, y: number, z: number) => {
@@ -1169,45 +1176,63 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
     body.add(g);
     return g;
   };
-  // Hind legs: big furry haunches, white shins, long feet.
-  const legL = pivot(-0.24, 0.82, 0.36);
-  const legR = pivot(0.24, 0.82, 0.36);
+  // Short, chunky legs tucked under the body, like a real squirrel: furry
+  // and orange, with cream paws. They bend at the knee and elbow.
+  const joint = (parent: THREE.Object3D, x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
+  // Hind: a big round haunch, a short shin slanting back to the heel, and a
+  // long cream foot reaching forward.
+  const legL = pivot(-0.22, 0.66, 0.34);
+  const legR = pivot(0.22, 0.66, 0.34);
+  const knees: THREE.Group[] = [];
   for (const leg of [legL, legR]) {
-    part(fur, leg, GEO.sphere, 0, -0.08, 0.02, 0.36, 0.52, 0.56);
-    part(white, leg, GEO.box, 0, -0.48, 0.08, 0.14, 0.44, 0.16);
-    part(white, leg, GEO.box, 0, -0.76, -0.08, 0.16, 0.08, 0.36);
+    part(fur, leg, GEO.sphere, 0, -0.04, 0.02, 0.38, 0.48, 0.52);
+    const knee = joint(leg, 0, -0.25, -0.06);
+    part(fur, knee, LIMB, 0, -0.12, 0.07, 0.09, 0.14, 0.09).rotation.x = -0.5;
+    part(paws, knee, LIMB, 0, -0.32, 0.0, 0.08, 0.2, 0.075).rotation.x = Math.PI / 2;
+    knees.push(knee);
   }
-  // Front legs: slim and white, little paws.
-  const armL = pivot(-0.2, 0.72, -0.48);
-  const armR = pivot(0.2, 0.72, -0.48);
+  // Front: a short furry upper leg, a cream forearm and a round little paw.
+  const armL = pivot(-0.19, 0.58, -0.46);
+  const armR = pivot(0.19, 0.58, -0.46);
+  const elbows: THREE.Group[] = [];
   for (const arm of [armL, armR]) {
-    part(white, arm, GEO.box, 0, -0.33, 0, 0.12, 0.66, 0.13);
-    part(white, arm, GEO.box, 0, -0.68, -0.06, 0.15, 0.07, 0.2);
+    part(fur, arm, LIMB, 0, -0.12, 0, 0.09, 0.16, 0.09);
+    const elbow = joint(arm, 0, -0.26, 0);
+    part(paws, elbow, LIMB, 0, -0.1, 0, 0.072, 0.12, 0.072);
+    part(paws, elbow, GEO.sphere, 0, -0.22, -0.05, 0.18, 0.11, 0.24);
+    elbows.push(elbow);
   }
 
-  // Head up on a short neck, so it shows over the back from behind.
-  const head = pivot(0, 1.06, -0.62);
-  part(fur, head, GEO.sphere, 0, 0.02, 0.12, 0.42, 0.44, 0.5);
-  part(scarf, head, GEO.cyl, 0, -0.08, 0.14, 0.5, 0.12, 0.5);
-  part(fur, head, GEO.sphere, 0, 0.26, -0.08, 0.56, 0.5, 0.58);
-  part(white, head, GEO.sphere, -0.13, 0.17, -0.3, 0.22, 0.18, 0.2);
-  part(white, head, GEO.sphere, 0.13, 0.17, -0.3, 0.22, 0.18, 0.2);
-  part(pink, head, GEO.sphere, 0, 0.22, -0.39, 0.08, 0.07, 0.07);
-  part(dark, head, GEO.sphere, -0.17, 0.33, -0.27, 0.1, 0.12, 0.08);
-  part(dark, head, GEO.sphere, 0.17, 0.33, -0.27, 0.1, 0.12, 0.08);
-  // Rounded ears with the dark tufts squirrels have.
+  // A big round head on a short neck: cream cheeks, big shiny eyes, a
+  // little nose, and tall pointed ears with dark tufts.
+  const head = pivot(0, 0.92, -0.6);
+  part(fur, head, GEO.sphere, 0, 0.02, 0.12, 0.44, 0.46, 0.5);
+  part(scarf, head, GEO.cyl, 0, -0.06, 0.14, 0.52, 0.12, 0.52);
+  part(fur, head, GEO.sphere, 0, 0.3, -0.06, 0.68, 0.62, 0.64);
+  part(paws, head, GEO.sphere, -0.15, 0.18, -0.3, 0.26, 0.22, 0.22);
+  part(paws, head, GEO.sphere, 0.15, 0.18, -0.3, 0.26, 0.22, 0.22);
+  part(dark, head, GEO.sphere, 0, 0.24, -0.4, 0.09, 0.08, 0.08);
   for (const side of [-1, 1]) {
-    part(fur, head, GEO.sphere, side * 0.16, 0.54, -0.02, 0.15, 0.24, 0.1);
-    const t = part(tuft, head, new THREE.ConeGeometry(0.06, 0.2, 5), side * 0.18, 0.71, -0.02, 1, 1, 1);
-    t.rotation.z = -side * 0.25;
+    part(dark, head, GEO.sphere, side * 0.17, 0.38, -0.3, 0.13, 0.16, 0.08);
+    part(white, head, GEO.sphere, side * 0.15, 0.42, -0.34, 0.04, 0.05, 0.02).castShadow = false;
+    const ear = part(fur, head, new THREE.ConeGeometry(0.1, 0.3, 6), side * 0.2, 0.68, 0.0, 1, 1, 0.7);
+    ear.rotation.z = -side * 0.18;
+    const t = part(tuft, head, new THREE.ConeGeometry(0.05, 0.2, 5), side * 0.23, 0.87, 0.0, 1, 1, 1);
+    t.rotation.z = -side * 0.28;
   }
 
-  // The bushy S tail rises from the rump and leans out to the right, so the
-  // head stays visible from behind. Compact: about head height.
-  const tail = pivot(0.12, 0.86, 0.66);
+  // The big bushy tail streams out behind as it runs, rising with the tip
+  // curled up, like a squirrel in full flight. Lying back keeps it below the
+  // head from the camera's view.
+  const tail = pivot(0.06, 0.74, 0.6);
   const plume = new THREE.Group();
-  plume.rotation.set(0.25, 0, -0.62);
-  plume.scale.set(0.8, 0.66, 0.8);
+  plume.rotation.set(1.3, 0.3, 0);
+  plume.scale.set(0.95, 0.85, 0.95);
   tail.add(plume);
   part(TAIL_MATERIAL, plume, squirrelTailGeometry(), 0, 0, 0, 1, 1, 1);
   part(tailTip, plume, GEO.sphere, 0, 1.47, -0.42, 0.36, 0.34, 0.36);
@@ -1215,20 +1240,20 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
 
   // Accessories from the shop sit on the head.
   if (outfit === 'sunglasses') {
-    for (const x of [-0.15, 0.15]) part(dark, head, GEO.box, x, 0.33, -0.31, 0.2, 0.12, 0.04);
-    part(dark, head, GEO.box, 0, 0.35, -0.31, 0.12, 0.03, 0.03);
+    for (const x of [-0.17, 0.17]) part(dark, head, GEO.box, x, 0.39, -0.37, 0.24, 0.14, 0.04);
+    part(dark, head, GEO.box, 0, 0.41, -0.37, 0.12, 0.03, 0.03);
   } else if (outfit === 'flower') {
     const petal = mat('#ffffff');
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      part(petal, head, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 0.52 + Math.sin(a) * 0.1, -0.14, 0.12, 0.12, 0.06);
+      part(petal, head, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 0.62 + Math.sin(a) * 0.1, -0.2, 0.12, 0.12, 0.06);
     }
-    part(mat('#ffd23f'), head, GEO.sphere, 0.2, 0.52, -0.17, 0.1, 0.1, 0.06);
+    part(mat('#ffd23f'), head, GEO.sphere, 0.2, 0.62, -0.23, 0.1, 0.1, 0.06);
   } else if (outfit === 'crown-squirrel') {
-    crown(head, part, mat, 0.52, 0.32);
+    crown(head, part, mat, 0.6, 0.3);
   }
 
-  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad' };
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };
 }
 
 const BUBBLE = new THREE.MeshBasicMaterial({ color: '#d9f3ff', transparent: true, opacity: 0.35, depthWrite: false });
