@@ -13,21 +13,6 @@ import '@fontsource/nunito/cyrillic-800.css';
 import '@fontsource/rubik/cyrillic-800.css';
 import { Game } from './game/game';
 
-// iPhone home-screen app: iOS reports a viewport that is shorter than the
-// screen by the status bar, which left a strip of page background at the
-// bottom. There the real screen size is known exactly, so use it.
-if ((navigator as Navigator & { standalone?: boolean }).standalone) {
-  const fit = () => {
-    const portrait = window.matchMedia('(orientation: portrait)').matches;
-    const long = Math.max(screen.width, screen.height);
-    const short = Math.min(screen.width, screen.height);
-    document.documentElement.style.setProperty('--app-h', `${portrait ? long : short}px`);
-  };
-  fit();
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', fit);
-}
-
 const canvasContainer = document.getElementById('game');
 const uiContainer = document.getElementById('ui');
 

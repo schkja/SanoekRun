@@ -159,63 +159,103 @@ function buildBeast(o: { hide: string; dark: string; eyes: string; horns: boolea
 }
 
 /**
- * A chubby cartoon hawk: round body, big friendly eyes, small beak and soft
- * rounded wings. Cheeky rather than scary, since the players are kids.
+ * The hawk: a fierce cartoon bird of prey. It hovers behind the runner,
+ * turned towards the camera, so you see what's after you: angry brows,
+ * glaring yellow eyes, a hooked beak, a spiky crest and open talons.
+ * Scary for a game, not gory.
  */
 function buildHawk(): Body {
   const root = new THREE.Group();
   const g = new THREE.Group();
   root.add(g);
-  g.scale.setScalar(0.3);
-  const feathers = mat('#b5763f');
-  const dark = mat('#8a5530');
-  const light = mat('#fff1d6');
-  const beak = mat('#ffc24d');
-  const white = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-  const pupil = new THREE.MeshBasicMaterial({ color: '#1f2a44' });
+  g.scale.setScalar(0.34);
+  // Facing the camera (the track runs away from it).
+  g.rotation.y = Math.PI;
+  const feathers = mat('#5a3a22');
+  const wingDark = mat('#3b2616');
+  const band = mat('#c9a27a');
+  const chest = mat('#e9dcc4');
+  const beak = mat('#ffb21f');
+  const claw = mat('#1f2a44');
+  const eyeWhite = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
+  const pupil = new THREE.MeshBasicMaterial({ color: '#111111' });
+  const brow = mat('#1f1610');
 
-  // Body and fluffy belly.
-  part(SPHERE, feathers, g, 0, 0, 0, 1.5, 1.25, 1.9);
-  part(SPHERE, light, g, 0, -0.18, -0.35, 1.1, 0.9, 1.3);
-  // Head, a little tuft and cheeks.
+  // Body: lean and long, chest barred.
+  part(SPHERE, feathers, g, 0, 0, 0.1, 1.3, 1.15, 2.0);
+  part(SPHERE, chest, g, 0, -0.1, -0.45, 0.95, 0.95, 1.0);
+  for (const y of [-0.05, -0.32]) part(BOX, band, g, 0, y, -0.93, 0.6, 0.06, 0.05);
+
+  // Head: flat-topped with a spiky crest, glaring eyes under heavy brows.
   const head = new THREE.Group();
-  head.position.set(0, 0.55, -0.85);
+  head.position.set(0, 0.72, -0.8);
   g.add(head);
-  part(SPHERE, feathers, head, 0, 0, 0, 1.15, 1.05, 1.05);
-  part(SPHERE, light, head, 0, -0.15, -0.3, 0.8, 0.6, 0.55);
-  part(SPHERE, dark, head, 0, 0.55, 0.05, 0.25, 0.35, 0.25).rotation.x = -0.4;
-  // Big round eyes looking slightly up and back at the runner.
-  for (const side of [-1, 1]) {
-    part(SPHERE, white, head, side * 0.27, 0.12, -0.42, 0.38, 0.42, 0.2).castShadow = false;
-    part(SPHERE, pupil, head, side * 0.25, 0.14, -0.52, 0.2, 0.24, 0.08).castShadow = false;
-    part(SPHERE, white, head, side * 0.21, 0.22, -0.57, 0.07, 0.07, 0.03).castShadow = false;
+  part(SPHERE, feathers, head, 0, 0, 0, 1.0, 0.9, 1.0);
+  const spike = new THREE.ConeGeometry(0.1, 0.5, 4);
+  for (const [x, rz] of [[-0.18, 0.5], [0, 0], [0.18, -0.5]] as const) {
+    // Swept back, so it reads as a crest and not as owl ears.
+    const c = part(spike, wingDark, head, x * 0.6, 0.32, 0.38, 0.8, 1, 0.8);
+    c.rotation.set(1.25, 0, rz * 0.4);
   }
-  // Short hooked beak.
-  part(SPHERE, beak, head, 0, -0.12, -0.58, 0.26, 0.22, 0.3);
-  // Tail fan.
-  for (const a of [-0.35, 0, 0.35]) {
-    const feather = part(SPHERE, dark, g, Math.sin(a) * 0.35, 0.05, 1.05, 0.45, 0.12, 0.9);
-    feather.rotation.y = a;
+  for (const side of [-1, 1]) {
+    part(SPHERE, eyeWhite, head, side * 0.24, 0.06, -0.42, 0.3, 0.24, 0.12).castShadow = false;
+    part(SPHERE, pupil, head, side * 0.22, 0.04, -0.49, 0.1, 0.16, 0.05).castShadow = false;
+    // Brows slant down towards the beak: an angry glare.
+    const b = part(BOX, brow, head, side * 0.24, 0.22, -0.46, 0.38, 0.09, 0.08);
+    b.rotation.z = side * 0.45;
+  }
+  // Hooked beak, slightly open.
+  const upper = part(new THREE.ConeGeometry(0.16, 0.5, 6), beak, head, 0, -0.08, -0.62, 1, 1, 1);
+  upper.rotation.x = -Math.PI / 2 - 0.5;
+  const lower = part(new THREE.ConeGeometry(0.11, 0.28, 6), beak, head, 0, -0.24, -0.52, 1, 1, 1);
+  lower.rotation.x = -Math.PI / 2 + 0.35;
+
+  // Talons stretched forward, ready to grab.
+  const talons: THREE.Group[] = [];
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Group();
+    leg.position.set(side * 0.3, -0.55, -0.2);
+    g.add(leg);
+    part(BOX, beak, leg, 0, -0.25, -0.15, 0.12, 0.5, 0.12).rotation.x = 0.6;
+    for (const dx of [-0.1, 0, 0.1]) {
+      const c = part(new THREE.ConeGeometry(0.05, 0.28, 4), claw, leg, dx, -0.5, -0.4, 1, 1, 1);
+      c.rotation.x = -2.2;
+    }
+    talons.push(leg);
   }
 
+  // Tail: barred fan.
+  for (const a of [-0.4, 0, 0.4]) {
+    const f = part(SPHERE, wingDark, g, Math.sin(a) * 0.4, 0.05, 1.2, 0.4, 0.1, 1.0);
+    f.rotation.y = a;
+  }
+
+  // Wings: broad, with spread "finger" feathers at the tips.
   const wings: THREE.Group[] = [];
   for (const side of [-1, 1]) {
     const pivot = new THREE.Group();
-    pivot.position.set(side * 0.6, 0.2, -0.05);
+    pivot.position.set(side * 0.55, 0.25, 0);
     g.add(pivot);
-    part(SPHERE, feathers, pivot, side * 0.95, 0, 0, 2.0, 0.22, 1.0);
-    part(SPHERE, dark, pivot, side * 1.75, -0.02, 0.12, 0.8, 0.16, 0.7);
+    part(SPHERE, feathers, pivot, side * 1.1, 0, 0, 2.3, 0.28, 1.5);
+    part(BOX, band, pivot, side * 1.1, -0.06, 0.25, 1.8, 0.04, 0.12);
+    for (let k = 0; k < 4; k++) {
+      const f = part(BOX, wingDark, pivot, side * (2.25 + k * 0.08), 0, -0.3 + k * 0.22, 0.9, 0.06, 0.16);
+      f.rotation.y = side * (0.25 - k * 0.18);
+    }
     wings.push(pivot);
   }
+
   return {
     root,
     animate: (_pace, time) => {
-      const flap = Math.sin(time * 7) * 0.5;
-      wings[0].rotation.z = flap;
-      wings[1].rotation.z = -flap;
-      g.position.y = Math.sin(time * 7) * 0.1;
-      g.rotation.x = 0.1;
-      head.rotation.y = Math.sin(time * 1.3) * 0.2;
+      const flap = Math.sin(time * 6) * 0.55;
+      // Wings held up in a V (so you see them, not their edge) and beating.
+      wings[0].rotation.z = -0.5 + flap;
+      wings[1].rotation.z = 0.5 - flap;
+      g.position.y = Math.sin(time * 6) * 0.12;
+      g.rotation.x = -0.15;
+      head.rotation.z = Math.sin(time * 1.7) * 0.12;
+      for (const leg of talons) leg.rotation.x = Math.sin(time * 3) * 0.15;
     },
   };
 }

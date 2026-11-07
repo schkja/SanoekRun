@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.4.1",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "The hawk is fierce now: glaring eyes, hooked beak, sharp talons",
+        "iPhone home-screen app fills the screen (re-add it to the home screen once)"
+      ],
+      "de": [
+        "Der Habicht ist jetzt furchteinflößend: stechender Blick, Hakenschnabel, scharfe Krallen",
+        "Die iPhone-App füllt den Bildschirm (einmal neu zum Homescreen hinzufügen)"
+      ],
+      "ru": [
+        "Ястреб стал грозным: злой взгляд, крючковатый клюв, острые когти",
+        "Приложение на айфоне занимает весь экран (один раз заново добавь на рабочий стол)"
+      ],
+      "uk": [
+        "Яструб став грізним: злий погляд, гачкуватий дзьоб, гострі кігті",
+        "Застосунок на айфоні займає весь екран (один раз знову додай на головний екран)"
+      ],
+      "es": [
+        "El halcón ahora da miedo: mirada feroz, pico curvo, garras afiladas",
+        "La app del iPhone ocupa toda la pantalla (vuelve a añadirla una vez a la pantalla de inicio)"
+      ]
+    }
+  },
+  {
     "version": "1.4.0",
     "date": "2026-11-07",
     "notes": {
