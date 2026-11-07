@@ -15,7 +15,6 @@ export const BUILD_DATE: string = typeof __BUILD_DATE__ === 'string' ? __BUILD_D
 export const AUTHOR = {
   name: 'Sascha Belon',
   email: 'saschabelon@gmail.com',
-  site: 'https://saschabelon.vercel.app/',
 };
 
 export const LEGAL_URL = './legal.html';
