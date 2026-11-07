@@ -10,6 +10,11 @@ services:
       - proxy
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   sanoekrun-api:
     image: ghcr.io/schkja/sanoekrun-api:latest
@@ -22,6 +27,7 @@ services:
       - proxy
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    logging: *logging
 
 networks:
   proxy:

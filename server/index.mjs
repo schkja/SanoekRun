@@ -14,6 +14,7 @@
  */
 
 import { createServer } from 'node:http';
+import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -110,6 +111,8 @@ function plausible(run) {
 
 // Per-device and per-address limits on how often runs can be sent.
 const recent = new Map();
+const IP_SALT = randomBytes(16).toString('hex');
+
 function rateLimited(key) {
   const now = Date.now();
   const times = (recent.get(key) ?? []).filter((t) => now - t < 3_600_000);
@@ -146,7 +149,10 @@ function publicEntry(e, index, device) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
-  const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',')[0].trim();
+  // The address is only used for rate limiting, as a salted hash kept in
+  // memory (new salt on every restart). It is never written to disk or logged.
+  const rawIp = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',')[0].trim();
+  const ip = createHash('sha256').update(IP_SALT + rawIp).digest('hex').slice(0, 16);
 
   try {
     if (url.pathname === '/api/health') return send(res, 200, { ok: true });
@@ -194,6 +200,16 @@ const server = createServer(async (req, res) => {
     send(res, 400, { error: 'bad-request' });
   }
 });
+
+// Housekeeping every 10 minutes: drop yesterday's runs that didn't make the
+// all-time board, and forget rate-limit entries older than an hour.
+setInterval(() => {
+  const before = entries.length;
+  prune();
+  if (entries.length !== before) save();
+  const now = Date.now();
+  for (const [key, times] of recent) if (!times.some((t) => now - t < 3_600_000)) recent.delete(key);
+}, 600_000).unref();
 
 server.listen(PORT, () => console.log(`[leaderboard] listening on ${PORT}, ${entries.length} runs stored`));
 for (const signal of ['SIGTERM', 'SIGINT']) {
