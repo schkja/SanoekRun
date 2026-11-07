@@ -14,7 +14,7 @@ export const GAME_NAME = 'SanökRun';
 /** The link printed on share cards. */
 export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.sascha.iodatalabs.dev';
 
-export type Character = 'lumberjack' | 'squirrel';
+export type Character = 'lumberjack' | 'squirrel' | 'bear';
 export type MusicStyle = 'chase' | 'hop' | 'menu' | 'off';
 
 export interface Effects {
@@ -48,7 +48,7 @@ export interface Settings {
 }
 
 /** The options, in the order the Settings buttons cycle through them. Their names live in src/i18n. */
-export const CHARACTERS: Character[] = ['lumberjack', 'squirrel'];
+export const CHARACTERS: Character[] = ['lumberjack', 'squirrel', 'bear'];
 export const MUSIC_STYLES: MusicStyle[] = ['chase', 'hop', 'menu', 'off'];
 export const EFFECT_KEYS: Array<keyof Effects> = [
   'coinSparkle',
@@ -78,7 +78,7 @@ function envChoice<T extends string>(name: string, options: readonly T[], fallba
 
 export const DEFAULT_SETTINGS: Settings = {
   language: envChoice('VITE_LANGUAGE', LANGUAGE_CHOICES, 'auto'),
-  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel'] as const, 'lumberjack'),
+  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel', 'bear'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
   revision: 2,

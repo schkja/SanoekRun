@@ -55,6 +55,15 @@ const ICONS: Record<string, string> = {
       <circle cx="18" cy="28" r="9" fill="#ff8fb1"/><circle cx="32" cy="32" r="8" fill="#ffc93c"/>
     </g>`,
   'crown-squirrel': crown(),
+  'crown-bear': crown(),
+  'bandana-blue': scarf('#3b82f6', '#ffffff'),
+  strawhat: `<ellipse cx="32" cy="42" rx="28" ry="8" fill="#f2d27a" ${S}/>
+    <path d="M18 42 Q18 20 32 20 Q46 20 46 42 Z" fill="#f2d27a" ${S}/>
+    <rect x="18" y="34" width="28" height="6" fill="#e8423a" ${S}/>`,
+  beekeeper: `<ellipse cx="32" cy="30" rx="26" ry="7" fill="#fbfbf4" ${S}/>
+    <path d="M16 30 Q16 12 32 12 Q48 12 48 30 Z" fill="#fbfbf4" ${S}/>
+    <path d="M10 32 L14 56 L50 56 L54 32" fill="#2b2b3d" fill-opacity="0.25" ${S}/>
+    <ellipse cx="46" cy="18" rx="5" ry="4" fill="#ffd23f" stroke="${INK}" stroke-width="2"/>`,
   tophat: `<path d="M8 46 Q32 54 56 46 L56 50 Q32 58 8 50 Z" fill="#24242e" ${S}/>
     <rect x="18" y="14" width="28" height="34" rx="3" fill="#24242e" ${S}/>
     <rect x="18" y="38" width="28" height="7" fill="#e8423a" ${S}/>`,

@@ -17,7 +17,7 @@ import data from '../../content/worlds.json';
 import type { Character } from './settings';
 
 export type ObstacleKind = 'low' | 'high' | 'gap' | 'block';
-export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball';
+export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball' | 'bees';
 export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail' | 'brook';
 export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail';
 
