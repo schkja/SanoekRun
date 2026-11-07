@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.13.1",
+    "date": "2026-11-08",
+    "notes": {
+      "en": [
+        "Smoother on phones: about half the work per frame, and the game lowers its resolution by itself if your phone gets hot or slow"
+      ],
+      "de": [
+        "Flüssiger auf dem Handy: etwa halb so viel Arbeit pro Bild, und das Spiel senkt selbst die Auflösung, wenn dein Handy heiß oder langsam wird"
+      ],
+      "ru": [
+        "Плавнее на телефонах: примерно вдвое меньше работы на кадр, а если телефон нагрелся или не успевает, игра сама снижает разрешение"
+      ],
+      "uk": [
+        "Плавніше на телефонах: приблизно вдвічі менше роботи на кадр, а якщо телефон нагрівся чи не встигає, гра сама знижує роздільність"
+      ],
+      "es": [
+        "Más fluido en el móvil: más o menos la mitad de trabajo por fotograma, y el juego baja la resolución solo si tu móvil se calienta o va lento"
+      ]
+    }
+  },
+  {
     "version": "1.13.0",
     "date": "2026-11-07",
     "notes": {

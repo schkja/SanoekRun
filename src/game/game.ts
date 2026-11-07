@@ -844,8 +844,10 @@ export class Game {
   private frame = (now: number): void => {
     requestAnimationFrame(this.frame);
     // Clamp dt so a hiccup or a backgrounded tab can't teleport the runner.
-    const dt = Math.min((now - this.lastFrame) / 1000, 1 / 20);
+    const realDt = (now - this.lastFrame) / 1000;
+    const dt = Math.min(realDt, 1 / 20);
     this.lastFrame = now;
+    this.engine.adapt(realDt);
     this.time += dt;
 
     // Slow motion: the world runs slower for a moment, the controls don't.
@@ -879,6 +881,7 @@ export class Game {
       }
       this.engine.showcase(this.runner.visual, this.runner.yaw, dt);
     } else if (this.phase !== 'paused') {
+      this.cullAhead();
       this.runner.animate(gameDt);
       for (let i = Math.max(0, this.runner.seg.index - 1); i < this.track.segments.length; i++) {
         const group = this.track.segments[i].group;
@@ -890,6 +893,24 @@ export class Game {
     }
     this.engine.render();
   };
+
+  /**
+   * Don't draw what the fog hides anyway: whole stretches of track far ahead,
+   * and coins and obstacles beyond about 70 m. Saves a lot of work on phones.
+   */
+  private cullAhead(): void {
+    const r = this.runner;
+    const here = r.seg.startDistance + r.s;
+    const far = (this.engine.scene.fog as THREE.Fog).far + 10;
+    for (let i = r.seg.index; i < this.track.segments.length; i++) {
+      const seg = this.track.segments[i];
+      if (!seg.group) continue;
+      const ahead = seg.startDistance - here;
+      seg.group.visible = ahead < far;
+      if (!seg.group.visible) continue;
+      for (const c of seg.coins) if (c.object) c.object.visible = !c.taken && seg.startDistance + c.s - here < 70;
+    }
+  }
 
   /**
    * Advance the run. Long frames (a slow phone at 20 fps) are split into small

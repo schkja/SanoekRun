@@ -254,6 +254,13 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 `theme.weather` = `rain` (LineSegments streaks) | `snow` | `petals` | `leaves` (Points with a round sprite, vertex colours). `Weather` in `engine.ts` keeps a few hundred particles in a box around the camera and wraps them; updated from `engine.follow()`. Used by blossom-trail (petals), rainy-treetops / rainy-boardwalk (rain), autumn worlds (leaves), snowy-pines / winter-boardwalk (snow).
 Slow motion on close calls is off by default (owner's wish). `Settings.revision` (now 2) lets a default change reach existing players once: saved settings with an older revision get `slowMotion` reset to the default.
 
+### 6.10g Performance
+Measured with `renderer.info` while the autopilot runs (owner saw slowdowns on iPhone; no leak found, the GPU load plus heat throttling is the cause). Rules:
+- Scenery and pick-ups use `GEO.ball` (10×7 sphere) instead of `GEO.sphere` (16×12); `add()` in `buildSegmentMesh` swaps automatically. `GEO.dome` is 12×5.
+- `game.cullAhead()` hides segments beyond the fog and coins more than 70 m ahead (coins are separate meshes with outline hulls, the biggest draw-call source).
+- `Engine.adapt(realDt)` + `Quality` ladder: pixel ratio min(dpr,2) → 1.6 → 1.3 → 1.1 → shadows off → 0.9; steps down when 1.5 s average frame > 1/48 s, back up after ~9 s under 1/58 s. `window.game.engine.quality.step` shows the level (0 = best).
+- Result in the forest trail: draw calls 300–530 → 200–316, triangles 165–480 k → 70–215 k, same look.
+
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
 - Anything decorative must stand on something: the squirrel hollow needs the giant corner trunk (trail and branch worlds both build one).
