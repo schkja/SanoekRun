@@ -35,10 +35,12 @@ export class Engine {
   private portraitFov = 0;
 
   private container: HTMLElement | null = null;
+  /** Adaptive quality: see `adapt()`. */
+  readonly quality = new Quality();
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(this.quality.pixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     // Filmic tone mapping: brighter, richer colours without blowing out.
@@ -196,6 +198,27 @@ export class Engine {
     this.sun.position.set(target.x, 0, target.z).add(this.sunOffset);
     this.abyss.position.x = target.x;
     this.abyss.position.z = target.z;
+  }
+
+  /**
+   * Called every frame with the real frame time. If the phone can't keep up
+   * (or gets hot and slows down), lower the resolution step by step, then
+   * switch shadows off. If it has plenty of room for a while, step back up.
+   */
+  adapt(dt: number): void {
+    const change = this.quality.measure(dt);
+    if (!change) return;
+    this.renderer.setPixelRatio(this.quality.pixelRatio);
+    this.resize();
+    const shadows = this.quality.shadows;
+    if (this.renderer.shadowMap.enabled !== shadows) {
+      this.renderer.shadowMap.enabled = shadows;
+      this.sun.castShadow = shadows;
+      this.scene.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+        if (m) (Array.isArray(m) ? m : [m]).forEach((x) => (x.needsUpdate = true));
+      });
+    }
   }
 
   render(): void {
@@ -396,4 +419,65 @@ function roundSprite(): THREE.Texture {
   g.fill();
   sprite = new THREE.CanvasTexture(c);
   return sprite;
+}
+
+/**
+ * Picks how sharp to render. Starts at the screen's own sharpness (max 2×),
+ * and moves down a ladder of steps when frames take too long, up again when
+ * there is room. Changes are rare (at most every few seconds), so they don't
+ * flicker.
+ */
+class Quality {
+  private readonly ladder: Array<{ ratio: number; shadows: boolean }>;
+  private level = 0;
+  private sum = 0;
+  private frames = 0;
+  private fast = 0;
+  private cooldown = 3;
+
+  constructor() {
+    const top = Math.min(window.devicePixelRatio || 1, 2);
+    const steps = [top, 1.6, 1.3, 1.1].filter((r, i, all) => r <= top && all.indexOf(r) === i);
+    this.ladder = [...steps.map((ratio) => ({ ratio, shadows: true })), { ratio: steps[steps.length - 1], shadows: false }, { ratio: 0.9, shadows: false }];
+  }
+
+  get pixelRatio(): number {
+    return this.ladder[this.level].ratio;
+  }
+
+  get shadows(): boolean {
+    return this.ladder[this.level].shadows;
+  }
+
+  /** Current step, for debugging: 0 is the best. */
+  get step(): number {
+    return this.level;
+  }
+
+  /** Returns true when the quality changed. */
+  measure(dt: number): boolean {
+    if (dt <= 0 || dt > 0.25) return false; // hidden tab or a one-off hitch
+    this.cooldown -= dt;
+    this.sum += dt;
+    this.frames++;
+    if (this.sum < 1.5) return false;
+    const avg = this.sum / this.frames;
+    this.sum = 0;
+    this.frames = 0;
+    if (this.cooldown > 0) return false;
+    if (avg > 1 / 48 && this.level < this.ladder.length - 1) {
+      this.level++;
+      this.fast = 0;
+      this.cooldown = 3;
+      return true;
+    }
+    this.fast = avg < 1 / 58 ? this.fast + 1 : 0;
+    if (this.fast >= 6 && this.level > 0) {
+      this.level--;
+      this.fast = 0;
+      this.cooldown = 8;
+      return true;
+    }
+    return false;
+  }
 }

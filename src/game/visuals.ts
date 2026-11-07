@@ -42,11 +42,13 @@ const GEO = {
   crystal: new THREE.OctahedronGeometry(1, 0),
   coin: new THREE.CylinderGeometry(0.36, 0.36, 0.1, 18),
   sphere: new THREE.SphereGeometry(0.5, 16, 12),
+  /** A lighter sphere for scenery and pick-ups: with toon shading and outlines it looks the same. */
+  ball: new THREE.SphereGeometry(0.5, 10, 7),
   portal: new THREE.TorusGeometry(2.9, 0.26, 10, 40),
   portalDisc: new THREE.CircleGeometry(2.75, 40),
   beam: new THREE.PlaneGeometry(1, 1),
   /** The top half of a sphere: a mushroom cap. */
-  dome: new THREE.SphereGeometry(0.5, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2),
+  dome: new THREE.SphereGeometry(0.5, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2),
 };
 
 /** Soft shafts of sunlight slanting through the leaves. */
@@ -120,13 +122,13 @@ const HONEY_CLOTH = std('#ff5c7a', { roughness: 0.9 });
 /** A little honey pot with a cloth tied over the top. */
 function makeHoney(): THREE.Group {
   const g = new THREE.Group();
-  const pot = new THREE.Mesh(GEO.sphere, HONEY);
+  const pot = new THREE.Mesh(GEO.ball, HONEY);
   pot.scale.set(0.58, 0.56, 0.58);
   pot.position.y = -0.05;
   const rim = new THREE.Mesh(GEO.cyl, HONEY_LID);
   rim.scale.set(0.4, 0.08, 0.4);
   rim.position.y = 0.22;
-  const cloth = new THREE.Mesh(GEO.sphere, HONEY_CLOTH);
+  const cloth = new THREE.Mesh(GEO.ball, HONEY_CLOTH);
   cloth.scale.set(0.46, 0.16, 0.46);
   cloth.position.y = 0.3;
   g.add(pot, rim, cloth);
@@ -143,14 +145,14 @@ const PIE_JAM = toon('#e8423a');
 /** A little round pie with a golden crust and a dab of jam, like the ones in the fairy tale basket. */
 function makePie(): THREE.Group {
   const g = new THREE.Group();
-  const base = new THREE.Mesh(GEO.sphere, PIE_CRUST);
+  const base = new THREE.Mesh(GEO.ball, PIE_CRUST);
   base.scale.set(0.72, 0.36, 0.72);
   g.add(base);
-  const top = new THREE.Mesh(GEO.sphere, PIE_TOP);
+  const top = new THREE.Mesh(GEO.ball, PIE_TOP);
   top.scale.set(0.56, 0.24, 0.56);
   top.position.y = 0.1;
   g.add(top);
-  const jam = new THREE.Mesh(GEO.sphere, PIE_JAM);
+  const jam = new THREE.Mesh(GEO.ball, PIE_JAM);
   jam.scale.set(0.2, 0.1, 0.2);
   jam.position.y = 0.2;
   g.add(jam);
@@ -179,10 +181,10 @@ function makeCarrot(): THREE.Group {
 
 function makeAcorn(): THREE.Group {
   const g = new THREE.Group();
-  const nut = new THREE.Mesh(GEO.sphere, ACORN_NUT);
+  const nut = new THREE.Mesh(GEO.ball, ACORN_NUT);
   nut.scale.set(0.5, 0.62, 0.5);
   nut.position.y = -0.06;
-  const cap = new THREE.Mesh(GEO.sphere, ACORN_CAP);
+  const cap = new THREE.Mesh(GEO.ball, ACORN_CAP);
   cap.scale.set(0.58, 0.3, 0.58);
   cap.position.y = 0.17;
   const stalk = new THREE.Mesh(GEO.box, ACORN_CAP);
@@ -401,6 +403,8 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   group.rotation.y = headingYaw(seg.heading);
 
   const add: AddFn = (geo, mat, x, y, s, sx, sy, sz, shadow = false) => {
+    // Scenery is small on screen: the light sphere is plenty.
+    if (geo === GEO.sphere) geo = GEO.ball;
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, y, -s);
     mesh.scale.set(sx, sy, sz);
