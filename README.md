@@ -1,4 +1,4 @@
-# Sanoek Run
+# SanökRun
 
 An endless runner in the spirit of Temple Run. The path twists through jungle
 ruins and lava caves; swipe to turn at corners, jump gaps and logs, slide under
@@ -88,6 +88,39 @@ src/
     style.css        all UI styling; CSS variables at the top
 ```
 
+## Settings and effects
+
+Players open **Settings** from the title screen or the pause menu:
+
+- **Character:** Explorer (collects coins) or Squirrel (collects nuts)
+- **Music:** Chase, Forest hop, Menu chill or Off — generated in code, and it adds layers as the run speeds up
+- **Sound** on or off
+- **Effects**, each on or off: coin sparkles, speed lines, slow-mo close calls, corner tilt, camera shake, screen flashes, speed zoom
+
+Their choices are saved on their device. The defaults come from environment
+variables at build time — copy `.env.example` to `.env` and change any line.
+`VITE_FX=off` turns every effect off at once, which is handy for debugging.
+
+## Share card
+
+At the end of a run, **Share your run** makes a 1080×1350 picture (the last
+frame of the run, the distance, the world reached and "Can you beat me?") and
+opens the phone's share sheet for WhatsApp, Instagram or TikTok. On a desktop
+it downloads the picture instead. The link printed on it is `VITE_SHARE_URL`.
+
+## Deployment
+
+Every push to `main` deploys itself:
+
+1. GitHub Actions (`.github/workflows/deploy.yml`) type-checks, builds, and
+   publishes a Docker image to `ghcr.io/schkja/sanoekrun:latest`.
+2. On the server, Watchtower checks for a new image every minute and restarts
+   the game container with it.
+
+The server runs `deploy/docker-compose.yml`. The image is nginx serving the
+built game (`deploy/nginx.conf`), with the page itself never cached so players
+always get the latest version.
+
 ## Tuning the feel
 
 Almost everything is in **`src/game/tuning.ts`**: running speed and how fast it
@@ -122,4 +155,4 @@ every model and its licence.
 
 ## License
 
-MIT.
+All rights reserved. The licence is still to be decided.

@@ -114,10 +114,16 @@ export class Hud {
   }
 
   /** A full-screen flash: white for a portal, red for a hit. */
-  flash(color: 'white' | 'red'): void {
+  flash(color: 'white' | 'red', strength = 1): void {
     this.flashEl.className = 'hud-flash';
+    this.flashEl.style.setProperty('--flash-strength', String(strength));
     void this.flashEl.offsetWidth;
     this.flashEl.className = `hud-flash is-${color}`;
+  }
+
+  /** Coin or acorn icon next to the counter. */
+  setCollectible(kind: 'coin' | 'acorn'): void {
+    this.root.classList.toggle('is-acorn', kind === 'acorn');
   }
 
   reset(): void {

@@ -27,6 +27,7 @@ export class Engine {
   private shake = 0;
   private fovKick = 0;
   private lift = 0;
+  private roll = 0;
   /** Extra field of view on tall portrait screens, so all three lanes stay in view. */
   private portraitFov = 0;
 
@@ -84,6 +85,11 @@ export class Engine {
     this.shake = Math.min(1, this.shake + amount);
   }
 
+  /** Lean the camera into a corner: -1 left, 1 right. It eases back on its own. */
+  tilt(dir: number, amount = 0.09): void {
+    this.roll = -dir * amount;
+  }
+
   /** A quick widening of the view, e.g. when diving through a portal. */
   kickFov(amount: number): void {
     this.fovKick = Math.max(this.fovKick, amount);
@@ -121,6 +127,10 @@ export class Engine {
       .set(target.x, (falling ? target.y : this.camY) + C.lookHeight, target.z)
       .addScaledVector(this.forward, C.lookAhead);
     this.camera.lookAt(this.look);
+    if (Math.abs(this.roll) > 0.0005) {
+      this.roll *= Math.max(0, 1 - dt * 4);
+      this.camera.rotateZ(this.roll);
+    }
 
     if (this.shake > 0.001) {
       this.shake = Math.max(0, this.shake - dt * 2.2);
