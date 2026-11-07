@@ -261,6 +261,10 @@ Measured with `renderer.info` while the autopilot runs (owner saw slowdowns on i
 - `Engine.adapt(realDt)` + `Quality` ladder: pixel ratio min(dpr,2) → 1.6 → 1.3 → 1.1 → shadows off → 0.9; steps down when 1.5 s average frame > 1/48 s, back up after ~9 s under 1/58 s. `window.game.engine.quality.step` shows the level (0 = best).
 - Result in the forest trail: draw calls 300–530 → 200–316, triangles 165–480 k → 70–215 k, same look.
 
+### 6.10h Layout on small phones
+Owner saw misaligned arrows, story text over buttons and hints running off screen on an iPhone X (older Safari). Fixes: picker grid `48px minmax(0,1fr) 48px` with SVG chevrons (no font glyph baseline issues); toolbar `repeat(3, minmax(0,1fr))` with `overflow-wrap:anywhere; hyphens:auto` and clamp font size; `.hud-hint` wraps (`max-width: calc(100vw - 32px)`, clamp font); `@media (max-width:360px)` tighter card. Check with the layout script: 320×500, 375×635, 414×720 in all 5 locales and every hero, flag off-screen, clipped (scrollWidth > clientWidth) and overlapping elements. Avoid relying on `text-wrap: balance` (iOS 17.5+ only).
+Forest route order: forest-trail → dark-thicket (dark early world, `night` effects) → treetops → rainy-treetops → brook → autumn-canopy → snowy-pines → blossom-trail (spring after winter) → sunset-glade → moonlit-forest → firefly-night.
+
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
 - Anything decorative must stand on something: the squirrel hollow needs the giant corner trunk (trail and branch worlds both build one).
