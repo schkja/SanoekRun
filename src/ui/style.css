@@ -147,6 +147,11 @@ body {
   border: 2.5px solid var(--ink);
 }
 
+.hud.is-cabbage .hud-coin {
+  background: #7fd65a;
+  box-shadow: inset -4px -3px 0 #4fb54a;
+}
+
 .hud.is-carrot .hud-coin {
   width: 12px;
   height: 20px;

@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.13.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New hero: the Wolf! He went vegetarian and raided the lumberjack's cabbage patch. Now the lumberjack is after him, waving his arms. Collect cabbages; outfits include a chef's hat"
+      ],
+      "de": [
+        "Neuer Held: der Wolf! Er ist Vegetarier geworden und hat den Kohl des Holzfällers stibitzt. Jetzt rennt ihm der Holzfäller mit fuchtelnden Armen hinterher. Sammle Kohlköpfe; unter den Outfits ist eine Kochmütze"
+      ],
+      "ru": [
+        "Новый герой: Волк! Он стал вегетарианцем и обчистил огород дровосека. Теперь дровосек гонится за ним, размахивая руками. Собирай капусту, среди нарядов есть поварской колпак"
+      ],
+      "uk": [
+        "Новий герой: Вовк! Він став вегетаріанцем і обчистив город лісоруба. Тепер лісоруб женеться за ним, розмахуючи руками. Збирай капусту, серед убрань є кухарський ковпак"
+      ],
+      "es": [
+        "Nuevo héroe: ¡el Lobo! Se volvió vegetariano y asaltó el huerto del leñador. Ahora el leñador lo persigue agitando los brazos. Recoge coles; entre la ropa hay un gorro de chef"
+      ]
+    }
+  },
+  {
     "version": "1.12.0",
     "date": "2026-11-07",
     "notes": {
