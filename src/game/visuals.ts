@@ -966,6 +966,8 @@ export interface RunnerModel {
   armR: THREE.Group;
   /** The squirrel's tail, which sways as it runs. */
   tail?: THREE.Group;
+  /** Knees and elbows (the lower half of each leg), for legs that bend. */
+  joints?: { legL: THREE.Group; legR: THREE.Group; armL: THREE.Group; armR: THREE.Group };
   /** The squirrel's head, which bobs as it gallops. */
   head?: THREE.Group;
   /** How it runs: 'run' (on two legs, like a person) or 'quad' (on all fours, galloping). */
@@ -1101,6 +1103,9 @@ function crown(body: THREE.Group, part: ModelPart, mat: MatFn, y: number, r: num
   }
 }
 
+/** A unit capsule (radius 1, length 1 along Y) for rounded legs. */
+const LIMB = new THREE.CapsuleGeometry(1, 1, 4, 10);
+
 const TAIL_MATERIAL = std('#d9692a', { flatShading: false, roughness: 0.8 });
 let tailGeometry: THREE.BufferGeometry | null = null;
 
@@ -1169,20 +1174,35 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
     body.add(g);
     return g;
   };
-  // Hind legs: big furry haunches, white shins, long feet.
+  // Legs with real joints, so they bend instead of swinging like sticks.
+  // Hind: furry haunch on the hip, then a knee with a slim shin and a long
+  // foot. Front: upper leg, then an elbow with the forearm and a round paw.
+  const joint = (parent: THREE.Object3D, x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
   const legL = pivot(-0.24, 0.82, 0.36);
   const legR = pivot(0.24, 0.82, 0.36);
+  const knees: THREE.Group[] = [];
   for (const leg of [legL, legR]) {
-    part(fur, leg, GEO.sphere, 0, -0.08, 0.02, 0.36, 0.52, 0.56);
-    part(white, leg, GEO.box, 0, -0.48, 0.08, 0.14, 0.44, 0.16);
-    part(white, leg, GEO.box, 0, -0.76, -0.08, 0.16, 0.08, 0.36);
+    part(fur, leg, GEO.sphere, 0, -0.1, 0.02, 0.34, 0.5, 0.52);
+    const knee = joint(leg, 0, -0.3, -0.1);
+    // Shin slants back from the knee to the heel; the long foot runs forward from the heel.
+    part(white, knee, LIMB, 0, -0.2, 0.1, 0.07, 0.3, 0.07).rotation.x = -0.35;
+    part(white, knee, LIMB, 0, -0.44, -0.02, 0.066, 0.26, 0.066).rotation.x = Math.PI / 2;
+    knees.push(knee);
   }
-  // Front legs: slim and white, little paws.
   const armL = pivot(-0.2, 0.72, -0.48);
   const armR = pivot(0.2, 0.72, -0.48);
+  const elbows: THREE.Group[] = [];
   for (const arm of [armL, armR]) {
-    part(white, arm, GEO.box, 0, -0.33, 0, 0.12, 0.66, 0.13);
-    part(white, arm, GEO.box, 0, -0.68, -0.06, 0.15, 0.07, 0.2);
+    part(white, arm, LIMB, 0, -0.17, 0, 0.068, 0.3, 0.068);
+    const elbow = joint(arm, 0, -0.34, 0);
+    part(white, elbow, LIMB, 0, -0.15, 0, 0.062, 0.24, 0.062);
+    part(white, elbow, GEO.sphere, 0, -0.33, -0.05, 0.16, 0.09, 0.22);
+    elbows.push(elbow);
   }
 
   // Head up on a short neck, so it shows over the back from behind.
@@ -1228,7 +1248,7 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
     crown(head, part, mat, 0.52, 0.32);
   }
 
-  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad' };
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };
 }
 
 const BUBBLE = new THREE.MeshBasicMaterial({ color: '#d9f3ff', transparent: true, opacity: 0.35, depthWrite: false });

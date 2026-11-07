@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.4.7",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "The squirrel's legs bend at knees and elbows and move left, right, left: a real run, no more robot legs"
+      ],
+      "de": [
+        "Die Beine des Eichhörnchens knicken an Knien und Ellbogen ein und laufen links, rechts, links: ein echter Lauf statt Roboterbeine"
+      ],
+      "ru": [
+        "Лапы белки сгибаются в коленях и локтях и работают по очереди: настоящий бег, а не ноги робота"
+      ],
+      "uk": [
+        "Лапи білки згинаються в колінах і ліктях і працюють почергово: справжній біг, а не ноги робота"
+      ],
+      "es": [
+        "Las patas de la ardilla se doblan en rodillas y codos y se alternan: una carrera de verdad, sin patas de robot"
+      ]
+    }
+  },
+  {
     "version": "1.4.6",
     "date": "2026-11-07",
     "notes": {

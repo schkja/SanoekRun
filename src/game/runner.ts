@@ -225,36 +225,56 @@ export class Runner {
 
   /**
    * Four-legged animation (the squirrel). Returns [body pitch, body height].
-   * Running is a gallop: the hind legs push off as a pair, the front legs land
-   * as a pair half a stride later, each pair slightly out of step, while the
-   * spine rocks and the head stays steady. Jumping stretches out like a
-   * flying squirrel; sliding flattens the belly to the ground with the legs
-   * splayed, so nothing ever sinks below the path.
+   *
+   * Running: legs alternate left and right, in diagonal pairs (left hind with
+   * right front), so you clearly see it run rather than hop. Each leg swings
+   * from the hip or shoulder; while a paw travels forward it lifts by bending
+   * at the knee or elbow, and it straightens again to push on the ground.
+   * The body bobs twice per stride and the head counters it.
+   * Jumping stretches out like a flying squirrel; sliding flattens the belly
+   * to the ground with the legs splayed, so nothing sinks below the path.
    */
   private animateQuad(m: RunnerModel): [number, number] {
-    const p = this.phase * 0.9;
+    const p = this.phase * 0.85;
     const head = m.head;
+    const j = m.joints;
+    const bend = (lowerL: number, lowerR: number, armL: number, armR: number) => {
+      if (!j) return;
+      j.legL.rotation.x = lowerL;
+      j.legR.rotation.x = lowerR;
+      j.armL.rotation.x = armL;
+      j.armR.rotation.x = armR;
+    };
     if (this.sliding) {
       m.armL.rotation.x = m.armR.rotation.x = 1.45;
       m.legL.rotation.x = m.legR.rotation.x = -1.45;
+      bend(0, 0, 0, 0);
       if (head) head.rotation.x = 0.25;
       return [0, -0.42];
     }
     if (!this.grounded) {
       const fall = this.falling;
-      m.armL.rotation.x = m.armR.rotation.x = fall ? 2.2 : 1.1;
-      m.legL.rotation.x = m.legR.rotation.x = fall ? -0.4 : -1.0;
+      m.armL.rotation.x = m.armR.rotation.x = fall ? 2.2 : 1.05;
+      m.legL.rotation.x = m.legR.rotation.x = fall ? -0.4 : -0.95;
+      bend(fall ? -0.6 : 0.2, fall ? -0.6 : 0.2, -0.25, -0.25);
       if (head) head.rotation.x = -0.2;
-      return [fall ? -0.5 : this.vy > 0 ? 0.22 : -0.12, 0];
+      return [fall ? -0.5 : this.vy > 0 ? 0.2 : -0.1, 0];
     }
-    const hind = Math.sin(p);
-    m.legL.rotation.x = hind * 0.95;
-    m.legR.rotation.x = Math.sin(p + 0.45) * 0.95;
-    m.armL.rotation.x = Math.sin(p + Math.PI) * 0.9;
-    m.armR.rotation.x = Math.sin(p + Math.PI + 0.45) * 0.9;
-    // The spine rocks with the stride; the head counter-rocks to stay level.
-    const pitch = Math.cos(p) * 0.1;
-    if (head) head.rotation.x = -pitch + Math.sin(p * 2) * 0.04;
-    return [(this.stumbling ? 0.35 : 0) + pitch, Math.abs(Math.sin(p)) * 0.1];
+    // One leg: swing from the hip, and fold the lower half while the paw
+    // comes forward (the swing's rising half), straight while it pushes.
+    const step = (upper: THREE.Group, phase: number, reach: number, fold: number): number => {
+      upper.rotation.x = Math.sin(phase) * reach;
+      return -Math.max(0, Math.cos(phase)) * fold;
+    };
+    const hindL = step(m.legL, p, 0.75, 1.2);
+    const hindR = step(m.legR, p + Math.PI, 0.75, 1.2);
+    const frontL = step(m.armL, p + Math.PI + 0.25, 0.8, 1.4);
+    const frontR = step(m.armR, p + 0.25, 0.8, 1.4);
+    bend(hindL, hindR, frontL, frontR);
+    // Two bobs per stride (one per diagonal pair); the head stays level.
+    const bob = (1 - Math.cos(p * 2)) * 0.035;
+    const pitch = Math.sin(p * 2) * 0.035;
+    if (head) head.rotation.x = -pitch - Math.sin(p * 2 + 0.6) * 0.05;
+    return [(this.stumbling ? 0.35 : 0) + pitch, bob];
   }
 }
