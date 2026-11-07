@@ -3,6 +3,8 @@
     "lumberjack": [
       "boardwalk",
       "autumn-boardwalk",
+      "evening-boardwalk",
+      "lantern-night",
       "temple",
       "lava"
     ],
@@ -146,6 +148,96 @@
         "high": 3,
         "gap": 2,
         "block": 2
+      }
+    },
+    {
+      "id": "evening-boardwalk",
+      "name": "Evening boardwalk",
+      "length": 650,
+      "chaser": "bear",
+      "caughtBy": "Caught by the grumpy bear",
+      "decor": "boardwalk",
+      "theme": {
+        "skyTop": "#4e3a86",
+        "sky": "#ff9a66",
+        "fog": "#f2a982",
+        "fogNear": 40,
+        "fogFar": 135,
+        "sun": "#ffc490",
+        "sunIntensity": 2.3,
+        "hemiSky": "#ffd3b0",
+        "hemiGround": "#7a7048",
+        "abyss": "#5a6a3a",
+        "abyssGlow": false,
+        "accent": "#ff7a59",
+        "sunDisc": "#ffd27a"
+      },
+      "path": {
+        "style": "planks",
+        "slab": "#c98b52",
+        "grout": "#8a5a33",
+        "body": "#7a4e2c",
+        "curb": "#9c6a3e"
+      },
+      "palette": {
+        "leaves": [
+          "#7fb84a",
+          "#b0c855",
+          "#5a9a40"
+        ],
+        "trunk": "#7a4a2f"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
+      }
+    },
+    {
+      "id": "lantern-night",
+      "name": "Lantern night",
+      "length": 650,
+      "chaser": "bear",
+      "caughtBy": "Caught by the grumpy bear",
+      "decor": "boardwalk",
+      "theme": {
+        "skyTop": "#070f2a",
+        "sky": "#1d2f63",
+        "fog": "#1a2850",
+        "fogNear": 30,
+        "fogFar": 115,
+        "sun": "#c3d4ff",
+        "sunIntensity": 1.9,
+        "hemiSky": "#93a6e6",
+        "hemiGround": "#22304a",
+        "abyss": "#14283a",
+        "abyssGlow": false,
+        "accent": "#ffc85a",
+        "night": true,
+        "stars": true,
+        "moon": true
+      },
+      "path": {
+        "style": "planks",
+        "slab": "#b9895a",
+        "grout": "#6a4a30",
+        "body": "#5a3c24",
+        "curb": "#7a5232"
+      },
+      "palette": {
+        "leaves": [
+          "#22625e",
+          "#2f7a70",
+          "#1a4c4a"
+        ],
+        "trunk": "#4e3b3a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
       }
     },
     {
