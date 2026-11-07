@@ -1,46 +1,182 @@
 [
   {
+    "version": "1.4.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New first world for the squirrel: a sunny forest trail with bushes, flowers and trees",
+        "The squirrel looks like a squirrel: big bushy tail and tufted ears",
+        "The hawk no longer fills the screen",
+        "No more strip at the bottom on iPhone home-screen apps"
+      ],
+      "de": [
+        "Neue erste Welt fürs Eichhörnchen: ein sonniger Waldpfad mit Büschen, Blumen und Bäumen",
+        "Das Eichhörnchen sieht aus wie ein Eichhörnchen: buschiger Schwanz und Ohrpinsel",
+        "Der Habicht verdeckt nicht mehr das Bild",
+        "Kein Streifen mehr unten in der iPhone-App"
+      ],
+      "ru": [
+        "Новый первый мир для белки: солнечная лесная тропа с кустами, цветами и деревьями",
+        "Белка теперь похожа на белку: пушистый хвост и кисточки на ушах",
+        "Ястреб больше не закрывает экран",
+        "На айфоне больше нет полосы внизу"
+      ],
+      "uk": [
+        "Новий перший світ для білки: сонячна лісова стежка з кущами, квітами й деревами",
+        "Білка тепер схожа на білку: пухнастий хвіст і китиці на вухах",
+        "Яструб більше не закриває екран",
+        "На айфоні більше немає смуги внизу"
+      ],
+      "es": [
+        "Nuevo primer mundo para la ardilla: un sendero soleado con arbustos, flores y árboles",
+        "La ardilla parece una ardilla: cola tupida y orejas con pincel",
+        "El halcón ya no tapa la pantalla",
+        "Se acabó la franja inferior en el iPhone"
+      ]
+    }
+  },
+  {
     "version": "1.3.0",
     "date": "2026-11-07",
     "notes": {
-      "en": ["Start your run in any world you have reached", "Friendlier hawk and nicer toadstools", "Fills the whole screen on iPhone home-screen apps", "Info screen with what's new and how to reach us", "Privacy page, and long screens scroll again"],
-      "de": ["Starte in jeder Welt, die du schon erreicht hast", "Freundlicherer Habicht und schönere Fliegenpilze", "Füllt auf dem iPhone-Homescreen den ganzen Bildschirm", "Info-Seite mit Neuigkeiten und Kontakt", "Datenschutzseite, lange Seiten lassen sich wieder scrollen"],
-      "ru": ["Начинай забег с любого мира, до которого добежал", "Добрый ястреб и красивые мухоморы", "На айфоне с рабочего стола игра занимает весь экран", "Экран «Инфо»: что нового и как связаться", "Страница о данных, длинные экраны снова листаются"],
-      "uk": ["Починай забіг з будь-якого світу, до якого добіг", "Добрий яструб і гарні мухомори", "На айфоні з головного екрана гра займає весь екран", "Екран «Інфо»: що нового і як зв’язатися", "Сторінка про дані, довгі екрани знову гортаються"],
-      "es": ["Empieza en cualquier mundo al que hayas llegado", "Halcón más simpático y setas más bonitas", "Ocupa toda la pantalla en el iPhone como app", "Pantalla de info con novedades y contacto", "Página de privacidad y las pantallas largas vuelven a desplazarse"]
+      "en": [
+        "Start your run in any world you have reached",
+        "Friendlier hawk and nicer toadstools",
+        "Fills the whole screen on iPhone home-screen apps",
+        "Info screen with what's new and how to reach us",
+        "Privacy page, and long screens scroll again"
+      ],
+      "de": [
+        "Starte in jeder Welt, die du schon erreicht hast",
+        "Freundlicherer Habicht und schönere Fliegenpilze",
+        "Füllt auf dem iPhone-Homescreen den ganzen Bildschirm",
+        "Info-Seite mit Neuigkeiten und Kontakt",
+        "Datenschutzseite, lange Seiten lassen sich wieder scrollen"
+      ],
+      "ru": [
+        "Начинай забег с любого мира, до которого добежал",
+        "Добрый ястреб и красивые мухоморы",
+        "На айфоне с рабочего стола игра занимает весь экран",
+        "Экран «Инфо»: что нового и как связаться",
+        "Страница о данных, длинные экраны снова листаются"
+      ],
+      "uk": [
+        "Починай забіг з будь-якого світу, до якого добіг",
+        "Добрий яструб і гарні мухомори",
+        "На айфоні з головного екрана гра займає весь екран",
+        "Екран «Інфо»: що нового і як зв’язатися",
+        "Сторінка про дані, довгі екрани знову гортаються"
+      ],
+      "es": [
+        "Empieza en cualquier mundo al que hayas llegado",
+        "Halcón más simpático y setas más bonitas",
+        "Ocupa toda la pantalla en el iPhone como app",
+        "Pantalla de info con novedades y contacto",
+        "Página de privacidad y las pantallas largas vuelven a desplazarse"
+      ]
     }
   },
   {
     "version": "1.2.0",
     "date": "2026-11-07",
     "notes": {
-      "en": ["Records table with nicknames", "Missions, levels and a coin bank", "Outfit shop for both heroes", "Power-ups: magnet, shield, double coins", "Install the game on your phone", "New share picture for TikTok and Stories"],
-      "de": ["Rekordtabelle mit Spitznamen", "Aufgaben, Level und eine Münzkasse", "Outfit-Shop für beide Helden", "Power-ups: Magnet, Schild, doppelte Münzen", "Installiere das Spiel auf dem Handy", "Neues Teilen-Bild für TikTok und Stories"],
-      "ru": ["Таблица рекордов с никами", "Задания, уровни и копилка", "Магазин нарядов для обоих героев", "Бонусы: магнит, щит, двойные монеты", "Игру можно установить на телефон", "Новая картинка для TikTok и сторис"],
-      "uk": ["Таблиця рекордів з ніками", "Завдання, рівні та скарбничка", "Магазин вбрань для обох героїв", "Бонуси: магніт, щит, подвійні монети", "Гру можна встановити на телефон", "Нова картинка для TikTok і сторіз"],
-      "es": ["Tabla de récords con apodos", "Misiones, niveles y una hucha", "Tienda de ropa para ambos héroes", "Potenciadores: imán, escudo, monedas dobles", "Instala el juego en tu móvil", "Nueva imagen para TikTok y Stories"]
+      "en": [
+        "Records table with nicknames",
+        "Missions, levels and a coin bank",
+        "Outfit shop for both heroes",
+        "Power-ups: magnet, shield, double coins",
+        "Install the game on your phone",
+        "New share picture for TikTok and Stories"
+      ],
+      "de": [
+        "Rekordtabelle mit Spitznamen",
+        "Aufgaben, Level und eine Münzkasse",
+        "Outfit-Shop für beide Helden",
+        "Power-ups: Magnet, Schild, doppelte Münzen",
+        "Installiere das Spiel auf dem Handy",
+        "Neues Teilen-Bild für TikTok und Stories"
+      ],
+      "ru": [
+        "Таблица рекордов с никами",
+        "Задания, уровни и копилка",
+        "Магазин нарядов для обоих героев",
+        "Бонусы: магнит, щит, двойные монеты",
+        "Игру можно установить на телефон",
+        "Новая картинка для TikTok и сторис"
+      ],
+      "uk": [
+        "Таблиця рекордів з ніками",
+        "Завдання, рівні та скарбничка",
+        "Магазин вбрань для обох героїв",
+        "Бонуси: магніт, щит, подвійні монети",
+        "Гру можна встановити на телефон",
+        "Нова картинка для TikTok і сторіз"
+      ],
+      "es": [
+        "Tabla de récords con apodos",
+        "Misiones, niveles y una hucha",
+        "Tienda de ropa para ambos héroes",
+        "Potenciadores: imán, escudo, monedas dobles",
+        "Instala el juego en tu móvil",
+        "Nueva imagen para TikTok y Stories"
+      ]
     }
   },
   {
     "version": "1.1.0",
     "date": "2026-11-07",
     "notes": {
-      "en": ["The squirrel joins with its own treetop worlds", "Cartoon look with outlines", "Five languages", "Music and effects you can switch"],
-      "de": ["Das Eichhörnchen ist dabei, mit eigenen Baumkronen-Welten", "Cartoon-Look mit Umrissen", "Fünf Sprachen", "Musik und Effekte zum Umschalten"],
-      "ru": ["Появилась белка со своими мирами в кронах", "Мультяшный стиль с обводкой", "Пять языков", "Музыку и эффекты можно настроить"],
-      "uk": ["З’явилася білка зі своїми світами в кронах", "Мультяшний стиль з обведенням", "П’ять мов", "Музику та ефекти можна налаштувати"],
-      "es": ["Llega la ardilla con sus mundos en las copas", "Estilo de dibujos con contornos", "Cinco idiomas", "Música y efectos ajustables"]
+      "en": [
+        "The squirrel joins with its own treetop worlds",
+        "Cartoon look with outlines",
+        "Five languages",
+        "Music and effects you can switch"
+      ],
+      "de": [
+        "Das Eichhörnchen ist dabei, mit eigenen Baumkronen-Welten",
+        "Cartoon-Look mit Umrissen",
+        "Fünf Sprachen",
+        "Musik und Effekte zum Umschalten"
+      ],
+      "ru": [
+        "Появилась белка со своими мирами в кронах",
+        "Мультяшный стиль с обводкой",
+        "Пять языков",
+        "Музыку и эффекты можно настроить"
+      ],
+      "uk": [
+        "З’явилася білка зі своїми світами в кронах",
+        "Мультяшний стиль з обведенням",
+        "П’ять мов",
+        "Музику та ефекти можна налаштувати"
+      ],
+      "es": [
+        "Llega la ardilla con sus mundos en las copas",
+        "Estilo de dibujos con contornos",
+        "Cinco idiomas",
+        "Música y efectos ajustables"
+      ]
     }
   },
   {
     "version": "1.0.0",
     "date": "2026-11-07",
     "notes": {
-      "en": ["First version: run, jump, slide and turn away from the bear"],
-      "de": ["Erste Version: lauf, spring, rutsch und bieg ab, weg vom Bären"],
-      "ru": ["Первая версия: беги, прыгай, скользи и поворачивай, убегая от медведя"],
-      "uk": ["Перша версія: біжи, стрибай, ковзай і повертай, тікаючи від ведмедя"],
-      "es": ["Primera versión: corre, salta, deslízate y gira huyendo del oso"]
+      "en": [
+        "First version: run, jump, slide and turn away from the bear"
+      ],
+      "de": [
+        "Erste Version: lauf, spring, rutsch und bieg ab, weg vom Bären"
+      ],
+      "ru": [
+        "Первая версия: беги, прыгай, скользи и поворачивай, убегая от медведя"
+      ],
+      "uk": [
+        "Перша версія: біжи, стрибай, ковзай і повертай, тікаючи від ведмедя"
+      ],
+      "es": [
+        "Primera versión: corre, salta, deslízate y gira huyendo del oso"
+      ]
     }
   }
 ]

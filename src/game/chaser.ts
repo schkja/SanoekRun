@@ -83,7 +83,8 @@ export class Chaser {
     // It glides from side to side above the path, like a bird circling,
     // and stays high enough that it never hides the runner.
     const sway = Math.sin(this.time * 0.9);
-    hawk.position.set(sway * 1.1, 3.2 + Math.max(0, this.gap - 3) * 0.25, -Math.min(2.2, this.gap * 0.45));
+    // Never closer than ~3 m behind the runner, so it can't fill the camera.
+    hawk.position.set(sway * 1.2, 4.0, -Math.max(0, this.gap - 3.2));
     hawk.rotation.z = -sway * 0.35;
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
@@ -165,7 +166,7 @@ function buildHawk(): Body {
   const root = new THREE.Group();
   const g = new THREE.Group();
   root.add(g);
-  g.scale.setScalar(0.36);
+  g.scale.setScalar(0.3);
   const feathers = mat('#b5763f');
   const dark = mat('#8a5530');
   const light = mat('#fff1d6');
