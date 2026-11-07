@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.4.2",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "The squirrel's hollow sits in a giant old tree on the forest trail, not in mid-air",
+        "No more stripes and lines across the path at corners",
+        "Snowy pines no longer sweep across the screen"
+      ],
+      "de": [
+        "Die Baumhöhle des Eichhörnchens sitzt am Waldpfad in einem alten Riesenbaum statt in der Luft",
+        "Keine Streifen und Linien mehr quer über den Weg an Kurven",
+        "Die verschneiten Kiefern fegen nicht mehr übers Bild"
+      ],
+      "ru": [
+        "Дупло белки на лесной тропе теперь в огромном старом дереве, а не в воздухе",
+        "На поворотах больше нет полос и линий поперёк тропы",
+        "Снежные ели больше не проносятся через весь экран"
+      ],
+      "uk": [
+        "Дупло білки на лісовій стежці тепер у величезному старому дереві, а не в повітрі",
+        "На поворотах більше немає смуг і ліній упоперек стежки",
+        "Засніжені ялини більше не пролітають через увесь екран"
+      ],
+      "es": [
+        "El hueco de la ardilla en el sendero está en un árbol gigante, no flotando",
+        "Se acabaron las franjas y líneas en las curvas",
+        "Los pinos nevados ya no barren la pantalla"
+      ]
+    }
+  },
+  {
     "version": "1.4.1",
     "date": "2026-11-07",
     "notes": {

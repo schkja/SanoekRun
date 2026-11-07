@@ -268,14 +268,8 @@ function makeFloorTexture(style: PathStyle, main: string, line: string): THREE.T
       g.ellipse(14 + Math.random() * (size - 28), Math.random() * size, 2 + Math.random() * 3, 1.5 + Math.random() * 2, 0, 0, Math.PI * 2);
       g.fill();
     }
-    // Grass creeping in at both edges.
-    g.fillStyle = '#6cc04f';
-    for (const edge of [0, size]) {
-      for (let y = 0; y < size; y += 8) {
-        const w = 6 + Math.random() * 10;
-        g.fillRect(edge === 0 ? 0 : size - w, y, w, 8);
-      }
-    }
+    // No grass painted along the edges: at a corner the old path's floor
+    // lies crosswise, and its edges would draw a stripe across the new path.
   } else if (style === 'snow') {
     // Fresh snow on a branch: bark peeks out at the edges.
     g.fillStyle = main;
@@ -383,8 +377,9 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
       const r = W / 2 + 0.35;
       add(GEO.log, kit.floorBody, 0, -r + 0.02, mid, r, r * 0.8, len);
     } else if (style === 'trail') {
-      // Packed earth, flush with the forest floor.
-      add(GEO.box, kit.floorBody, 0, -0.14, mid, W, 0.26, len);
+      // Packed earth, flush with the forest floor. No ink outline: on the
+      // ground it would draw lines across the path where pieces meet.
+      add(GEO.box, kit.floorBody, 0, -0.14, mid, W, 0.26, len).userData.noOutline = true;
     } else if (style === 'planks') {
       // A thin deck on beams, with posts reaching down to the forest floor.
       add(GEO.box, kit.floorBody, 0, -0.3, mid, W, 0.56, len);
@@ -408,12 +403,14 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
         add(GEO.box, kit.curb, x, 0.95, (a + edgeEnd) / 2, 0.16, 0.14, run);
         for (let s = a + 0.4; s < edgeEnd; s += 2.6) post(x, 0.48, s, 0.18, 0.96, 0.18);
       } else if (style === 'bark') {
-        add(GEO.box, kit.curb, x - side * 0.1, 0.06, (a + edgeEnd) / 2, 0.42, 0.2, run);
+        // A strip of moss along the edge; no ink outline, so the strips of
+        // two branches meeting at a corner don't draw lines across the path.
+        add(GEO.box, kit.curb, x - side * 0.1, 0.04, (a + edgeEnd) / 2, 0.36, 0.14, run).userData.noOutline = true;
       } else if (style === 'trail') {
-        // A soft grass verge.
-        add(GEO.box, kit.curb, x, -0.02, (a + edgeEnd) / 2, 0.5, 0.14, run);
+        // No verge: the grass painted into the path's edges meets the forest
+        // floor directly, so corners don't get stripes where verges cross.
       } else if (style === 'snow') {
-        add(GEO.log, kit.curb, x - side * 0.1, 0.05, (a + edgeEnd) / 2, 0.3, 0.26, run);
+        add(GEO.log, kit.curb, x - side * 0.1, 0.05, (a + edgeEnd) / 2, 0.3, 0.26, run).userData.noOutline = true;
       } else {
         add(GEO.box, kit.curb, x, 0.12, (a + edgeEnd) / 2, 0.36, 0.5, run);
       }
@@ -524,6 +521,22 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
     (side === seg.turn && s > seg.length - W / 2 - 4) ||
     (seg.arrivedBy !== null && side === seg.arrivedBy && s < W / 2 + 4) ||
     s > seg.length + W / 2;
+
+  // Forest trail: a giant old tree stands behind each corner (the squirrel's
+  // home, with the hollow), rooted in the ground.
+  if (kit.decor === 'trail') {
+    const r = 2.6;
+    const s = seg.length + W / 2 + r;
+    const x = -seg.turn * (W / 2 + r * 0.6);
+    add(GEO.trunk, kit.trunk, x, 8, s, r * 2, 16, r * 2, true);
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + 0.4;
+      add(GEO.sphere, kit.trunk, x + Math.cos(a) * r * 0.95, 0.2, s + Math.sin(a) * r * 0.95, 1.4, 0.7, 1.4);
+    }
+    add(GEO.blob, kit.leaves[0], x, 17.5, s, 7, 5, 7, true);
+    add(GEO.blob, kit.leaves[1], x - 3, 15, s + 2, 5, 4, 5);
+    add(GEO.blob, kit.leaves[2], x + 3, 15.5, s - 1.5, 4.5, 3.5, 4.5);
+  }
 
   // Branch worlds: the branch grows out of a giant trunk behind each corner.
   if (kit.decor === 'branch' || kit.decor === 'snow') {
@@ -723,14 +736,17 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
     side = -side;
     if (blocked(side, s)) continue;
     const r = rand(0.8, 1.3);
-    const x = side * (W / 2 + rand(1.6, 3));
+    // Pines spread wide low down, so they stand further from the path.
+    const x = side * (W / 2 + (snow ? rand(2.8, 4.2) : rand(1.6, 3)));
     // Every trunk ends in a proper crown you can see, never a bare pole.
     const top = rand(8.5, 11.5);
     add(GEO.trunk, kit.trunk, x, (top - 30) / 2, s, r * 2, top + 30, r * 2, true);
     if (snow) {
       for (let i = 0; i < 4; i++) {
-        const y = top - 5 + i * 2.2;
-        const w = 3.6 - i * 0.7;
+        // Branch layers start above camera height and stay narrow enough
+        // that they never sweep across the screen as you run past.
+        const y = top - 3 + i * 2;
+        const w = 2.6 - i * 0.5;
         add(GEO.cone, kit.leaves[i % 2], x, y, s, w, 3, w, i === 0);
         add(GEO.cone, kit.snow, x, y + 0.9, s, w * 0.55, 1.1, w * 0.55);
       }
@@ -812,9 +828,11 @@ function squirrelHome(seg: Segment, kit: Kit, add: AddFn): void {
   const r = 2.6;
   const s = seg.length + W / 2 + r;
   const x = -seg.turn * (W / 2 + r * 0.6);
-  // The hollow faces the runner as they come up to the corner.
-  add(GEO.sphere, kit.dark, x, 3.2, s - r * 0.9, 1.6, 2.2, 0.5);
-  add(GEO.sphere, kit.woodEnd, x, 2.05, s - r * 0.95, 1.8, 0.35, 0.55);
+  // The hollow faces the runner as they come up to the corner, set into the
+  // bark of the giant trunk (thicker at this height on the forest floor).
+  const bark = kit.decor === 'trail' ? r * 0.92 : r * 0.74;
+  add(GEO.sphere, kit.dark, x, 3.2, s - bark, 1.6, 2.2, 0.5);
+  add(GEO.sphere, kit.woodEnd, x, 2.05, s - bark - 0.05, 1.8, 0.35, 0.55);
   if (Math.random() < 0.5) {
     // A nest of twigs with two eggs, on a stub of branch.
     const nx = x - Math.sign(x) * 0.2;

@@ -229,6 +229,12 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 ### 6.10 iPhone home-screen height
 `apple-mobile-web-app-status-bar-style` is `default`, NOT `black-translucent`: with translucent, iOS standalone apps get a viewport short by the status bar and a strip of page background shows at the bottom (CSS/JS height hacks did not fix it on the owner's iPhone). iOS reads this meta only when the icon is added, so after changing it the app must be re-added to the home screen.
 
+### 6.11 Visual QA checklist (run after scenery changes)
+Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
+- Anything decorative must stand on something: the squirrel hollow needs the giant corner trunk (trail and branch worlds both build one).
+- At corners the previous segment's floor lies crosswise under the new path: no along-the-edge texture details (painted grass) and no outlined edge strips (verges, moss curbs use `userData.noOutline`), or they draw stripes across the path.
+- Nothing wide at camera height (≈3.5–5 m) within ~3 m of the path: pine layers start above it, trees beside the path keep crowns high.
+
 ## 7. Content: adding a world
 
 Edit `content/worlds.json` only (no code) if you reuse existing parts:
