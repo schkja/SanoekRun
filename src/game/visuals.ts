@@ -1079,13 +1079,53 @@ function crown(body: THREE.Group, part: ModelPart, mat: MatFn, y: number, r: num
   }
 }
 
+const TAIL_MATERIAL = std('#d9692a', { flatShading: false, roughness: 0.8 });
+let tailGeometry: THREE.BufferGeometry | null = null;
+
+/**
+ * The squirrel's tail as one smooth tube along an S-curve, fat in the middle,
+ * with a ruffled edge for fur.
+ */
+function squirrelTailGeometry(): THREE.BufferGeometry {
+  if (tailGeometry) return tailGeometry;
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0.3, 0.32),
+    new THREE.Vector3(0, 0.78, 0.5),
+    new THREE.Vector3(0, 1.25, 0.38),
+    new THREE.Vector3(0, 1.58, 0.06),
+    new THREE.Vector3(0, 1.62, -0.28),
+    new THREE.Vector3(0, 1.45, -0.42),
+  ]);
+  const tubular = 40;
+  const radial = 14;
+  const geo = new THREE.TubeGeometry(curve, tubular, 1, radial, false);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const centre = new THREE.Vector3();
+  const v = new THREE.Vector3();
+  for (let i = 0; i <= tubular; i++) {
+    const t = i / tubular;
+    curve.getPointAt(t, centre);
+    // Thin at the root, fat through the middle, a rounded tuft at the end.
+    const r = 0.1 + 0.3 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 0.95 + 0.04)), 0.6);
+    for (let k = 0; k <= radial; k++) {
+      const j = i * (radial + 1) + k;
+      const fluff = 1 + 0.12 * Math.sin(k * 2.7 + i * 1.3) * Math.min(1, t * 4);
+      v.fromBufferAttribute(pos, j).sub(centre).multiplyScalar(r * fluff).add(centre);
+      pos.setXYZ(j, v.x, v.y, v.z);
+    }
+  }
+  geo.computeVertexNormals();
+  tailGeometry = geo;
+  return geo;
+}
+
 /** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
 export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
   const { root, body, part, limb } = characterKit();
   const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
   const fur = mat('#c8561f');
-  const tailFur = mat('#d9692a');
-  const tailTip = mat('#ffd9a8');
+  const tailTip = mat('#ffe2b8');
   const white = mat('#ffffff');
   const dark = mat('#2b2b3d');
   const tuft = mat('#7a3414');
@@ -1122,30 +1162,22 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
   part(white, armL, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
   part(white, armR, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
 
-  // The signature: a big bushy tail. It rises from the back, leans out to
-  // the right and curls over at the top in an S, with a pale fluffy outer
-  // edge. Leaning out keeps the head and ears visible from behind.
+  // The signature: a big bushy tail, one smooth fluffy S rising from the
+  // back and curling over at the top, orange fading to a cream tip. It
+  // leans out to the right so the head and tufted ears stay visible.
   const tail = new THREE.Group();
-  tail.position.set(0.2, 0.55, 0.4);
+  tail.position.set(0.18, 0.5, 0.42);
   body.add(tail);
-  // The runner animates `tail`; the lean lives on an inner group so it stays.
   const plume = new THREE.Group();
-  plume.rotation.z = -0.42;
+  plume.rotation.z = -0.38;
   tail.add(plume);
-  const puffs: Array<[number, number, number, number]> = [
-    [0, 0, 0, 0.22],
-    [0.02, 0.26, 0.16, 0.27],
-    [0.04, 0.56, 0.24, 0.31],
-    [0.05, 0.88, 0.2, 0.32],
-    [0.05, 1.16, 0.06, 0.3],
-    [0.04, 1.34, -0.14, 0.25],
-    [0.03, 1.38, -0.34, 0.19],
-  ];
-  for (const [x, y, z, r] of puffs) part(tailFur, plume, GEO.sphere, x, y, z, r * 2, r * 2, r * 1.7);
-  // Pale fluff along the outer edge and at the curled tip.
-  for (const [y, z, r] of [[0.5, 0.26, 0.2], [0.86, 0.22, 0.22], [1.18, 0.06, 0.2], [1.4, -0.38, 0.15]] as const) {
-    part(tailTip, plume, GEO.sphere, 0.26, y, z, r * 1.4, r * 1.9, r * 1.6);
-  }
+  part(TAIL_MATERIAL, plume, squirrelTailGeometry(), 0, 0, 0, 1, 1, 1);
+  // A round tuft closes the tip.
+  part(tailTip, plume, GEO.sphere, 0, 1.47, -0.42, 0.36, 0.34, 0.36);
+  part(tailTip, plume, GEO.sphere, 0.02, 1.6, -0.25, 0.3, 0.26, 0.3);
+
+  // Strong haunches: from behind, squirrels are all thighs and tail.
+  for (const side of [-1, 1]) part(fur, body, GEO.sphere, side * 0.24, 0.5, 0.12, 0.36, 0.42, 0.46);
 
   // Accessories from the shop.
   if (outfit === 'sunglasses') {

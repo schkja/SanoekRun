@@ -60,8 +60,6 @@ body {
   width: 100vw;
   height: 100vh;
   height: 100lvh;
-  /* Set from main.ts in the iPhone home-screen app. */
-  height: var(--app-h, 100lvh);
 }
 
 #game canvas {

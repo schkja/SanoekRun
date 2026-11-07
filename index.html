@@ -12,7 +12,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="SanökRun" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Not "black-translucent": with it, iOS home-screen apps get a viewport that is
+         short by the status bar and leave a strip at the bottom of the screen. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta property="og:title" content="SanökRun" />
     <meta property="og:image" content="icons/icon-512.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />

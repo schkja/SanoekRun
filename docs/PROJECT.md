@@ -143,7 +143,8 @@ Gap model: normally out of view. On stumble → danger mode (visible behind, HUD
   - Obstacle "faces" point to +z (toward the runner).
   - Nothing big near the camera line (leaf blobs blocked the view).
   - Things must be attached to something: toadstool families (`toadstool()`: stem, cream gills, red dome cap, white spots) sit on the branch shoulder; twigs grow out of the branch edge. Shelf mushrooms on trunks were removed (looked like plates).
-- The hawk is a chubby cartoon bird (big eyes, small beak), scaled 0.36, sways side to side above and slightly ahead of the chaser point so it never sits in the camera's face.
+- The hawk is a big bird of prey (owner: 'big, fierce, scary'; a chubby/cute one and a camera-facing one were rejected as 'a chick' and 'backwards'). It flies the same way as the runner, ~2 m behind and at y 5.3, nose up 0.4 rad so the camera sees dark wing tops: two-joint wings (shoulder + wrist) with fingered dark-tipped primaries, barred tail fan, hooked beak, brows, talons forward, scale 0.4. Its shadow on the path is part of the threat.
+- The squirrel tail is one smooth `TubeGeometry` along an S-curve (`squirrelTailGeometry()`), fat in the middle with a ruffled edge, cream tuft at the tip, leaning out 0.38 rad on an inner `plume` group (the runner animates the outer `tail` group). Haunches make the back view read as squirrel.
 - Story props: `lumberjackCamp` (axe, stump, cut logs) and `squirrelHome` (hollow, acorn stash).
 - Heroes: `makeCharacterModel(character, outfit)` returns `{root, body, legL, legR, armL, armR, tail?}`. Outfits are built in `hat()` (lumberjack) and squirrel accessories; shared `crown()`.
 
@@ -226,7 +227,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 `theme.ground: true` raises the engine's "abyss" plane to y −0.06 and colours it as grass, so the path lies on the forest floor. Decor `trail` + path style `trail`: sandy path, grass verge, bushes (some with berries), flower bunches, ferns, stones, toadstools, rooted trees, hedge at every corner. No gaps (`obstacles.gap: 0`). Missing a corner = "ran into the bushes" (instant death in `step()`, no falling).
 
 ### 6.10 iPhone home-screen height
-In iOS standalone mode with a translucent status bar the viewport is short by the status-bar height. `main.ts` sets `--app-h` to `screen.height` when `navigator.standalone`; `#game`/`#ui` use `height: var(--app-h, 100lvh)`. Page background is forest green as a last fallback.
+`apple-mobile-web-app-status-bar-style` is `default`, NOT `black-translucent`: with translucent, iOS standalone apps get a viewport short by the status bar and a strip of page background shows at the bottom (CSS/JS height hacks did not fix it on the owner's iPhone). iOS reads this meta only when the icon is added, so after changing it the app must be re-added to the home screen.
 
 ## 7. Content: adding a world
 
