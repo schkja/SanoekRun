@@ -22,6 +22,7 @@ import { TUNING } from './tuning';
 import type { Segment } from './track';
 import { headingYaw } from './track';
 import type { DecorKind, PathStyle, WorldDef } from './worlds';
+import { bake, outline, toon } from './toon';
 
 // ---------------------------------------------------------------------------
 // Shared geometry
@@ -43,10 +44,31 @@ const GEO = {
   sphere: new THREE.SphereGeometry(0.5, 16, 12),
   portal: new THREE.TorusGeometry(2.9, 0.26, 10, 40),
   portalDisc: new THREE.CircleGeometry(2.75, 40),
+  beam: new THREE.PlaneGeometry(1, 1),
 };
 
-function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0, flatShading: true, ...extra });
+/** Soft shafts of sunlight slanting through the leaves. */
+const SUNBEAM = new THREE.MeshBasicMaterial({
+  color: '#fff6c8',
+  transparent: true,
+  opacity: 0.16,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  side: THREE.DoubleSide,
+  fog: false,
+});
+
+type Mat = THREE.MeshToonMaterial;
+
+/** Every solid surface uses the cel-shaded cartoon material. */
+function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): Mat {
+  return toon(color, {
+    map: (extra.map as THREE.Texture | undefined) ?? undefined,
+    emissive: extra.emissive as string | undefined,
+    emissiveIntensity: extra.emissiveIntensity,
+    transparent: extra.transparent,
+    opacity: extra.opacity,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -61,15 +83,9 @@ export function setCollectible(kind: Collectible): void {
   collectible = kind;
 }
 
-const ACORN_NUT = new THREE.MeshStandardMaterial({ color: '#c47a35', roughness: 0.5, emissive: '#6a3608', emissiveIntensity: 0.45 });
+const ACORN_NUT = toon('#d48a42', { emissive: '#6a3608', emissiveIntensity: 0.35 });
 const ACORN_CAP = std('#6b4325', { roughness: 0.9 });
-const COIN_MATERIAL = new THREE.MeshStandardMaterial({
-  color: '#ffd23f',
-  emissive: '#c99a00',
-  emissiveIntensity: 0.6,
-  metalness: 0.5,
-  roughness: 0.3,
-});
+const COIN_MATERIAL = toon('#ffd23f', { emissive: '#c99a00', emissiveIntensity: 0.45 });
 
 function makeAcorn(): THREE.Group {
   const g = new THREE.Group();
@@ -92,25 +108,25 @@ function makeAcorn(): THREE.Group {
 
 interface Kit {
   decor: DecorKind;
-  floorTop: THREE.MeshStandardMaterial;
-  floorBody: THREE.MeshStandardMaterial;
-  curb: THREE.MeshStandardMaterial;
-  leaves: [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial, THREE.MeshStandardMaterial];
-  trunk: THREE.MeshStandardMaterial;
-  wood: THREE.MeshStandardMaterial;
-  woodDark: THREE.MeshStandardMaterial;
-  stone: THREE.MeshStandardMaterial;
-  rock: THREE.MeshStandardMaterial;
-  rockDark: THREE.MeshStandardMaterial;
-  hot: THREE.MeshStandardMaterial;
+  floorTop: Mat;
+  floorBody: Mat;
+  curb: Mat;
+  leaves: [Mat, Mat, Mat];
+  trunk: Mat;
+  wood: Mat;
+  woodDark: Mat;
+  stone: Mat;
+  rock: Mat;
+  rockDark: Mat;
+  hot: Mat;
   glow: THREE.MeshBasicMaterial;
-  snow: THREE.MeshStandardMaterial;
-  ice: THREE.MeshStandardMaterial;
-  mushroom: THREE.MeshStandardMaterial;
-  white: THREE.MeshStandardMaterial;
-  carrot: THREE.MeshStandardMaterial;
-  dark: THREE.MeshStandardMaterial;
-  portal: THREE.MeshStandardMaterial;
+  snow: Mat;
+  ice: Mat;
+  mushroom: Mat;
+  white: Mat;
+  carrot: Mat;
+  dark: Mat;
+  portal: Mat;
   portalDisc: THREE.MeshBasicMaterial;
 }
 
@@ -379,6 +395,7 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
     }
     item.position.set(c.x, c.y, -c.s);
     item.userData.coin = true;
+    item.userData.keep = true;
     group.add(item);
     c.object = item;
   }
@@ -388,13 +405,24 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
     const ring = new THREE.Mesh(GEO.portal, kit.portal);
     ring.position.set(0, 2.2, -seg.portalAt);
     ring.userData.portal = true;
+    ring.userData.keep = true;
     const disc = new THREE.Mesh(GEO.portalDisc, kit.portalDisc);
+    disc.userData.keep = true;
     disc.position.copy(ring.position);
     group.add(ring, disc);
   }
 
   decorate(seg, kit, add);
+  // Merge the still scenery into a few meshes, then ink everything else.
+  topMeshes(group);
+  bake(group);
+  outline(group);
   return group;
+}
+
+/** The walking surface is flat and seen from above; it gets no outline of its own. */
+function topMeshes(group: THREE.Group): void {
+  for (const child of group.children) if ((child as THREE.Mesh).geometry instanceof THREE.PlaneGeometry) child.userData.noOutline = true;
 }
 
 export function disposeSegmentMesh(group: THREE.Group): void {
@@ -435,6 +463,8 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
     }
   }
 
+  if (kit.decor === 'boardwalk' || kit.decor === 'branch' || kit.decor === 'snow') forest(seg, kit, add, blocked);
+
   for (const side of [-1, 1]) {
     for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += rand(4, 8.5)) {
       if (blocked(side, s)) continue;
@@ -442,10 +472,6 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
 
       switch (kit.decor) {
         case 'boardwalk': {
-          // Treetops all around and below the boardwalk.
-          const r = rand(2.2, 3.8);
-          const x = out(rand(2.8, 9));
-          add(GEO.blob, leaf(), x, rand(-4.5, -0.5), s, r, r * 0.8, r, true);
           if (Math.random() < 0.3) {
             // A taller tree whose crown rises above the path.
             const h = rand(4, 7);
@@ -457,9 +483,6 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
         }
         case 'branch': {
           // Clouds of leaves along the branch, some hanging overhead.
-          // Mostly below the branch, so they frame the path without hiding it.
-          const r = rand(1.4, 2.6);
-          add(GEO.blob, leaf(), out(rand(2.4, 7)), rand(-3.6, -0.6), s, r, r * 0.75, r, true);
           if (Math.random() < 0.25) add(GEO.blob, leaf(), out(rand(1.5, 4)), rand(5.5, 7.5), s, 2.6, 1.6, 2.4);
           if (Math.random() < 0.15) {
             // A little twig sticking out with a leaf on it.
@@ -507,6 +530,74 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
         }
       }
     }
+  }
+}
+
+/**
+ * The forest itself, for the tree worlds: a carpet of treetops below, giant
+ * trunks right beside the path, a roof of leaves overhead and sunbeams.
+ * This is what makes it feel like running through the trees, not over a lake.
+ */
+function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
+  const W = TUNING.pathWidth;
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  const leaf = () => kit.leaves[Math.floor(Math.random() * 3)];
+  const from = seg.index === 0 ? -14 : W / 2;
+  const to = seg.length + W / 2;
+  const snow = kit.decor === 'snow';
+
+  // 1. The carpet of treetops below, reaching to the horizon.
+  for (let s = from; s < to; s += 3.2) {
+    for (const side of [-1, 1]) {
+      if (blocked(side, s)) continue;
+      const x = side * (W / 2 + rand(2, 11));
+      const y = rand(-6.5, -3);
+      if (snow) {
+        const r = rand(1.6, 2.6);
+        add(GEO.cone, kit.leaves[0], x, y, s, r, r * 1.8, r);
+        add(GEO.cone, kit.snow, x, y + r * 0.75, s, r * 0.55, r * 0.6, r * 0.55);
+      } else {
+        const r = rand(2.2, 3.6);
+        add(GEO.canopy, leaf(), x, y, s, r, r * 0.8, r);
+      }
+      if (Math.random() < 0.3) {
+        const r = rand(4, 7);
+        add(GEO.canopy, leaf(), side * (W / 2 + rand(14, 28)), rand(-7, -2), s, r, r * 0.7, r);
+      }
+    }
+  }
+
+  // 2. Giant trunks right beside the path, rising past you.
+  let side = Math.random() < 0.5 ? -1 : 1;
+  for (let s = from + rand(2, 6); s < to; s += rand(7, 12)) {
+    side = -side;
+    if (blocked(side, s)) continue;
+    const r = rand(0.8, 1.3);
+    const x = side * (W / 2 + rand(1.6, 3));
+    add(GEO.trunk, kit.trunk, x, -4, s, r * 2, 52, r * 2, true);
+    if (!snow && Math.random() < 0.6) {
+      // A side branch with a clump of leaves reaching out over the path.
+      const arm = add(GEO.cyl, kit.trunk, x - side * 1.4, 7.5, s, 0.35, 3.2, 0.35);
+      arm.rotation.z = side * 1.05;
+      add(GEO.blob, leaf(), x - side * 2.8, 8.6, s, 2.2, 1.4, 2);
+    }
+    if (snow) add(GEO.blob, kit.snow, x, 1.2, s, r * 1.2, 0.25, r * 1.2);
+  }
+
+  // 3. A roof of leaves (or snowy pine tops) overhead.
+  for (let s = from; s < to; s += rand(6, 10)) {
+    const r = rand(3, 5);
+    if (snow) add(GEO.cone, kit.leaves[0], rand(-6, 6), rand(11, 14), s, r, r * 1.2, r);
+    else add(GEO.canopy, leaf(), rand(-6, 6), rand(10.5, 13.5), s, r, r * 0.55, r);
+  }
+
+  // 4. Sunbeams slanting down through the gaps.
+  for (let s = from + rand(4, 12); s < to; s += rand(16, 26)) {
+    const sideBeam = Math.random() < 0.5 ? -1 : 1;
+    const beam = add(GEO.beam, SUNBEAM, sideBeam * rand(0.5, 4), 6, s, rand(1.2, 2.4), 18, 1);
+    beam.rotation.z = sideBeam * 0.32;
+    beam.rotation.y = rand(-0.4, 0.4);
+    beam.receiveShadow = false;
   }
 }
 
@@ -631,7 +722,9 @@ export interface RunnerModel {
 }
 
 export function makeCharacterModel(character: 'lumberjack' | 'squirrel'): RunnerModel {
-  return character === 'squirrel' ? makeSquirrelModel() : makeLumberjackModel();
+  const model = character === 'squirrel' ? makeSquirrelModel() : makeLumberjackModel();
+  outline(model.root);
+  return model;
 }
 
 type PartFn = (m: THREE.Material, parent: THREE.Object3D, geo: THREE.BufferGeometry, x: number, y: number, z: number, sx: number, sy: number, sz: number) => THREE.Mesh;

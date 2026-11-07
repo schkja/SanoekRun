@@ -22,18 +22,22 @@ import { TUNING, speedAt } from './tuning';
 import { WORLDS, distanceOfWorld, route, type WorldDef } from './worlds';
 import { animateSegment, setCollectible } from './visuals';
 import { Sparkles } from './sparkles';
+import { setOutlines } from './toon';
 import {
-  CHARACTER_LABELS,
+  CHARACTERS,
   DEFAULT_SETTINGS,
-  EFFECT_LABELS,
+  EFFECT_KEYS,
   GAME_NAME,
-  MUSIC_LABELS,
+  LANGUAGE_CHOICES,
+  MUSIC_STYLES,
   settings,
   updateSettings,
   type Character,
-  type Effects,
-  type MusicStyle,
 } from './settings';
+import { LANGUAGE_NAMES, formatNumber, language, setLanguage, t, type StringKey } from '../i18n';
+
+/** A world's name in the current language. */
+const worldName = (w: WorldDef) => t(`world.${w.id}` as StringKey);
 
 type Phase = 'title' | 'playing' | 'paused' | 'dying' | 'over';
 
@@ -81,7 +85,8 @@ export class Game {
   private deathTimer = 0;
   private deathTitle = '';
   private world: WorldDef = WORLDS[0];
-  private furthestWorld = WORLDS[0].name;
+  private furthestWorld: WorldDef = WORLDS[0];
+  private caught = false;
   private coinStreak = 0;
   private lastCoinTime = -10;
   private bufferedTurn: { dir: TurnDir; t: number } | null = null;
@@ -100,6 +105,8 @@ export class Game {
     this.menus = new Menus(uiContainer);
     this.music = new Music(this.audio);
     this.audio.setMuted(!settings.sound);
+    setLanguage(settings.language);
+    setOutlines(settings.effects.outlines);
 
     this.engine.scene.add(this.track.root, this.runner.model.root, this.chaser.root, this.sparkles.root);
     this.input.setPauseHandler(() => this.togglePause());
@@ -133,24 +140,21 @@ export class Game {
     this.phase = 'title';
     this.hud.setVisible(false);
     this.menus.show({
-      eyebrow: 'An endless runner',
+      eyebrow: t('title.eyebrow'),
       title: GAME_NAME,
-      body: isTouch()
-        ? 'Swipe left or right to turn at corners and switch lanes. Swipe up to jump, down to slide. Don’t let it catch you.'
-        : 'Arrow keys or WASD: left and right turn at corners and switch lanes, up jumps, down slides. You can also drag with the mouse. Don’t let it catch you.',
-      badge: this.best.distance > 0 ? `Your best: ${Math.floor(this.best.distance)} m` : undefined,
+      body: isTouch() ? t('title.bodyTouch') : t('title.bodyKeys'),
+      badge: this.best.distance > 0 ? t('title.best', { m: this.best.distance }) : undefined,
       buttons: [
-        { label: 'Run', primary: true, onClick: () => this.newRun() },
+        { label: t('button.run'), primary: true, onClick: () => this.newRun() },
         {
-          label: `Play as: ${CHARACTER_LABELS[settings.character]}`,
+          label: t('button.playAs', { name: t(`character.${settings.character}`) }),
           onClick: () => {
-            const all = Object.keys(CHARACTER_LABELS) as Character[];
-            updateSettings((s) => (s.character = all[(all.indexOf(s.character) + 1) % all.length]));
+            updateSettings((s) => (s.character = next(CHARACTERS, s.character)));
             this.prepareTrack();
             this.showTitle();
           },
         },
-        { label: 'Settings', onClick: () => this.showSettings(() => this.showTitle()) },
+        { label: t('button.settings'), onClick: () => this.showSettings(() => this.showTitle()) },
       ],
     });
   }
@@ -166,8 +170,9 @@ export class Game {
     this.character = settings.character;
   }
 
-  private get collectibleName(): string {
-    return settings.character === 'squirrel' ? 'nuts' : 'coins';
+  /** "Coins" or "Nuts" in the current language, for stat rows. */
+  private get collectibleLabel(): string {
+    return settings.character === 'squirrel' ? t('stat.nuts') : t('stat.coins');
   }
 
   /** Build a fresh track with the runner standing at the start. */
@@ -202,7 +207,8 @@ export class Game {
     this.coinStreak = 0;
     this.hintedKinds.clear();
     this.turnHints = 0;
-    this.furthestWorld = this.world.name;
+    this.furthestWorld = this.world;
+    this.caught = false;
 
     this.input.clear();
     this.hud.reset();
@@ -210,9 +216,9 @@ export class Game {
     this.phase = 'playing';
     this.audio.play('start');
     this.menus.show({
-      eyebrow: `World ${this.track.first.worldNumber}`,
-      title: this.world.name,
-      body: 'Run!',
+      eyebrow: t('intro.world', { n: this.track.first.worldNumber }),
+      title: worldName(this.world),
+      body: t('intro.run'),
       variant: 'is-intro',
       autoHideMs: 1600,
     });
@@ -230,15 +236,15 @@ export class Game {
 
   private showPauseMenu(): void {
     this.menus.show({
-      title: 'Paused',
+      title: t('pause.title'),
       stats: [
-        ['Distance', `${Math.floor(this.distance)} m`],
-        [capitalise(this.collectibleName), String(this.coins)],
+        [t('stat.distance'), `${formatNumber(this.distance)} ${t('hud.unit')}`],
+        [this.collectibleLabel, formatNumber(this.coins)],
       ],
       buttons: [
-        { label: 'Resume', primary: true, onClick: () => this.resume() },
-        { label: 'Settings', onClick: () => this.showSettings(() => this.showPauseMenu()) },
-        { label: 'Quit to title', onClick: () => { this.prepareTrack(); this.showTitle(); } },
+        { label: t('button.resume'), primary: true, onClick: () => this.resume() },
+        { label: t('button.settings'), onClick: () => this.showSettings(() => this.showPauseMenu()) },
+        { label: t('button.quit'), onClick: () => { this.prepareTrack(); this.showTitle(); } },
       ],
     });
   }
@@ -250,60 +256,73 @@ export class Game {
   private showSettings(back: () => void): void {
     const inRun = this.phase === 'paused';
     const redraw = () => this.showSettings(back);
-    const characters = Object.keys(CHARACTER_LABELS) as Character[];
-    const styles = Object.keys(MUSIC_LABELS) as MusicStyle[];
-    const next = <T,>(list: T[], current: T) => list[(list.indexOf(current) + 1) % list.length];
+    const onOff = (on: boolean) => (on ? t('settings.on') : t('settings.off'));
+    const languageLabel =
+      settings.language === 'auto' ? t('settings.auto', { value: LANGUAGE_NAMES[language()] }) : LANGUAGE_NAMES[settings.language];
 
     const buttons: MenuButton[] = [
       {
-        label: `Character: ${CHARACTER_LABELS[settings.character]}`,
+        label: t('settings.language', { value: languageLabel }),
         onClick: () => {
-          updateSettings((s) => (s.character = next(characters, s.character)));
+          updateSettings((s) => (s.language = next(LANGUAGE_CHOICES, s.language)));
+          setLanguage(settings.language);
+          this.hud.relabel();
+          redraw();
+        },
+      },
+      {
+        label: t('settings.character', { value: t(`character.${settings.character}`) }),
+        onClick: () => {
+          updateSettings((s) => (s.character = next(CHARACTERS, s.character)));
           // On the title screen, show the new character straight away.
           if (!inRun) this.prepareTrack();
           redraw();
         },
       },
       {
-        label: `Music: ${MUSIC_LABELS[settings.music]}`,
+        label: t('settings.music', { value: t(`music.${settings.music}`) }),
         onClick: () => {
-          updateSettings((s) => (s.music = next(styles, s.music)));
+          updateSettings((s) => (s.music = next(MUSIC_STYLES, s.music)));
           this.audio.unlock();
           this.music.play(settings.music);
           redraw();
         },
       },
       {
-        label: `Sound: ${settings.sound ? 'on' : 'off'}`,
+        label: t('settings.sound', { value: onOff(settings.sound) }),
         onClick: () => {
           updateSettings((s) => (s.sound = !s.sound));
           this.audio.setMuted(!settings.sound);
           redraw();
         },
       },
-      ...(Object.keys(EFFECT_LABELS) as Array<keyof Effects>).map((key) => ({
-        label: `${EFFECT_LABELS[key]}: ${settings.effects[key] ? 'on' : 'off'}`,
+      ...EFFECT_KEYS.map((key) => ({
+        label: `${t(`effect.${key}`)}: ${onOff(settings.effects[key])}`,
         onClick: () => {
           updateSettings((s) => (s.effects[key] = !s.effects[key]));
+          setOutlines(settings.effects.outlines);
           redraw();
         },
       })),
       {
-        label: 'Reset to defaults',
+        label: t('button.reset'),
         onClick: () => {
           updateSettings((s) => Object.assign(s, structuredClone(DEFAULT_SETTINGS)));
           this.audio.setMuted(!settings.sound);
           this.music.play(settings.music);
+          setLanguage(settings.language);
+          setOutlines(settings.effects.outlines);
+          this.hud.relabel();
           if (!inRun) this.prepareTrack();
           redraw();
         },
       },
-      { label: 'Back', primary: true, onClick: back },
+      { label: t('button.back'), primary: true, onClick: back },
     ];
 
     this.menus.show({
-      title: 'Settings',
-      body: inRun && settings.character !== this.character ? 'The new character joins from your next run.' : undefined,
+      title: t('settings.title'),
+      body: inRun && settings.character !== this.character ? t('settings.nextRun') : undefined,
       variant: 'is-settings',
       buttons,
     });
@@ -330,17 +349,17 @@ export class Game {
     saveBest(this.best);
 
     let badge: string;
-    if (newBest && previousBest > 0) badge = 'New best distance';
-    else if (newBest) badge = 'Your first run';
-    else if (previousBest - distance <= 150) badge = `Only ${previousBest - distance} m from your best`;
-    else badge = `Your best: ${previousBest} m`;
+    if (newBest && previousBest > 0) badge = t('over.newBest');
+    else if (newBest) badge = t('over.firstRun');
+    else if (previousBest - distance <= 150) badge = t('over.near', { m: previousBest - distance });
+    else badge = t('over.best', { m: previousBest });
 
     // Snapshot the final frame for the share card while it's still on screen.
     this.lastRun = {
       distance,
       coins: this.coins,
-      collectibleName: this.collectibleName,
-      world: this.furthestWorld,
+      collectible: settings.character === 'squirrel' ? 'nuts' : 'coins',
+      world: worldName(this.furthestWorld),
       newBest: newBest && previousBest > 0,
     };
     this.engine.render();
@@ -352,21 +371,21 @@ export class Game {
   private showRunOverMenu(badge: string): void {
     const distance = Math.floor(this.distance);
     this.menus.show({
-      eyebrow: 'Run over',
+      eyebrow: t('over.eyebrow'),
       title: this.deathTitle,
-      hero: `${distance} m`,
+      hero: `${formatNumber(distance)} ${t('hud.unit')}`,
       badge,
       stats: [
-        ['Score', Math.floor(this.score).toLocaleString('en-US')],
-        [capitalise(this.collectibleName), String(this.coins)],
-        ['Furthest world', this.furthestWorld],
+        [t('stat.score'), formatNumber(this.score)],
+        [this.collectibleLabel, formatNumber(this.coins)],
+        [t('stat.furthest'), worldName(this.furthestWorld)],
       ],
       body: this.shareStatus || undefined,
       variant: 'is-over',
       buttons: [
-        { label: 'Play again', primary: true, onClick: () => this.newRun() },
-        { label: 'Share your run', onClick: () => void this.share(badge) },
-        { label: 'Main menu', onClick: () => { this.prepareTrack(); this.showTitle(); } },
+        { label: t('button.playAgain'), primary: true, onClick: () => this.newRun() },
+        { label: t('button.share'), onClick: () => void this.share(badge) },
+        { label: t('button.mainMenu'), onClick: () => { this.prepareTrack(); this.showTitle(); } },
       ],
     });
   }
@@ -375,10 +394,10 @@ export class Game {
     if (!this.shareCard || !this.lastRun) return;
     const result = await shareRun(this.shareCard, this.lastRun);
     this.shareStatus = {
-      shared: 'Shared. Good luck to whoever tries to beat it.',
-      downloaded: 'Picture saved. Post it anywhere you like.',
+      shared: t('over.shared'),
+      downloaded: t('over.saved'),
       cancelled: '',
-      failed: 'Sharing didn’t work on this device.',
+      failed: t('over.shareFailed'),
     }[result];
     if (this.phase === 'over') this.showRunOverMenu(badge);
   }
@@ -467,14 +486,14 @@ export class Game {
 
     if (r.falling && r.y < -1) {
       const decor = this.world.decor;
-      this.die(decor === 'lava' ? 'Into the lava' : decor === 'jungle' ? 'Into the abyss' : 'Fell out of the treetops', false);
+      this.die(t(decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : 'death.trees'), false);
     }
   }
 
   private stepDying(dt: number): void {
     this.deathTimer -= dt;
     this.runner.update(dt, this.runner.speed, this.track);
-    if (this.deathTitle === this.world.caughtBy) this.chaser.gap += (0.6 - this.chaser.gap) * Math.min(1, dt * 10);
+    if (this.caught) this.chaser.gap += (0.6 - this.chaser.gap) * Math.min(1, dt * 10);
     this.chaser.update(dt, this.track, this.runner.seg, this.runner.s, this.runner.speed);
     if (this.deathTimer <= 0) this.showRunOver();
   }
@@ -532,7 +551,7 @@ export class Game {
       this.multiplier = Math.min(TUNING.score.maxMultiplier, this.multiplier + 1);
       const points = TUNING.score.perfectTurn * this.multiplier;
       this.score += points;
-      this.hud.toast(`Perfect turn +${points}`, 'green');
+      this.hud.toast(t('toast.perfect', { p: points }), 'green');
       this.audio.play('perfect');
     } else {
       this.score += TUNING.score.goodTurn * this.multiplier;
@@ -577,7 +596,7 @@ export class Game {
         if (o.closeCall && !o.hit && !r.falling) {
           const points = TUNING.score.closeCall * this.multiplier;
           this.score += points;
-          this.hud.toast(`Close call +${points}`, 'gold');
+          this.hud.toast(t('toast.close', { p: points }), 'gold');
           this.audio.play('close');
           if (settings.effects.slowMotion) this.slowTimer = 0.32;
           if (settings.effects.screenFlash) this.hud.flash('white', 0.35);
@@ -612,14 +631,15 @@ export class Game {
     vibrate(this.danger > 0 ? 300 : 120);
 
     if (this.danger > 0) {
-      this.die(this.world.caughtBy, true);
+      this.caught = true;
+      this.die(t(`caught.${this.world.chaser}`), true);
       return;
     }
     this.danger = TUNING.chaser.dangerTime;
     this.multiplier = 1;
     this.runner.stumble();
     this.audio.play('stumble');
-    this.hud.toast('Watch out!', 'red');
+    this.hud.toast(t('toast.watchOut'), 'red');
   }
 
   private die(title: string, caught: boolean): void {
@@ -666,17 +686,17 @@ export class Game {
     if (seg.portalAt === null || seg.portalPassed || this.runner.s < seg.portalAt) return;
     seg.portalPassed = true;
     this.setWorld(seg.world);
-    this.furthestWorld = seg.world.name;
+    this.furthestWorld = seg.world;
 
     const bonus = 250 * this.multiplier;
     this.score += bonus;
     if (settings.effects.speedZoom) this.engine.kickFov(16);
     if (settings.effects.screenFlash) this.hud.flash('white');
-    this.hud.toast(`New world +${bonus}`, 'white');
+    this.hud.toast(t('toast.newWorld', { p: bonus }), 'white');
     this.audio.play('portal');
     this.menus.show({
-      eyebrow: `World ${seg.worldNumber}`,
-      title: seg.world.name,
+      eyebrow: t('intro.world', { n: seg.worldNumber }),
+      title: worldName(seg.world),
       variant: 'is-intro',
       autoHideMs: 1600,
     });
@@ -717,8 +737,10 @@ export class Game {
     const touch = isTouch();
 
     if (this.turnHints < 2 && this.nearTurn() && r.s < r.seg.length - TUNING.pathWidth / 2) {
-      const side = r.seg.turn === 1 ? 'right' : 'left';
-      this.showHint(touch ? `Swipe ${side} to turn` : `Press ${side} to turn`);
+      const right = r.seg.turn === 1;
+      this.showHint(
+        t(right ? (touch ? 'hint.turnRightTouch' : 'hint.turnRightKeys') : touch ? 'hint.turnLeftTouch' : 'hint.turnLeftKeys'),
+      );
       this.turnHints++;
       return;
     }
@@ -731,10 +753,10 @@ export class Game {
       if (this.hintedKinds.has(o.kind)) continue;
       this.hintedKinds.add(o.kind);
       const text = {
-        low: touch ? 'Swipe up to jump' : 'Press up to jump',
-        gap: touch ? 'Swipe up to jump the gap' : 'Press up to jump the gap',
-        high: touch ? 'Swipe down to slide' : 'Press down to slide',
-        block: touch ? 'Swipe left or right to dodge' : 'Press left or right to dodge',
+        low: t(touch ? 'hint.jumpTouch' : 'hint.jumpKeys'),
+        gap: t(touch ? 'hint.gapTouch' : 'hint.gapKeys'),
+        high: t(touch ? 'hint.slideTouch' : 'hint.slideKeys'),
+        block: t(touch ? 'hint.dodgeTouch' : 'hint.dodgeKeys'),
       }[o.kind];
       this.showHint(text);
       break;
@@ -747,8 +769,8 @@ export class Game {
   }
 }
 
-function capitalise(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
+function next<T>(list: T[], current: T): T {
+  return list[(list.indexOf(current) + 1) % list.length];
 }
 
 function loadBest(): Best {

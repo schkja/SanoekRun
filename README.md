@@ -108,6 +108,18 @@ Their choices are saved on their device. The defaults come from environment
 variables at build time — copy `.env.example` to `.env` and change any line.
 `VITE_FX=off` turns every effect off at once, which is handy for debugging.
 
+## Look and languages
+
+Everything is drawn in a cartoon style: three-tone cel shading and dark ink
+outlines (`src/game/toon.ts`). The still scenery of each stretch of track is
+merged into a few meshes so the outlines stay cheap on phones. Players can turn
+the outlines off in Settings.
+
+The game speaks English, German, Russian, Ukrainian and Spanish. It starts in
+the phone or browser language and can be changed in Settings. Every text lives
+in `src/i18n/strings.ts`; to add a language, copy the English block and
+translate it.
+
 ## Share card
 
 At the end of a run, **Share your run** makes a 1080×1350 picture (the last

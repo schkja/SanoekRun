@@ -17,6 +17,7 @@ import * as THREE from 'three';
 import type { ChaserKind } from './worlds';
 import { TUNING } from './tuning';
 import { headingYaw, type Segment, type Track } from './track';
+import { outline, toon } from './toon';
 
 interface Body {
   root: THREE.Group;
@@ -43,7 +44,10 @@ export class Chaser {
       snowball: buildSnowball(),
       lava: buildLavaWave(),
     };
-    for (const body of Object.values(this.bodies)) this.root.add(body.root);
+    for (const body of Object.values(this.bodies)) {
+      outline(body.root);
+      this.root.add(body.root);
+    }
     this.setKind('monster');
   }
 
@@ -94,7 +98,7 @@ const part: PartFn = (geo, m, parent, x, y, z, sx, sy, sz) => {
   return mesh;
 };
 
-const mat = (color: string) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true });
+const mat = (color: string) => toon(color);
 const BOX = new THREE.BoxGeometry(1, 1, 1);
 const SPHERE = new THREE.SphereGeometry(0.5, 14, 10);
 
@@ -194,7 +198,7 @@ function buildSnowball(): Body {
   const ball = new THREE.Group();
   ball.position.y = 1.6;
   root.add(ball);
-  const snow = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.7, flatShading: true });
+  const snow = toon('#ffffff');
   const sticks = mat('#6b4a35');
   part(new THREE.IcosahedronGeometry(1, 1), snow, ball, 0, 0, 0, 1.75, 1.7, 1.75);
   // Twigs and pine needles caught in the snow, so you can see it roll.
@@ -214,7 +218,7 @@ function buildLavaWave(): Body {
   const width = TUNING.pathWidth + 2.5;
   const hot = new THREE.MeshBasicMaterial({ color: '#ff6a2a' });
   const bright = new THREE.MeshBasicMaterial({ color: '#ffc04a' });
-  const crust = new THREE.MeshStandardMaterial({ color: '#7a1e0a', roughness: 1, flatShading: true });
+  const crust = toon('#7a1e0a');
 
   // A low rolling wave rather than a tall wall, so you can still see yourself.
   const front = new THREE.Mesh(new THREE.BoxGeometry(width, 3.4, 1.4), hot);
