@@ -240,6 +240,9 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 ### 6.10d Music
 `src/core/music.ts` is a small Web Audio studio (no files): compressor bus, convolver reverb (generated impulse), dotted-eighth echo. Instruments: detuned-saw pads through a low-pass, round sine+triangle bass, FM marimba pluck (sine carrier, 4× modulator with fast-decaying depth) for melody and arpeggio, soft kick, clap, hats. `SONGS` (exported for previews): `chase` (A minor, Am F C G, 124 bpm), `hop` (C major, C G Am F, 112 bpm, swung), `menu` (Fmaj7 Em7 Dm7 Cmaj7, 80 bpm, no drums). Each is 4 bars: chords, bass per bar with a rhythm, 64-step melody. Layers 1 pads+kick, 2 bass, 3 drums+arpeggio, 4 melody. The owner found the old square-wave music too "80s" but liked its energy and the build-up; a calm pads-and-marimba version was rejected as "makes me fall asleep". Keep it energetic: chase 150 bpm four-on-the-floor with supersaw hook and pumping pads, hop 132 bpm bouncy marimba, menu 104 bpm. Preview: import the module in the dev server and render with an `OfflineAudioContext` to WAV.
 
+### 6.10e Sound effects
+`src/core/audio.ts` synthesises all effects (`synth()`): FM bells (`bell`), gliding tones (`tone`, optional wobble), band-pass noise `whoosh`, low `thud`. Coin = two-note chime, acorn (`audio.collect = 'acorn'`, set in `applyCharacter`) = wooden tok-tok; streaks climb a pentatonic scale. Files in `public/sounds/` listed in `SOUND_FILES` still override. Owner approved the set after an MP3 preview (render with `OfflineAudioContext` by importing the module in the dev server).
+
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
 - Anything decorative must stand on something: the squirrel hollow needs the giant corner trunk (trail and branch worlds both build one).

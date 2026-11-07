@@ -457,6 +457,7 @@ export class Game {
   private applyCharacter(): void {
     setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
     this.hud.setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
+    this.audio.collect = settings.character === 'squirrel' ? 'acorn' : 'coin';
     const outfit = outfitFor(settings.character);
     if (this.character === settings.character && this.outfit === outfit) return;
     this.engine.scene.remove(this.runner.model.root);
