@@ -15,6 +15,7 @@ import { Hud } from '../ui/hud';
 import { Menus } from '../ui/menus';
 import { SpeedLines } from '../ui/speed-lines';
 import { PORTRAITS } from '../ui/portraits';
+import { outfitIcon } from '../ui/outfit-icons';
 import { drawShareCard, shareRun, type RunSummary } from '../ui/share-card';
 import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
@@ -24,6 +25,9 @@ import { WORLDS, distanceOfWorld, route, type WorldDef } from './worlds';
 import { animateSegment, setCollectible } from './visuals';
 import { Sparkles } from './sparkles';
 import { setOutlines } from './toon';
+import { OUTFITS, buyOrEquip, levelBonus, missionReward, outfitFor, profile, report, saveProfile, tryLevelUp, type Mission, type Stat } from './progress';
+import { fetchBoard, submitRun, type Period } from './leaderboard';
+import type { PowerupKind } from './track';
 import {
   CHARACTERS,
   DEFAULT_SETTINGS,
@@ -54,6 +58,13 @@ const TUTORIAL_RUNS = 2;
 
 const isTouch = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;
 
+/** True when the game was opened from its home-screen icon. */
+const isInstalled = () =>
+  (window.matchMedia?.('(display-mode: standalone)').matches || window.matchMedia?.('(display-mode: fullscreen)').matches) ??
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+const POWER_ICONS: Record<PowerupKind, string> = { magnet: '🧲', shield: '🛡️', double: '✖️2' };
+
 export class Game {
   private readonly engine: Engine;
   private readonly input: Input;
@@ -74,6 +85,17 @@ export class Game {
   private shareCard: HTMLCanvasElement | null = null;
   private shareStatus = '';
   private readonly scratch = new THREE.Vector3();
+  private outfit = '';
+  /** Seconds left on each power-up (the shield counts down too, but mostly waits for a hit). */
+  private powers: Record<PowerupKind, number> = { magnet: 0, shield: 0, double: 0 };
+  private readonly shieldBubble: THREE.Mesh;
+  private runTime = 0;
+  /** Distance at the last stumble, for "run without stumbling" missions. */
+  private cleanFrom = 0;
+  /** What the leaderboard said last time: is it there, and what distance makes the board. */
+  private board = { reachable: false, cutoff: 0 };
+  private rankLine = '';
+  private installPrompt: (Event & { prompt: () => Promise<void> }) | null = null;
 
   private phase: Phase = 'title';
   private distance = 0;
@@ -109,7 +131,19 @@ export class Game {
     setLanguage(settings.language);
     setOutlines(settings.effects.outlines);
 
-    this.engine.scene.add(this.track.root, this.runner.model.root, this.chaser.root, this.sparkles.root);
+    this.shieldBubble = new THREE.Mesh(
+      new THREE.SphereGeometry(1.25, 20, 14),
+      new THREE.MeshBasicMaterial({ color: '#7cc8ff', transparent: true, opacity: 0.28, depthWrite: false }),
+    );
+    this.shieldBubble.visible = false;
+    this.engine.scene.add(this.track.root, this.runner.model.root, this.chaser.root, this.sparkles.root, this.shieldBubble);
+
+    // Android and desktop Chrome offer a real "Install" prompt; keep it for our button.
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.installPrompt = e as Event & { prompt: () => Promise<void> };
+    });
+    void this.refreshBoard();
     this.input.setPauseHandler(() => this.togglePause());
 
     // Pause when the phone locks or the tab is hidden.
@@ -142,11 +176,16 @@ export class Game {
     this.hud.setVisible(false);
     // The chaser only shows up once you start running.
     this.chaser.root.visible = false;
+    const toTitle = () => this.showTitle();
     this.menus.show({
       eyebrow: t('title.eyebrow'),
       title: GAME_NAME,
       body: t(`story.${settings.character}`),
-      badge: this.best.distance > 0 ? t('title.best', { m: this.best.distance }) : undefined,
+      chips: [
+        t('chip.level', { n: profile.level }),
+        t('chip.bank', { n: profile.bank }),
+        ...(this.best.distance > 0 ? [t('title.best', { m: this.best.distance })] : []),
+      ],
       choicesTitle: t('title.choose'),
       choices: CHARACTERS.map((c) => ({
         label: t(`character.${c}`),
@@ -160,12 +199,122 @@ export class Game {
           this.showTitle();
         },
       })),
-      buttons: [
-        { label: t('button.run'), primary: true, onClick: () => this.newRun() },
-        { label: t('button.settings'), onClick: () => this.showSettings(() => this.showTitle()) },
+      buttons: [{ label: t('button.run'), primary: true, onClick: () => this.newRun() }],
+      toolbar: [
+        { label: t('tool.records'), onClick: () => void this.showRecords('all', toTitle) },
+        { label: t('tool.missions'), onClick: () => this.showMissions(toTitle) },
+        { label: t('tool.shop'), onClick: () => this.showShop(toTitle) },
+        { label: t('tool.settings'), onClick: () => this.showSettings(toTitle) },
+        ...(isInstalled() ? [] : [{ label: t('tool.install'), onClick: () => void this.install(toTitle) }]),
       ],
       note: isTouch() ? undefined : t('title.keys'),
       variant: 'is-title',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Records, missions, shop, install
+  // ---------------------------------------------------------------------------
+
+  private async refreshBoard(): Promise<void> {
+    const board = await fetchBoard('all', profile.device);
+    this.board = board ? { reachable: true, cutoff: board.cutoff } : { reachable: false, cutoff: 0 };
+  }
+
+  private async showRecords(period: Period, back: () => void): Promise<void> {
+    const tabs = [
+      { label: `${period === 'all' ? '● ' : ''}${t('records.all')}`, onClick: () => void this.showRecords('all', back) },
+      { label: `${period === 'today' ? '● ' : ''}${t('records.today')}`, onClick: () => void this.showRecords('today', back) },
+    ];
+    const frame = (body: string | undefined, rows: Array<{ label: string; value: string; selected: boolean }>) =>
+      this.menus.show({
+        title: t('records.title'),
+        variant: 'is-settings',
+        toolbar: tabs,
+        body,
+        sections: rows.length ? [{ rows: rows.map((r) => ({ ...r, onClick: () => undefined })) }] : undefined,
+        buttons: [{ label: t('button.back'), primary: true, onClick: back }],
+      });
+    frame(t('records.loading'), []);
+    const board = await fetchBoard(period, profile.device);
+    if (!board) return frame(t('records.offline'), []);
+    this.board = period === 'all' ? { reachable: true, cutoff: board.cutoff } : { ...this.board, reachable: true };
+    if (!board.entries.length) return frame(t('records.empty'), []);
+    const medal = (rank: number) => ['🥇', '🥈', '🥉'][rank - 1] ?? `${rank}.`;
+    frame(
+      undefined,
+      board.entries.map((e) => ({
+        label: `${medal(e.rank)} ${e.character === 'squirrel' ? '🐿️' : '🪓'} ${e.name}`,
+        value: `${formatNumber(e.distance)} ${t('hud.unit')}`,
+        selected: e.mine,
+      })),
+    );
+  }
+
+  private missionRows(): Array<{ label: string; value?: string; selected: boolean }> {
+    return profile.missions.map((m: Mission) => ({
+      label: t(`mission.${m.stat}` as StringKey, { n: m.target }),
+      value: m.done ? undefined : `${formatNumber(m.progress)} / ${formatNumber(m.target)}`,
+      selected: m.done,
+    }));
+  }
+
+  private showMissions(back: () => void): void {
+    this.menus.show({
+      title: t('missions.title'),
+      chips: [t('chip.level', { n: profile.level }), t('chip.bank', { n: profile.bank })],
+      variant: 'is-settings',
+      sections: [{ rows: this.missionRows() }],
+      note: t('missions.reward', { n: missionReward(profile.level), b: levelBonus(profile.level) }),
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
+    });
+  }
+
+  private showShop(back: () => void, message?: string): void {
+    const c = settings.character;
+    this.menus.show({
+      title: t('shop.title'),
+      chips: [t('shop.bank', { n: profile.bank })],
+      body: message ?? t('shop.hint'),
+      variant: 'is-shop',
+      choices: OUTFITS.filter((o) => o.character === c).map((o) => {
+        const owned = profile.owned.includes(o.id);
+        const wearing = profile.equipped[c] === o.id;
+        return {
+          label: t(`outfit.${o.id}` as StringKey),
+          caption: wearing ? t('shop.wearing') : owned ? t('shop.wear') : t('shop.price', { n: o.price }),
+          art: outfitIcon(o.id),
+          selected: wearing,
+          onClick: () => {
+            const result = buyOrEquip(o);
+            if (result === 'too-expensive') return this.showShop(back, t('shop.tooExpensive'));
+            if (result === 'bought') this.audio.play('perfect');
+            this.prepareTrack();
+            this.showShop(back, result === 'bought' ? t('shop.bought') : undefined);
+          },
+        };
+      }),
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
+    });
+  }
+
+  /** Install to the home screen: the browser's own prompt where there is one, otherwise how-to steps. */
+  private async install(back: () => void): Promise<void> {
+    if (this.installPrompt) {
+      await this.installPrompt.prompt();
+      this.installPrompt = null;
+      return back();
+    }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const step = (label: string) => ({ label, onClick: () => undefined });
+    const ios_ = { title: t('install.iosTitle'), rows: [step(t('install.ios1')), step(t('install.ios2')), step(t('install.ios3'))] };
+    const android = { title: t('install.androidTitle'), rows: [step(t('install.android1')), step(t('install.android2'))] };
+    this.menus.show({
+      title: t('install.title'),
+      body: isInstalled() ? t('install.done') : t('install.body'),
+      variant: 'is-settings',
+      sections: ios ? [ios_, android] : [android, ios_],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
     });
   }
 
@@ -173,11 +322,13 @@ export class Game {
   private applyCharacter(): void {
     setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
     this.hud.setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
-    if (this.character === settings.character) return;
+    const outfit = outfitFor(settings.character);
+    if (this.character === settings.character && this.outfit === outfit) return;
     this.engine.scene.remove(this.runner.model.root);
-    this.runner.setCharacter(settings.character);
+    this.runner.setCharacter(settings.character, outfit);
     this.engine.scene.add(this.runner.model.root);
     this.character = settings.character;
+    this.outfit = outfit;
   }
 
   /** "Coins" or "Nuts" in the current language, for stat rows. */
@@ -219,6 +370,10 @@ export class Game {
     this.turnHints = 0;
     this.furthestWorld = this.world;
     this.caught = false;
+    this.powers = { magnet: 0, shield: 0, double: 0 };
+    this.runTime = 0;
+    this.cleanFrom = 0;
+    this.rankLine = '';
 
     this.input.clear();
     this.hud.reset();
@@ -247,6 +402,7 @@ export class Game {
   private showPauseMenu(): void {
     this.menus.show({
       title: t('pause.title'),
+      body: window.matchMedia('(pointer: fine)').matches ? t('pause.keys') : undefined,
       stats: [
         [t('stat.distance'), `${formatNumber(this.distance)} ${t('hud.unit')}`],
         [this.collectibleLabel, formatNumber(this.coins)],
@@ -383,6 +539,8 @@ export class Game {
     this.phase = 'over';
     this.hud.setVisible(false);
     this.hud.hint(null);
+    this.hud.setPowers([]);
+    this.shieldBubble.visible = false;
 
     const distance = Math.floor(this.distance);
     const previousBest = Math.floor(this.best.distance);
@@ -392,24 +550,75 @@ export class Game {
     this.best.score = Math.max(this.best.score, Math.floor(this.score));
     saveBest(this.best);
 
+    // Progress: the coins go in the bank, run missions are checked, maybe a level up.
+    profile.bank += this.coins;
+    this.reportMissions('runDistance', distance);
+    this.reportMissions('runCoins', this.coins);
+    this.reportMissions('runNoHit', Math.floor(this.distance - this.cleanFrom));
+    this.reportMissions('runs', 1);
+    const level = tryLevelUp();
+    saveProfile();
+
     let badge: string;
-    if (newBest && previousBest > 0) badge = t('over.newBest');
+    if (level) badge = t('level.up', { n: level, b: levelBonus(level - 1) });
+    else if (newBest && previousBest > 0) badge = t('over.newBest');
     else if (newBest) badge = t('over.firstRun');
     else if (previousBest - distance <= 150) badge = t('over.near', { m: previousBest - distance });
     else badge = t('over.best', { m: previousBest });
 
     // Snapshot the final frame for the share card while it's still on screen.
-    this.lastRun = {
+    const run: RunSummary = {
       distance,
       coins: this.coins,
       collectible: settings.character === 'squirrel' ? 'nuts' : 'coins',
+      character: settings.character,
       world: worldName(this.furthestWorld),
       newBest: newBest && previousBest > 0,
     };
+    this.lastRun = run;
     this.engine.render();
-    this.shareCard = drawShareCard(this.lastRun, this.engine.renderer.domElement);
+    const snapshot = document.createElement('canvas');
+    const source = this.engine.renderer.domElement;
+    snapshot.width = source.width;
+    snapshot.height = source.height;
+    snapshot.getContext('2d')?.drawImage(source, 0, 0);
+    this.shareCard = null;
+    void drawShareCard(run, snapshot).then((card) => (this.shareCard = card));
     this.shareStatus = '';
-    this.showRunOverMenu(badge);
+
+    // Made the leaderboard? Ask for a name first.
+    if (this.board.reachable && distance >= Math.max(50, this.board.cutoff)) this.askName(badge);
+    else this.showRunOverMenu(badge);
+  }
+
+  private askName(badge: string, error?: string): void {
+    const run = { distance: Math.floor(this.distance), coins: this.coins, durationMs: Math.round(this.runTime * 1000) };
+    this.menus.show({
+      eyebrow: `${formatNumber(run.distance)} ${t('hud.unit')}`,
+      title: t('name.title'),
+      body: t('name.body'),
+      input: { placeholder: t('name.placeholder'), value: profile.name, maxLength: 12, error },
+      buttons: [
+        {
+          label: t('name.save'),
+          primary: true,
+          onClick: async () => {
+            const name = this.menus.inputValue.trim();
+            if (!name) return this.askName(badge, t('name.invalid'));
+            const result = await submitRun({ ...run, name, character: settings.character, device: profile.device });
+            if (!result.ok && result.error === 'name') return this.askName(badge, t('name.invalid'));
+            if (!result.ok) return this.askName(badge, t('name.failed'));
+            profile.name = name;
+            saveProfile();
+            this.rankLine = t('over.rank', { all: result.rank ?? 0, today: result.rankToday ?? 0 });
+            void this.refreshBoard();
+            this.audio.play('perfect');
+            this.showRunOverMenu(badge);
+          },
+        },
+        { label: t('name.skip'), onClick: () => this.showRunOverMenu(badge) },
+      ],
+    });
   }
 
   private showRunOverMenu(badge: string): void {
@@ -419,11 +628,13 @@ export class Game {
       title: this.deathTitle,
       hero: `${formatNumber(distance)} ${t('hud.unit')}`,
       badge,
+      chips: this.rankLine ? [`🏆 ${this.rankLine}`] : undefined,
       stats: [
         [t('stat.score'), formatNumber(this.score)],
-        [this.collectibleLabel, formatNumber(this.coins)],
+        [this.collectibleLabel, `${formatNumber(this.coins)} → 🪙 ${formatNumber(profile.bank)}`],
         [t('stat.furthest'), worldName(this.furthestWorld)],
       ],
+      sections: [{ title: t('missions.title'), rows: this.missionRows() }],
       body: this.shareStatus || undefined,
       variant: 'is-over',
       buttons: [
@@ -435,8 +646,9 @@ export class Game {
   }
 
   private async share(badge: string): Promise<void> {
-    if (!this.shareCard || !this.lastRun) return;
-    const result = await shareRun(this.shareCard, this.lastRun);
+    if (!this.lastRun) return;
+    const card = this.shareCard ?? (await drawShareCard(this.lastRun, null));
+    const result = await shareRun(card, this.lastRun);
     this.shareStatus = {
       shared: t('over.shared'),
       downloaded: t('over.saved'),
@@ -444,6 +656,14 @@ export class Game {
       failed: t('over.shareFailed'),
     }[result];
     if (this.phase === 'over') this.showRunOverMenu(badge);
+  }
+
+  /** Count progress towards missions, and celebrate any that just finished. */
+  private reportMissions(stat: Stat, value: number): void {
+    for (const _ of report(stat, value)) {
+      if (this.phase === 'playing') this.hud.toast(t('mission.done', { n: missionReward(profile.level) }), 'gold');
+      this.audio.play('perfect');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -507,6 +727,7 @@ export class Game {
       multiplier: this.multiplier,
       danger: this.danger / TUNING.chaser.dangerTime,
     });
+    this.showPowers();
   }
 
   private tick(dt: number): void {
@@ -522,8 +743,12 @@ export class Game {
       if (this.tryTurn(this.bufferedTurn.dir) || this.bufferedTurn.t <= 0) this.bufferedTurn = null;
     }
 
+    this.runTime += dt;
+    for (const kind of Object.keys(this.powers) as PowerupKind[]) this.powers[kind] = Math.max(0, this.powers[kind] - dt);
+
     this.checkObstacles();
     this.checkCoins();
+    this.checkPowerups();
     this.checkPortal();
     this.updateChaser(dt);
     this.updateHints(dt);
@@ -561,10 +786,12 @@ export class Game {
       }
     } else if (action === 'up') {
       if (r.jump()) {
+        this.reportMissions('jumps', 1);
         this.markCloseCall('jump', r.lane);
         this.audio.play('jump');
       }
     } else if (r.slide()) {
+      this.reportMissions('slides', 1);
       this.markCloseCall('slide', r.lane);
       this.audio.play('slide');
     }
@@ -592,6 +819,7 @@ export class Game {
     if (settings.effects.turnTilt) this.engine.tilt(dir, perfect ? 0.12 : 0.08);
 
     if (perfect) {
+      this.reportMissions('perfects', 1);
       this.multiplier = Math.min(TUNING.score.maxMultiplier, this.multiplier + 1);
       const points = TUNING.score.perfectTurn * this.multiplier;
       this.score += points;
@@ -643,6 +871,7 @@ export class Game {
           this.hud.toast(t('toast.close', { p: points }), 'gold');
           this.audio.play('close');
           if (settings.effects.slowMotion) this.slowTimer = 0.32;
+          this.reportMissions('closeCalls', 1);
           if (settings.effects.screenFlash) this.hud.flash('white', 0.35);
         }
         continue;
@@ -670,6 +899,15 @@ export class Game {
   private stumble(o: Obstacle): void {
     o.hit = true;
     if (o.object) o.object.visible = false;
+    if (this.powers.shield > 0) {
+      // The shield takes the hit instead of you.
+      this.powers.shield = 0;
+      this.hud.toast(t('power.saved'), 'white');
+      if (settings.effects.screenFlash) this.hud.flash('white', 0.5);
+      this.audio.play('close');
+      return;
+    }
+    this.cleanFrom = this.distance;
     if (settings.effects.cameraShake) this.engine.addShake(0.6);
     if (settings.effects.screenFlash) this.hud.flash('red');
     vibrate(this.danger > 0 ? 300 : 120);
@@ -705,9 +943,13 @@ export class Game {
   private checkCoins(): void {
     const r = this.runner;
     const centre = r.y + 0.9;
+    const magnet = this.powers.magnet > 0;
     for (const c of r.seg.coins) {
       if (c.taken) continue;
-      if (Math.abs(c.s - r.s) > 0.9 || Math.abs(c.x - r.x) > 0.85 || Math.abs(c.y - centre) > 1.15) continue;
+      const touching = Math.abs(c.s - r.s) <= 0.9 && Math.abs(c.x - r.x) <= 0.85 && Math.abs(c.y - centre) <= 1.15;
+      // The magnet pulls in everything just ahead, in every lane.
+      const pulled = magnet && c.s - r.s > -1 && c.s - r.s < TUNING.powerup.magnetReach;
+      if (!touching && !pulled) continue;
       c.taken = true;
       if (c.object) c.object.visible = false;
       if (settings.effects.coinSparkle) {
@@ -715,8 +957,9 @@ export class Game {
         at.y = c.y;
         this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : '#ffd23f');
       }
-      this.coins += 1;
-      this.score += TUNING.score.coin * this.multiplier;
+      const worth = this.powers.double > 0 ? 2 : 1;
+      this.coins += worth;
+      this.score += TUNING.score.coin * this.multiplier * worth;
 
       // Coins collected in quick succession climb in pitch — a little reward loop.
       this.coinStreak = this.time - this.lastCoinTime < 0.45 ? this.coinStreak + 1 : 0;
@@ -725,10 +968,47 @@ export class Game {
     }
   }
 
+  private checkPowerups(): void {
+    const r = this.runner;
+    for (const p of r.seg.powerups) {
+      if (p.taken || Math.abs(p.s - r.s) > 1 || Math.abs(p.x - r.x) > 0.95 || r.y > 2.2) continue;
+      p.taken = true;
+      if (p.object) p.object.visible = false;
+      const P = TUNING.powerup;
+      this.powers[p.kind] = p.kind === 'magnet' ? P.magnetTime : p.kind === 'double' ? P.doubleTime : P.shieldTime;
+      this.hud.toast(t(`power.${p.kind}`), 'white');
+      this.audio.play('perfect');
+      this.reportMissions('powerups', 1);
+      if (settings.effects.coinSparkle) {
+        const at = this.track.position(r.seg, p.s, p.x, this.scratch);
+        at.y = 1.1;
+        this.sparkles.burst(at, '#7cc8ff', 14);
+      }
+    }
+  }
+
+  /** Power-up badges in the HUD and the bubble around you while the shield is up. */
+  private showPowers(): void {
+    const P = TUNING.powerup;
+    const full: Record<PowerupKind, number> = { magnet: P.magnetTime, shield: P.shieldTime, double: P.doubleTime };
+    this.hud.setPowers(
+      (Object.keys(this.powers) as PowerupKind[])
+        .filter((k) => this.powers[k] > 0)
+        .map((k) => ({ icon: POWER_ICONS[k], left: this.powers[k] / full[k] })),
+    );
+    this.shieldBubble.visible = this.powers.shield > 0 && this.phase === 'playing';
+    if (this.shieldBubble.visible) {
+      this.shieldBubble.position.copy(this.runner.visual);
+      this.shieldBubble.position.y += 1;
+      this.shieldBubble.scale.setScalar(1 + Math.sin(this.time * 6) * 0.04);
+    }
+  }
+
   private checkPortal(): void {
     const seg = this.runner.seg;
     if (seg.portalAt === null || seg.portalPassed || this.runner.s < seg.portalAt) return;
     seg.portalPassed = true;
+    this.reportMissions('runWorlds', seg.worldNumber);
     this.setWorld(seg.world);
     this.furthestWorld = seg.world;
 

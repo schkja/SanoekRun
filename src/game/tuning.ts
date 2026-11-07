@@ -65,6 +65,15 @@ export const TUNING = {
     gapLengthEasy: 2.8,
     gapLengthHard: 4.2,
   },
+  /** Chance that a stretch of track has a power-up on it. */
+  powerupChance: 0.4,
+  powerup: {
+    magnetTime: 10,
+    doubleTime: 10,
+    /** The shield lasts until it saves you once, or this long. */
+    shieldTime: 20,
+    magnetReach: 7,
+  },
   /** Metres of track kept built ahead of the runner. */
   lookahead: 170,
 

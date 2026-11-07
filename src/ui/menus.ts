@@ -5,6 +5,19 @@
  * new screen is a matter of calling `show()` with different content.
  */
 
+import { ACORN_URL } from './logo';
+
+/**
+ * The game's name gets its logo treatment: the dots over the ö are acorns.
+ * Every other title (and every other ö, e.g. in German) stays plain text.
+ */
+function titleHtml(title: string): string {
+  const safe = escapeHtml(title);
+  if (!/^Sanök/.test(title)) return safe;
+  const acorn = `<img src="${ACORN_URL}" alt="" draggable="false">`;
+  return safe.replace('ö', `<span class="acorn-o" aria-label="ö">o<span class="acorn-dots" aria-hidden="true">${acorn}${acorn}</span></span>`);
+}
+
 export interface MenuButton {
   label: string;
   onClick: () => void;
@@ -23,7 +36,8 @@ export interface MenuRow {
   selected?: boolean;
   /** A second, smaller line under the label. */
   hint?: string;
-  onClick: () => void;
+  /** Leave out for a read-only row (no chevron, not tappable). */
+  onClick?: () => void;
 }
 
 export interface MenuSection {
@@ -56,7 +70,13 @@ export interface MenuScreen {
   choicesTitle?: string;
   choices?: MenuChoice[];
   sections?: MenuSection[];
+  /** Small chips in a row, e.g. level and coins. */
+  chips?: string[];
+  /** A text field, e.g. for a nickname. Read it with `menus.inputValue`. */
+  input?: { placeholder: string; value: string; maxLength: number; error?: string };
   buttons?: MenuButton[];
+  /** Compact icon buttons in a row under the main buttons. */
+  toolbar?: MenuButton[];
   /** Small print under everything, e.g. keyboard controls. */
   note?: string;
   /** Extra class for per-screen colour, e.g. 'is-gameover'. */
@@ -86,14 +106,17 @@ export class Menus {
     this.root.innerHTML = `
       <div class="menu-card">
         ${screen.eyebrow ? `<p class="menu-eyebrow">${escapeHtml(screen.eyebrow)}</p>` : ''}
-        <h1 class="menu-title">${escapeHtml(screen.title)}</h1>
+        <h1 class="menu-title">${titleHtml(screen.title)}</h1>
         ${screen.hero ? `<p class="menu-hero">${escapeHtml(screen.hero)}</p>` : ''}
         ${screen.badge ? `<p class="menu-badge">${escapeHtml(screen.badge)}</p>` : ''}
         ${screen.body ? `<p class="menu-body">${escapeHtml(screen.body)}</p>` : ''}
+        ${screen.chips?.length ? `<div class="menu-chips">${screen.chips.map((c) => `<span class="menu-chip">${escapeHtml(c)}</span>`).join('')}</div>` : ''}
         ${renderStats(screen.stats)}
+        ${screen.input ? `<input class="menu-input" id="menu-input" type="text" autocomplete="nickname" enterkeyhint="done" maxlength="${screen.input.maxLength}" placeholder="${escapeHtml(screen.input.placeholder)}" value="${escapeHtml(screen.input.value)}" />${screen.input.error ? `<p class="menu-error">${escapeHtml(screen.input.error)}</p>` : ''}` : ''}
         ${screen.choices?.length ? `${screen.choicesTitle ? `<p class="menu-label">${escapeHtml(screen.choicesTitle)}</p>` : ''}<div class="menu-choices"></div>` : ''}
         ${screen.sections?.length ? '<div class="menu-sections"></div>' : ''}
         <div class="menu-buttons"></div>
+        ${screen.toolbar?.length ? '<div class="menu-toolbar"></div>' : ''}
         ${screen.note ? `<p class="menu-note">${escapeHtml(screen.note)}</p>` : ''}
       </div>
     `;
@@ -123,8 +146,8 @@ export class Menus {
       const list = document.createElement('div');
       list.className = 'menu-rows';
       for (const row of section.rows) {
-        const el = document.createElement('button');
-        el.className = `menu-row${row.selected ? ' is-selected' : ''}`;
+        const el = document.createElement(row.onClick ? 'button' : 'div');
+        el.className = `menu-row${row.selected ? ' is-selected' : ''}${row.onClick ? '' : ' is-static'}`;
         if (row.toggle !== undefined) {
           el.setAttribute('role', 'switch');
           el.setAttribute('aria-checked', String(row.toggle));
@@ -134,11 +157,11 @@ export class Menus {
             <span class="menu-row-label">${escapeHtml(row.label)}</span>
             ${row.hint ? `<span class="menu-row-hint">${escapeHtml(row.hint)}</span>` : ''}
           </span>
-          ${row.value !== undefined ? `<span class="menu-row-value">${escapeHtml(row.value)}<span class="menu-row-chevron" aria-hidden="true">›</span></span>` : ''}
+          ${row.value !== undefined ? `<span class="menu-row-value">${escapeHtml(row.value)}${row.onClick ? '<span class="menu-row-chevron" aria-hidden="true">›</span>' : ''}</span>` : ''}
           ${row.toggle !== undefined ? `<span class="menu-switch${row.toggle ? ' is-on' : ''}" aria-hidden="true"><span></span></span>` : ''}
           ${row.selected ? '<span class="menu-row-check" aria-hidden="true">✓</span>' : ''}
         `;
-        el.addEventListener('click', () => row.onClick());
+        if (row.onClick) el.addEventListener('click', () => row.onClick?.());
         list.appendChild(el);
       }
       sectionList?.appendChild(list);
@@ -154,12 +177,34 @@ export class Menus {
     }
     if (!screen.buttons?.length) buttonRow.remove();
 
-    // Focus the primary action so Enter and Space work without a mouse.
-    this.root.querySelector<HTMLButtonElement>('.menu-button.is-primary')?.focus({ preventScroll: true });
+    const toolbar = this.root.querySelector<HTMLElement>('.menu-toolbar');
+    for (const button of screen.toolbar ?? []) {
+      const el = document.createElement('button');
+      el.className = 'menu-tool';
+      el.textContent = button.label;
+      el.addEventListener('click', () => button.onClick());
+      toolbar?.appendChild(el);
+    }
+
+    // Enter in the text field presses the main button.
+    const field = this.root.querySelector<HTMLInputElement>('#menu-input');
+    field?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.root.querySelector<HTMLButtonElement>('.menu-button.is-primary')?.click();
+    });
+
+    // Focus the text field if there is one, otherwise the main button, so the
+    // keyboard works without a mouse.
+    if (field) field.focus({ preventScroll: true });
+    else this.root.querySelector<HTMLButtonElement>('.menu-button.is-primary')?.focus({ preventScroll: true });
 
     if (screen.autoHideMs) {
       this.hideTimer = window.setTimeout(() => this.hide(), screen.autoHideMs);
     }
+  }
+
+  /** The text in the screen's input field. */
+  get inputValue(): string {
+    return this.root.querySelector<HTMLInputElement>('#menu-input')?.value ?? '';
   }
 
   hide(): void {

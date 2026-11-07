@@ -71,6 +71,16 @@ export interface Coin {
   object: THREE.Object3D | null;
 }
 
+export type PowerupKind = 'magnet' | 'shield' | 'double';
+
+export interface Powerup {
+  kind: PowerupKind;
+  s: number;
+  x: number;
+  taken: boolean;
+  object: THREE.Object3D | null;
+}
+
 export interface Segment {
   index: number;
   /** Centre of the corner this segment starts from (y = 0, the running surface). */
@@ -89,6 +99,7 @@ export interface Segment {
   floor: Array<[number, number]>;
   obstacles: Obstacle[];
   coins: Coin[];
+  powerups: Powerup[];
   /** Where the portal into this world stands, if this segment opens a new world. */
   portalAt: number | null;
   portalPassed: boolean;
@@ -173,6 +184,7 @@ export class Track {
     seg.group = null;
     for (const o of seg.obstacles) o.object = null;
     for (const c of seg.coins) c.object = null;
+    for (const p of seg.powerups) p.object = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -210,6 +222,7 @@ export class Track {
       floor: [],
       obstacles: [],
       coins: [],
+      powerups: [],
       portalAt,
       portalPassed: false,
       group: null,
@@ -218,6 +231,7 @@ export class Track {
     this.placeObstacles(seg, first);
     this.buildFloor(seg, first);
     this.placeCoins(seg);
+    this.placePowerup(seg);
 
     this.segments.push(seg);
     seg.group = buildSegmentMesh(seg);
@@ -279,6 +293,22 @@ export class Track {
     seg.floor.push([from, seg.length + W / 2]);
   }
 
+  /** Now and then, a power-up in an open stretch between obstacles. */
+  private placePowerup(seg: Segment): void {
+    if (seg.index < 2 || Math.random() > TUNING.powerupChance) return;
+    const stops = [T0(seg), ...seg.obstacles.map((o) => o.s1 + 3)];
+    const ends = [...seg.obstacles.map((o) => o.s0 - 3), seg.length - TUNING.pathWidth / 2 - 4];
+    const spots = stops.map((a, i) => [a, ends[i]] as const).filter(([a, b]) => b - a > 6);
+    if (!spots.length) return;
+    const [a, b] = spots[Math.floor(Math.random() * spots.length)];
+    const s = (a + b) / 2;
+    const x = (Math.floor(Math.random() * 3) - 1) * TUNING.laneOffset;
+    // Don't bury it in a line of coins.
+    seg.coins = seg.coins.filter((c) => !(Math.abs(c.s - s) < 2 && Math.abs(c.x - x) < 0.5));
+    const kinds: PowerupKind[] = ['magnet', 'shield', 'double'];
+    seg.powerups.push({ kind: kinds[Math.floor(Math.random() * kinds.length)], s, x, taken: false, object: null });
+  }
+
   private placeCoins(seg: Segment): void {
     const T = TUNING;
     const lane = (i: number) => (i - 1) * T.laneOffset;
@@ -325,6 +355,13 @@ export class Track {
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
+
+/** Where obstacles may start after a corner on this segment. */
+function T0(seg: Segment): number {
+  return seg.index === 0 ? 12 : TUNING.segment.clearAfterTurn;
+}
+
+
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;

@@ -225,6 +225,37 @@ body {
   }
 }
 
+/* Active power-ups: round badges whose ring drains as time runs out. */
+.hud-powers {
+  position: absolute;
+  right: var(--safe-side);
+  top: calc(var(--safe-top) + 62px);
+  display: flex;
+  gap: 8px;
+}
+
+.hud-power {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: conic-gradient(var(--sun) calc(var(--left) * 360deg), var(--paper) 0);
+  box-shadow: 0 3px 0 var(--ink);
+  animation: value-pop 0.35s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
+
+.hud-power span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: var(--paper);
+  border-radius: 50%;
+}
+
 /* The chaser meter: only visible while it's on your heels. */
 .hud-danger {
   position: absolute;
@@ -653,6 +684,97 @@ body {
   color: #7a88a6;
 }
 
+/* Chips (level, coins), the text field, and the small toolbar buttons. */
+.menu-chips {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.menu-chip {
+  padding: 4px 12px 5px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  background: var(--paper-2);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+}
+
+.menu-input {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: var(--outline);
+  border-radius: var(--radius);
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.menu-input:focus {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 4px rgba(79, 184, 255, 0.35);
+}
+
+.menu-error {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--berry);
+}
+
+.menu-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.menu-tool {
+  padding: 8px 4px 9px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.15;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer;
+}
+
+.menu-tool:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+/* Shop cards: a big emoji instead of a portrait. */
+.menu-choice-art .emoji-art {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  font-size: 40px;
+  background: #ffffff;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+
+.menu.is-shop .menu-choices {
+  grid-template-columns: 1fr 1fr;
+}
+
+.menu-choice.is-locked {
+  opacity: 0.6;
+}
+
 /* Settings: grouped lists with switches, like a phone's own settings. */
 .menu.is-settings .menu-card {
   max-height: calc(100% - 20px);
@@ -843,4 +965,39 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+/* The logo ö: two little acorns instead of dots. */
+.acorn-o {
+  position: relative;
+  display: inline-block;
+}
+.acorn-dots {
+  position: absolute;
+  left: 50%;
+  top: -0.06em;
+  display: flex;
+  gap: 0.02em;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.acorn-dots img {
+  width: 0.36em;
+  height: auto;
+  filter: drop-shadow(0 2px 0 rgba(31, 42, 68, 0.35));
+}
+.acorn-dots img:last-child {
+  transform: rotate(14deg);
+}
+.acorn-dots img:first-child {
+  transform: rotate(-12deg);
+}
+
+.menu-row.is-static {
+  cursor: default;
+}
+.outfit-art {
+  display: block;
+  width: 100%;
+  height: 100%;
 }

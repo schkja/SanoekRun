@@ -1,107 +1,189 @@
 /**
- * Share card: a picture of your run, sized for Instagram (4:5), stories and
- * WhatsApp. It uses a snapshot of the game's last frame as the background,
- * then prints the distance, the world you reached and a challenge.
+ * The share picture: a tall 9:16 image made for TikTok, Instagram Stories and
+ * WhatsApp status.
+ *
+ * Built like a comic panel: the last frame of your run as the background, a
+ * yellow "BOOM" burst behind your distance, your hero's face, and a challenge
+ * at the bottom. The big number is the thing people scroll past and stop for.
  *
  * On phones, `shareRun` opens the system share sheet with the image attached.
  * Where that isn't possible (most desktops), it downloads the image instead.
  */
 
-import { GAME_NAME, SHARE_URL } from '../game/settings';
+import { GAME_NAME, SHARE_URL, type Character } from '../game/settings';
 import { formatNumber, t } from '../i18n';
+import { PORTRAITS } from './portraits';
+import { ICON_SVG, svgImage } from './logo';
 
 export interface RunSummary {
   distance: number;
   coins: number;
   /** What the character collects. */
   collectible: 'coins' | 'nuts';
+  character: Character;
   world: string;
   newBest: boolean;
 }
 
 const W = 1080;
-const H = 1350;
+const H = 1920;
+const INK = '#1f2a44';
 const FONT = "'Lilita One', 'Rubik', 'Trebuchet MS', system-ui, sans-serif";
 
-export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | null): HTMLCanvasElement {
+export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement | null): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const g = canvas.getContext('2d')!;
-
-  g.fillStyle = '#123b2e';
-  g.fillRect(0, 0, W, H);
-
-  // The game's last frame, cropped to fill the card.
-  if (snapshot) {
-    const src = snapshot as HTMLCanvasElement;
-    const sw = src.width || W;
-    const sh = src.height || H;
-    const scale = Math.max(W / sw, H / sh);
-    const dw = sw * scale;
-    const dh = sh * scale;
-    try {
-      g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh);
-    } catch {
-      // A blank snapshot just leaves the plain background.
-    }
+  const [portrait, icon] = await Promise.all([svgImage(PORTRAITS[run.character]), svgImage(ICON_SVG)]);
+  try {
+    await document.fonts?.load(`80px 'Lilita One'`);
+  } catch {
+    // Drawn with the fallback font then.
   }
 
-  // Darken the top and bottom so the text always reads.
+  // Background: the last frame of the run, cropped to fill, or a sky.
+  const sky = g.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#4fb8ff');
+  sky.addColorStop(1, '#bfe9ff');
+  g.fillStyle = sky;
+  g.fillRect(0, 0, W, H);
+  if (snapshot && snapshot.width) {
+    const scale = Math.max(W / snapshot.width, H / snapshot.height);
+    const dw = snapshot.width * scale;
+    const dh = snapshot.height * scale;
+    g.drawImage(snapshot, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
   const shade = g.createLinearGradient(0, 0, 0, H);
-  shade.addColorStop(0, 'rgba(8, 10, 20, 0.82)');
-  shade.addColorStop(0.42, 'rgba(8, 10, 20, 0.15)');
-  shade.addColorStop(0.62, 'rgba(8, 10, 20, 0.2)');
-  shade.addColorStop(1, 'rgba(8, 10, 20, 0.9)');
+  shade.addColorStop(0, 'rgba(20, 30, 60, 0.55)');
+  shade.addColorStop(0.3, 'rgba(20, 30, 60, 0.1)');
+  shade.addColorStop(0.62, 'rgba(20, 30, 60, 0.15)');
+  shade.addColorStop(1, 'rgba(20, 30, 60, 0.75)');
   g.fillStyle = shade;
   g.fillRect(0, 0, W, H);
 
+  // Top: icon and name.
+  if (icon) g.drawImage(icon, 70, 90, 150, 150);
+  g.textAlign = 'left';
+  outlined(g, GAME_NAME, 250, 195, 96, '#ffc93c', 16);
+
+  // The burst behind the number.
+  burst(g, W / 2, 820, 470, 340, 18);
   g.textAlign = 'center';
-  g.textBaseline = 'alphabetic';
+  outlined(g, t(`share.headline.${run.character}`), W / 2, 640, fitSize(g, t(`share.headline.${run.character}`), 64, W - 160), '#ffffff', 12);
+  const number = `${formatNumber(run.distance)} ${t('hud.unit')}`;
+  outlined(g, number, W / 2, 880, fitSize(g, number, 220, W - 200), '#ffffff', 24);
 
-  pill(g, W / 2, 110, GAME_NAME, '#5ce1a0', '#04342c', 44);
+  // The hero, tilted, peeking in from the side.
+  if (portrait) {
+    g.save();
+    g.translate(W / 2, 1335);
+    g.rotate(0.08);
+    g.fillStyle = '#ffffff';
+    g.strokeStyle = INK;
+    g.lineWidth = 14;
+    g.beginPath();
+    g.arc(0, 0, 170, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.drawImage(portrait, -160, -160, 320, 320);
+    g.restore();
+  }
 
-  g.fillStyle = '#ffffff';
-  g.font = `190px ${FONT}`;
-  g.fillText(`${formatNumber(run.distance)} ${t('hud.unit')}`, W / 2, 360);
+  // What happened.
+  g.textAlign = 'center';
+  const items = t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins');
+  const line = t('share.reached', { world: run.world, n: run.coins, items });
+  outlined(g, line, W / 2, 1110, fitSize(g, line, 60, W - 160), '#ffc93c', 12);
+  if (run.newBest) sticker(g, W / 2 + 230, 1230, t('share.newBest'), '#ff5c7a', 0.12);
 
-  g.font = `52px ${FONT}`;
-  g.fillStyle = '#ffd23f';
-  fitText(g, t('share.reached', { world: run.world, n: run.coins, items: t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins') }), W / 2, 440, W - 80, 52);
-
-  if (run.newBest) pill(g, W / 2, 530, t('share.newBest'), '#ff5c7a', '#ffffff', 38);
-
-  pill(g, W / 2, H - 230, t('share.challenge'), '#ffd23f', '#3a2a00', 64);
-  g.font = `42px ${FONT}`;
-  g.fillStyle = '#ffffff';
-  g.fillText(SHARE_URL.replace(/^https?:\/\//, ''), W / 2, H - 110);
+  // The challenge.
+  g.textAlign = 'center';
+  pill(g, W / 2, 1600, t('share.challenge'), '#4fd07a', '#ffffff', 84);
+  outlined(g, SHARE_URL.replace(/^https?:\/\//, ''), W / 2, 1760, fitSize(g, SHARE_URL, 46, W - 120), '#ffffff', 8);
 
   return canvas;
 }
 
-/** Draw a line of text, shrinking it until it fits the width. */
-function fitText(g: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, size: number): void {
-  let s = size;
-  g.font = `${s}px ${FONT}`;
-  while (g.measureText(text).width > maxWidth && s > 24) {
-    s -= 2;
-    g.font = `${s}px ${FONT}`;
-  }
+/** Text with a thick cartoon outline. */
+function outlined(g: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, fill: string, stroke: number): void {
+  g.font = `${size}px ${FONT}`;
+  g.lineJoin = 'round';
+  g.lineWidth = stroke;
+  g.strokeStyle = INK;
+  g.strokeText(text, x, y);
+  g.fillStyle = fill;
   g.fillText(text, x, y);
 }
 
+function fitSize(g: CanvasRenderingContext2D, text: string, size: number, maxWidth: number): number {
+  let s = size;
+  g.font = `${s}px ${FONT}`;
+  while (g.measureText(text).width > maxWidth && s > 24) {
+    s -= 4;
+    g.font = `${s}px ${FONT}`;
+  }
+  return s;
+}
+
+/** A spiky comic "BOOM" shape. */
+function burst(g: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, spikes: number): void {
+  g.beginPath();
+  for (let i = 0; i <= spikes * 2; i++) {
+    const a = (i / (spikes * 2)) * Math.PI * 2;
+    const k = i % 2 === 0 ? 1 : 0.72;
+    const x = cx + Math.cos(a) * rx * k;
+    const y = cy + Math.sin(a) * ry * k;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.closePath();
+  g.fillStyle = '#ffc93c';
+  g.fill();
+  g.lineWidth = 16;
+  g.lineJoin = 'round';
+  g.strokeStyle = INK;
+  g.stroke();
+}
+
 function pill(g: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, fg: string, size: number): void {
-  g.font = `${size}px ${FONT}`;
-  const width = g.measureText(text).width + size * 1.3;
-  const height = size * 1.7;
+  const s = fitSize(g, text, size, W - 260);
+  g.font = `${s}px ${FONT}`;
+  const width = g.measureText(text).width + s * 1.4;
+  const height = s * 1.7;
+  g.fillStyle = INK;
+  g.beginPath();
+  g.roundRect(x - width / 2, y - height / 2 + 14, width, height, height / 2);
+  g.fill();
   g.fillStyle = bg;
+  g.lineWidth = 12;
+  g.strokeStyle = INK;
   g.beginPath();
   g.roundRect(x - width / 2, y - height / 2, width, height, height / 2);
   g.fill();
-  g.fillStyle = fg;
+  g.stroke();
   g.textBaseline = 'middle';
-  g.fillText(text, x, y + size * 0.05);
+  outlined(g, text, x, y + s * 0.05, s, fg, 10);
   g.textBaseline = 'alphabetic';
+}
+
+function sticker(g: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, angle: number): void {
+  g.save();
+  g.translate(x, y);
+  g.rotate(angle);
+  g.font = `48px ${FONT}`;
+  const width = g.measureText(text).width + 60;
+  g.fillStyle = bg;
+  g.strokeStyle = INK;
+  g.lineWidth = 10;
+  g.beginPath();
+  g.roundRect(-width / 2, -42, width, 84, 20);
+  g.fill();
+  g.stroke();
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  outlined(g, text, 0, 4, 48, '#ffffff', 8);
+  g.restore();
 }
 
 export type ShareResult = 'shared' | 'downloaded' | 'cancelled' | 'failed';
