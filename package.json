@@ -1,14 +1,15 @@
 {
-  "name": "arcade-template",
+  "name": "sanoekrun",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "A data-driven 3D arcade platformer template built with Three.js, Vite and TypeScript.",
+  "description": "Sanoek Run \u2014 an endless Temple Run style runner built with Three.js, Vite and TypeScript.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:single": "vite build --mode single"
   },
   "dependencies": {
     "three": "^0.186.0"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@types/three": "^0.186.0",
     "typescript": "^5.9.3",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vite-plugin-singlefile": "^2.3.4"
   }
 }
