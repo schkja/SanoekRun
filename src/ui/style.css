@@ -49,18 +49,30 @@ body {
   touch-action: none;
 }
 
+/* Full screen, sized by CSS. On an iPhone home-screen app with a translucent
+   status bar, window.innerHeight and inset: 0 come up short by the status bar
+   height, which left a strip of page background at the bottom. 100lvh is the
+   real screen height there (100vh is the fallback for older browsers). */
+#game,
+#ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
+}
+
 #game canvas {
   display: block;
-  position: fixed;
-  inset: 0;
+  width: 100%;
+  height: 100%;
   touch-action: none;
 }
 
 /* The UI layer sits above the canvas but lets swipes through by default;
    individual controls opt back in with pointer-events: auto. */
 #ui {
-  position: fixed;
-  inset: 0;
   pointer-events: none;
   z-index: 10;
 }
@@ -428,7 +440,8 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
   background: rgba(20, 50, 80, 0.28);
   pointer-events: auto;
   animation: fade-in 0.2s ease-out;
