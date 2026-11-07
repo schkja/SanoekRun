@@ -25,7 +25,7 @@ import { WORLDS, distanceOfWorld, route, type WorldDef } from './worlds';
 import { animateSegment, setCollectible } from './visuals';
 import { Sparkles } from './sparkles';
 import { setOutlines } from './toon';
-import { OUTFITS, buyOrEquip, levelBonus, missionReward, outfitFor, profile, report, saveProfile, tryLevelUp, type Mission, type Stat } from './progress';
+import { OUTFITS, buyOrEquip, levelBonus, missionReward, outfitFor, profile, report, saveProfile, markReached, tryLevelUp, type Mission, type Stat } from './progress';
 import { fetchBoard, submitRun, type Period } from './leaderboard';
 import type { PowerupKind } from './track';
 import {
@@ -95,6 +95,7 @@ export class Game {
   /** What the leaderboard said last time: is it there, and what distance makes the board. */
   private board = { reachable: false, cutoff: 0 };
   private rankLine = '';
+  private portalsThisRun = 0;
   private installPrompt: (Event & { prompt: () => Promise<void> }) | null = null;
 
   private phase: Phase = 'title';
@@ -199,6 +200,9 @@ export class Game {
           this.showTitle();
         },
       })),
+      sections: this.unlockedWorlds().length > 1
+        ? [{ rows: [{ label: t('start.label'), value: worldName(this.startWorld()), onClick: () => this.showWorldPicker(toTitle) }] }]
+        : undefined,
       buttons: [{ label: t('button.run'), primary: true, onClick: () => this.newRun() }],
       toolbar: [
         { label: t('tool.records'), onClick: () => void this.showRecords('all', toTitle) },
@@ -209,6 +213,58 @@ export class Game {
       ],
       note: isTouch() ? undefined : t('title.keys'),
       variant: 'is-title',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Start world: once a hero reaches a world, runs can start there.
+
+  private unlockedWorlds(): WorldDef[] {
+    const worlds = route(settings.character);
+    const reached = profile.reached[settings.character];
+    return worlds.filter((w, i) => i === 0 || reached.includes(w.id));
+  }
+
+  private startWorld(): WorldDef {
+    const id = profile.startWorld[settings.character];
+    return this.unlockedWorlds().find((w) => w.id === id) ?? route(settings.character)[0];
+  }
+
+  /** The world id to start in, or null for the start of the route. */
+  private startWorldId(): string | null {
+    const world = this.startWorld();
+    return world === route(settings.character)[0] ? null : world.id;
+  }
+
+  private showWorldPicker(back: () => void): void {
+    const unlocked = this.unlockedWorlds();
+    const current = this.startWorld();
+    this.menus.show({
+      title: t('start.title'),
+      body: t('start.body'),
+      variant: 'is-settings',
+      sections: [
+        {
+          rows: route(settings.character).map((w, i) => {
+            const open = unlocked.includes(w);
+            return {
+              label: `${i + 1}. ${worldName(w)}`,
+              hint: open ? undefined : t('start.locked'),
+              selected: w === current,
+              value: open ? undefined : '🔒',
+              onClick: open
+                ? () => {
+                    profile.startWorld[settings.character] = w.id;
+                    saveProfile();
+                    this.prepareTrack();
+                    back();
+                  }
+                : undefined,
+            };
+          }),
+        },
+      ],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
     });
   }
 
@@ -345,7 +401,7 @@ export class Game {
     // Each character runs its own route of worlds. `?world=snowy-pines` in the
     // address starts the run in a given world — handy for testing.
     const worlds = route(settings.character);
-    const startAt = new URLSearchParams(location.search).get('world');
+    const startAt = new URLSearchParams(location.search).get('world') ?? this.startWorldId();
     this.track.reset(worlds, startAt ? distanceOfWorld(worlds, startAt) : 0);
     this.runner.reset(this.track, this.track.first);
     this.runner.frozen = true;
@@ -369,6 +425,7 @@ export class Game {
     this.hintedKinds.clear();
     this.turnHints = 0;
     this.furthestWorld = this.world;
+    this.portalsThisRun = 0;
     this.caught = false;
     this.powers = { magnet: 0, shield: 0, double: 0 };
     this.runTime = 0;
@@ -1008,7 +1065,11 @@ export class Game {
     const seg = this.runner.seg;
     if (seg.portalAt === null || seg.portalPassed || this.runner.s < seg.portalAt) return;
     seg.portalPassed = true;
-    this.reportMissions('runWorlds', seg.worldNumber);
+    // "Reach world N in one run" counts worlds from where this run started.
+    this.portalsThisRun++;
+    this.reportMissions('runWorlds', this.portalsThisRun + 1);
+    const unlocked = markReached(settings.character, seg.world.id);
+    if (unlocked) window.setTimeout(() => this.hud.toast(t('toast.unlocked'), 'green'), 900);
     this.setWorld(seg.world);
     this.furthestWorld = seg.world;
 

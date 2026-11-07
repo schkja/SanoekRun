@@ -45,8 +45,8 @@ const GEO = {
   portal: new THREE.TorusGeometry(2.9, 0.26, 10, 40),
   portalDisc: new THREE.CircleGeometry(2.75, 40),
   beam: new THREE.PlaneGeometry(1, 1),
-  /** Half a disc: a shelf mushroom growing out of bark, flat side against the tree. */
-  shelf: new THREE.CylinderGeometry(1, 1, 1, 14, 1, false, 0, Math.PI),
+  /** The top half of a sphere: a mushroom cap. */
+  dome: new THREE.SphereGeometry(0.5, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2),
 };
 
 /** Soft shafts of sunlight slanting through the leaves. */
@@ -125,6 +125,7 @@ interface Kit {
   snow: Mat;
   ice: Mat;
   mushroom: Mat;
+  gills: Mat;
   white: Mat;
   carrot: Mat;
   dark: Mat;
@@ -159,6 +160,7 @@ function kitFor(world: WorldDef): Kit {
     snow: std('#ffffff', { roughness: 0.6 }),
     ice: std('#bfe8ff', { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.9, flatShading: false }),
     mushroom: std('#ff4d4d', { flatShading: false, roughness: 0.5 }),
+    gills: std('#ffe7c2', { flatShading: false }),
     white: std('#fff8f0', { flatShading: false }),
     carrot: std('#ff8a1e'),
     dark: std('#2b2b3d'),
@@ -500,7 +502,14 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
         case 'branch': {
           // Clouds of leaves along the branch, some hanging overhead.
           if (Math.random() < 0.25) add(GEO.blob, leaf(), out(rand(1.5, 4)), rand(5.5, 7.5), s, 2.6, 1.6, 2.4);
-          if (Math.random() < 0.15) {
+          if (Math.random() < 0.22) {
+            // A little family of toadstools on the mossy shoulder of the branch.
+            const n = 2 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < n; i++) {
+              const size = i === 0 ? 1 : rand(0.55, 0.8);
+              toadstool(add, kit, side * (W / 2 + 0.05 + i * 0.22), -0.12, s + (i - 1) * 0.42, size * 0.55, -side * 0.25);
+            }
+          } else if (Math.random() < 0.15) {
             // A twig growing out of the side of the branch, with two leaves at its tip.
             const angle = 0.6;
             const len = 1.5;
@@ -562,6 +571,19 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
  * trunks right beside the path, a roof of leaves overhead and sunbeams.
  * This is what makes it feel like running through the trees, not over a lake.
  */
+/** A small decorative toadstool, tilted by `lean` (radians around z). */
+function toadstool(add: AddFn, kit: Kit, x: number, y: number, s: number, size: number, lean: number): void {
+  const stemH = 0.9 * size;
+  const stem = add(GEO.trunk, kit.white, x, y + stemH / 2, s, 0.45 * size, stemH, 0.45 * size);
+  stem.rotation.z = lean;
+  const top = y + stemH;
+  const dx = -Math.sin(lean) * stemH;
+  add(GEO.cyl, kit.gills, x + dx, top + 0.02, s, 1.05 * size, 0.06 * size, 1.05 * size).rotation.z = lean;
+  add(GEO.dome, kit.mushroom, x + dx, top, s, 1.2 * size, 0.95 * size, 1.2 * size).rotation.z = lean;
+  add(GEO.sphere, kit.white, x + dx, top + 0.42 * size, s + 0.12 * size, 0.22 * size, 0.1 * size, 0.22 * size);
+  add(GEO.sphere, kit.white, x + dx + 0.28 * size, top + 0.25 * size, s + 0.2 * size, 0.16 * size, 0.08 * size, 0.16 * size);
+}
+
 function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
   const W = TUNING.pathWidth;
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -618,19 +640,6 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
         const arm = add(GEO.cyl, kit.trunk, x - side * 1.4, top - 3.5, s, 0.35, 3.2, 0.35);
         arm.rotation.z = side * 1.05;
         add(GEO.blob, leaf(), x - side * 2.8, top - 2.4, s, 2.2, 1.4, 2);
-      }
-      // Shelf mushrooms growing out of the bark on the path side: half discs
-      // with a pale rim, flat side sunk into the trunk, biggest at the bottom.
-      if (Math.random() < 0.5) {
-        const face = side < 0 ? 0 : Math.PI;
-        const bark = x - side * r * 0.62;
-        for (let i = 0; i < 3; i++) {
-          const size = 0.62 - i * 0.14;
-          const y = 1.2 + i * 0.5;
-          const dz = (i - 1) * 0.28;
-          add(GEO.shelf, kit.white, bark, y - 0.07, s + dz, size * 1.06, 0.1, size * 1.06).rotation.y = face;
-          add(GEO.shelf, kit.fungus, bark, y, s + dz, size, 0.14, size).rotation.y = face;
-        }
       }
     }
   }
@@ -789,12 +798,16 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
           end.castShadow = false;
         }
       } else if (d === 'branch') {
-        // A big spotty toadstool.
-        part(GEO.cyl, kit.white, x, 0.7, 0, 0.55, 1.4, 0.55);
-        const cap = part(GEO.sphere, kit.mushroom, x, 1.5, 0, 1.4, 0.9, 1.4);
+        // A big spotty toadstool: chubby stem, round red cap, cream rim, white spots.
+        part(GEO.trunk, kit.white, x, 0.65, 0, 0.85, 1.3, 0.85);
+        part(GEO.cyl, kit.gills, x, 1.24, 0, 1.5, 0.1, 1.5);
+        const cap = part(GEO.dome, kit.mushroom, x, 1.2, 0, 1.75, 1.45, 1.75);
         cap.castShadow = true;
-        for (const [dx, dy, dz] of [[-0.3, 1.78, 0.45], [0.32, 1.7, 0.5], [0, 1.92, 0.25], [-0.45, 1.6, 0.25]]) {
-          part(GEO.sphere, kit.white, x + dx, dy, dz, 0.2, 0.12, 0.2);
+        const a = 0.875;
+        const h = 0.725;
+        for (const [phi, theta, r] of [[0, 0, 0.3], [0.85, 1.57, 0.26], [0.95, 0.6, 0.22], [0.95, 2.55, 0.22], [0.55, 2.0, 0.18], [0.55, 1.1, 0.18], [1.2, 1.9, 0.16], [1.2, 1.2, 0.16]]) {
+          const spot = part(GEO.sphere, kit.white, x + a * Math.sin(phi) * Math.cos(theta), 1.2 + h * Math.cos(phi), a * Math.sin(phi) * Math.sin(theta), r, r * 0.45, r);
+          spot.rotation.set(Math.sin(phi) * Math.sin(theta) * 0.9, 0, -Math.sin(phi) * Math.cos(theta) * 0.9);
         }
       } else if (d === 'snow') {
         // A snowman.

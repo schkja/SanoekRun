@@ -91,6 +91,10 @@ export interface Profile {
   /** The nickname last used on the leaderboard. */
   name: string;
   device: string;
+  /** Worlds each hero has reached at least once: runs can start there. */
+  reached: Record<Character, string[]>;
+  /** Where each hero's next run starts (a world id), if not the first world. */
+  startWorld: Partial<Record<Character, string>>;
 }
 
 const KEY = 'sanoekrun.profile';
@@ -121,12 +125,20 @@ function load(): Profile {
     totals: {},
     name: '',
     device: randomId(),
+    reached: { lumberjack: [], squirrel: [] },
+    startWorld: {},
   };
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fresh;
     const saved = JSON.parse(raw) as Partial<Profile>;
-    return { ...fresh, ...saved, equipped: { ...fresh.equipped, ...(saved.equipped ?? {}) } };
+    return {
+      ...fresh,
+      ...saved,
+      equipped: { ...fresh.equipped, ...(saved.equipped ?? {}) },
+      reached: { ...fresh.reached, ...(saved.reached ?? {}) },
+      startWorld: { ...(saved.startWorld ?? {}) },
+    };
   } catch {
     return fresh;
   }
@@ -190,4 +202,13 @@ export function buyOrEquip(outfit: Outfit): BuyResult {
   profile.equipped[outfit.character] = outfit.id;
   saveProfile();
   return 'equipped';
+}
+
+/** Remember that a hero got to a world. Returns true the first time. */
+export function markReached(character: Character, worldId: string): boolean {
+  const list = profile.reached[character];
+  if (list.includes(worldId)) return false;
+  list.push(worldId);
+  saveProfile();
+  return true;
 }
