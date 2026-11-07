@@ -126,6 +126,9 @@ interface Kit {
   white: Mat;
   carrot: Mat;
   dark: Mat;
+  woodEnd: Mat;
+  steel: Mat;
+  fungus: Mat;
   portal: Mat;
   portalDisc: THREE.MeshBasicMaterial;
 }
@@ -157,6 +160,9 @@ function kitFor(world: WorldDef): Kit {
     white: std('#fff8f0', { flatShading: false }),
     carrot: std('#ff8a1e'),
     dark: std('#2b2b3d'),
+    woodEnd: std('#f0cf96'),
+    steel: std('#b9c6d6'),
+    fungus: std('#f5b54a'),
     portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
     portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
   };
@@ -574,15 +580,37 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
     if (blocked(side, s)) continue;
     const r = rand(0.8, 1.3);
     const x = side * (W / 2 + rand(1.6, 3));
-    add(GEO.trunk, kit.trunk, x, -4, s, r * 2, 52, r * 2, true);
-    if (!snow && Math.random() < 0.6) {
-      // A side branch with a clump of leaves reaching out over the path.
-      const arm = add(GEO.cyl, kit.trunk, x - side * 1.4, 7.5, s, 0.35, 3.2, 0.35);
-      arm.rotation.z = side * 1.05;
-      add(GEO.blob, leaf(), x - side * 2.8, 8.6, s, 2.2, 1.4, 2);
+    // Every trunk ends in a proper crown you can see, never a bare pole.
+    const top = rand(8.5, 11.5);
+    add(GEO.trunk, kit.trunk, x, (top - 30) / 2, s, r * 2, top + 30, r * 2, true);
+    if (snow) {
+      for (let i = 0; i < 4; i++) {
+        const y = top - 5 + i * 2.2;
+        const w = 3.6 - i * 0.7;
+        add(GEO.cone, kit.leaves[i % 2], x, y, s, w, 3, w, i === 0);
+        add(GEO.cone, kit.snow, x, y + 0.9, s, w * 0.55, 1.1, w * 0.55);
+      }
+      add(GEO.blob, kit.snow, x, 1.2, s, r * 1.2, 0.25, r * 1.2);
+    } else {
+      add(GEO.canopy, leaf(), x, top + 1.5, s, 3.6, 2.6, 3.6, true);
+      add(GEO.canopy, leaf(), x + side * 1.8, top + 0.4, s + 1.2, 2.6, 2, 2.6);
+      add(GEO.canopy, leaf(), x - side * 1.2, top + 2.6, s - 1, 2.4, 1.8, 2.4);
+      if (Math.random() < 0.6) {
+        // A side branch with a clump of leaves reaching out over the path.
+        const arm = add(GEO.cyl, kit.trunk, x - side * 1.4, top - 3.5, s, 0.35, 3.2, 0.35);
+        arm.rotation.z = side * 1.05;
+        add(GEO.blob, leaf(), x - side * 2.8, top - 2.4, s, 2.2, 1.4, 2);
+      }
+      // Shelf mushrooms on the bark, facing the path.
+      if (Math.random() < 0.5) {
+        for (let i = 0; i < 2; i++) add(GEO.sphere, kit.fungus, x - side * r * 0.85, 1.4 + i * 0.7, s + i * 0.3, 0.9 - i * 0.2, 0.22, 0.7 - i * 0.15);
+      }
     }
-    if (snow) add(GEO.blob, kit.snow, x, 1.2, s, r * 1.2, 0.25, r * 1.2);
   }
+
+  // 2b. The story in the scenery.
+  if (kit.decor === 'boardwalk') lumberjackCamp(seg, kit, add, blocked);
+  if (kit.decor === 'branch') squirrelHome(seg, kit, add);
 
   // 3. A roof of leaves (or snowy pine tops) overhead.
   for (let s = from; s < to; s += rand(6, 10)) {
@@ -598,6 +626,61 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
     beam.rotation.z = sideBeam * 0.32;
     beam.rotation.y = rand(-0.4, 0.4);
     beam.receiveShadow = false;
+  }
+}
+
+/**
+ * The lumberjack's forest: little side platforms along the boardwalk with his
+ * work lying about. Stumps with an axe in them, piles of cut logs, a saw.
+ */
+function lumberjackCamp(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
+  const W = TUNING.pathWidth;
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  for (let s = (seg.index === 0 ? 10 : W / 2 + 8) + rand(0, 8); s < seg.length - 6; s += rand(18, 30)) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    if (blocked(side, s)) continue;
+    const x = side * (W / 2 + 2.1);
+    // The platform, propped on a post.
+    add(GEO.box, kit.floorBody, x, -0.25, s, 3.4, 0.5, 3.6, true);
+    add(GEO.cyl, kit.woodDark, x, -15.5, s, 0.4, 30, 0.4);
+    if (Math.random() < 0.55) {
+      // A stump with the axe still in it.
+      add(GEO.cyl, kit.trunk, x, 0.35, s, 1.1, 0.7, 1.1, true);
+      add(GEO.cyl, kit.woodEnd, x, 0.71, s, 0.95, 0.04, 0.95);
+      const handle = add(GEO.box, kit.wood, x + 0.25, 1.1, s, 0.1, 0.95, 0.1, true);
+      handle.rotation.z = -side * 0.5;
+      add(GEO.box, kit.steel, x - side * 0.05, 0.8, s, 0.42, 0.26, 0.08, true);
+    } else {
+      // A pile of cut logs, ends facing the path.
+      for (const [dx, dy] of [[-0.45, 0.32], [0.45, 0.32], [0, 0.88]]) {
+        add(GEO.log, kit.trunk, x + dx, dy, s, 0.34, 0.34, 2.2, true);
+        add(GEO.log, kit.woodEnd, x + dx, dy, s - 1.11, 0.3, 0.3, 0.02);
+      }
+    }
+    if (Math.random() < 0.4) {
+      // A warning sign: a bear paw.
+      add(GEO.box, kit.woodDark, x + side * 1.2, 0.8, s + 1.2, 0.12, 1.6, 0.12);
+      add(GEO.box, kit.wood, x + side * 1.2, 1.55, s + 1.2, 0.9, 0.7, 0.1, true);
+      add(GEO.sphere, kit.woodDark, x + side * 1.2, 1.5, s + 1.14, 0.32, 0.26, 0.04);
+    }
+  }
+}
+
+/** The squirrel's forest: a hollow in the big trunk at each corner, and nests. */
+function squirrelHome(seg: Segment, kit: Kit, add: AddFn): void {
+  const W = TUNING.pathWidth;
+  const r = 2.6;
+  const s = seg.length + W / 2 + r;
+  const x = -seg.turn * (W / 2 + r * 0.6);
+  // The hollow faces the runner as they come up to the corner.
+  add(GEO.sphere, kit.dark, x, 3.2, s - r * 0.9, 1.6, 2.2, 0.5);
+  add(GEO.sphere, kit.woodEnd, x, 2.05, s - r * 0.95, 1.8, 0.35, 0.55);
+  if (Math.random() < 0.5) {
+    // A nest of twigs with two eggs, on a stub of branch.
+    const nx = x - Math.sign(x) * 0.2;
+    add(GEO.cyl, kit.trunk, nx, 6.4, s - r * 0.8, 1.6, 0.5, 1.4, true);
+    add(GEO.sphere, kit.white, nx - 0.25, 6.75, s - r * 0.8, 0.36, 0.44, 0.36);
+    add(GEO.sphere, kit.white, nx + 0.25, 6.75, s - r * 0.8 + 0.1, 0.34, 0.42, 0.34);
   }
 }
 
@@ -672,16 +755,18 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
         part(GEO.rock, kit.rock, x, 1.0, 0, 0.75, 1.15, 0.7);
         part(GEO.crystal, kit.hot, x, 2.15, 0, 0.3, 0.55, 0.3);
       } else if (d === 'boardwalk') {
-        // A stack of wooden crates.
-        part(GEO.box, kit.wood, x, 0.6, 0, 1.2, 1.2, 1.2);
-        part(GEO.box, kit.woodDark, x, 0.6, -0.61, 1.0, 0.16, 0.02);
-        part(GEO.box, kit.wood, x + 0.05, 1.7, 0, 0.95, 0.95, 0.95).rotation.y = 0.3;
+        // A stack of freshly cut logs, ends towards you.
+        for (const [dx, dy] of [[-0.32, 0.32], [0.32, 0.32], [0, 0.88], [-0.32, 1.44], [0.32, 1.44], [0, 2.0]]) {
+          part(GEO.log, kit.trunk, x + dx, dy, 0, 0.3, 0.3, 1.2);
+          const end = part(GEO.log, kit.woodEnd, x + dx, dy, 0.61, 0.26, 0.26, 0.02);
+          end.castShadow = false;
+        }
       } else if (d === 'branch') {
         // A big spotty toadstool.
         part(GEO.cyl, kit.white, x, 0.7, 0, 0.55, 1.4, 0.55);
         const cap = part(GEO.sphere, kit.mushroom, x, 1.5, 0, 1.4, 0.9, 1.4);
         cap.castShadow = true;
-        for (const [dx, dy, dz] of [[-0.3, 1.78, -0.45], [0.32, 1.7, -0.5], [0, 1.92, -0.25], [-0.45, 1.6, -0.25]]) {
+        for (const [dx, dy, dz] of [[-0.3, 1.78, 0.45], [0.32, 1.7, 0.5], [0, 1.92, 0.25], [-0.45, 1.6, 0.25]]) {
           part(GEO.sphere, kit.white, x + dx, dy, dz, 0.2, 0.12, 0.2);
         }
       } else if (d === 'snow') {
@@ -689,17 +774,17 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
         part(GEO.sphere, kit.snow, x, 0.5, 0, 1.15, 1.05, 1.15);
         part(GEO.sphere, kit.snow, x, 1.3, 0, 0.85, 0.8, 0.85);
         part(GEO.sphere, kit.snow, x, 1.95, 0, 0.62, 0.6, 0.62);
-        part(GEO.cone, kit.carrot, x, 1.95, -0.42, 0.08, 0.36, 0.08).rotation.x = -Math.PI / 2;
-        part(GEO.sphere, kit.dark, x - 0.12, 2.05, -0.27, 0.08, 0.08, 0.06);
-        part(GEO.sphere, kit.dark, x + 0.12, 2.05, -0.27, 0.08, 0.08, 0.06);
+        part(GEO.cone, kit.carrot, x, 1.95, 0.42, 0.08, 0.36, 0.08).rotation.x = Math.PI / 2;
+        part(GEO.sphere, kit.dark, x - 0.12, 2.05, 0.27, 0.08, 0.08, 0.06);
+        part(GEO.sphere, kit.dark, x + 0.12, 2.05, 0.27, 0.08, 0.08, 0.06);
         part(GEO.cyl, kit.dark, x, 2.32, 0, 0.5, 0.06, 0.5);
         part(GEO.cyl, kit.dark, x, 2.48, 0, 0.32, 0.32, 0.32);
       } else {
         // A temple statue with glowing eyes.
         part(GEO.box, kit.stone, x, 1.1, 0, 1.25, 2.2, 1.2);
         part(GEO.box, kit.curb, x, 2.32, 0, 1.4, 0.25, 1.35);
-        part(GEO.box, kit.glow, x - 0.25, 1.65, -0.61, 0.16, 0.1, 0.04).castShadow = false;
-        part(GEO.box, kit.glow, x + 0.25, 1.65, -0.61, 0.16, 0.1, 0.04).castShadow = false;
+        part(GEO.box, kit.glow, x - 0.25, 1.65, 0.61, 0.16, 0.1, 0.04).castShadow = false;
+        part(GEO.box, kit.glow, x + 0.25, 1.65, 0.61, 0.16, 0.1, 0.04).castShadow = false;
       }
     }
   }

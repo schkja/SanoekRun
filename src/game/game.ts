@@ -12,8 +12,9 @@ import { Input, type Action } from '../core/input';
 import { Audio } from '../core/audio';
 import { Music } from '../core/music';
 import { Hud } from '../ui/hud';
-import { Menus, type MenuButton } from '../ui/menus';
+import { Menus } from '../ui/menus';
 import { SpeedLines } from '../ui/speed-lines';
+import { PORTRAITS } from '../ui/portraits';
 import { drawShareCard, shareRun, type RunSummary } from '../ui/share-card';
 import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
@@ -34,7 +35,7 @@ import {
   updateSettings,
   type Character,
 } from './settings';
-import { LANGUAGE_NAMES, formatNumber, language, setLanguage, t, type StringKey } from '../i18n';
+import { LANGUAGE_NAMES, formatNumber, setLanguage, t, type StringKey } from '../i18n';
 
 /** A world's name in the current language. */
 const worldName = (w: WorldDef) => t(`world.${w.id}` as StringKey);
@@ -139,23 +140,32 @@ export class Game {
   private showTitle(): void {
     this.phase = 'title';
     this.hud.setVisible(false);
+    // The chaser only shows up once you start running.
+    this.chaser.root.visible = false;
     this.menus.show({
       eyebrow: t('title.eyebrow'),
       title: GAME_NAME,
-      body: isTouch() ? t('title.bodyTouch') : t('title.bodyKeys'),
+      body: t(`story.${settings.character}`),
       badge: this.best.distance > 0 ? t('title.best', { m: this.best.distance }) : undefined,
+      choicesTitle: t('title.choose'),
+      choices: CHARACTERS.map((c) => ({
+        label: t(`character.${c}`),
+        caption: t(`caption.${c}`),
+        art: PORTRAITS[c],
+        selected: settings.character === c,
+        onClick: () => {
+          if (settings.character === c) return;
+          updateSettings((s) => (s.character = c));
+          this.prepareTrack();
+          this.showTitle();
+        },
+      })),
       buttons: [
         { label: t('button.run'), primary: true, onClick: () => this.newRun() },
-        {
-          label: t('button.playAs', { name: t(`character.${settings.character}`) }),
-          onClick: () => {
-            updateSettings((s) => (s.character = next(CHARACTERS, s.character)));
-            this.prepareTrack();
-            this.showTitle();
-          },
-        },
         { label: t('button.settings'), onClick: () => this.showSettings(() => this.showTitle()) },
       ],
+      note: isTouch() ? undefined : t('title.keys'),
+      variant: 'is-title',
     });
   }
 
@@ -250,81 +260,115 @@ export class Game {
   }
 
   /**
-   * The Settings screen: character, music, sound and every visual effect.
-   * Each button cycles or toggles its setting and redraws the screen.
+   * The Settings screen, in three groups: game (language, character), sound
+   * and effects. Switches flip in place; language opens its own list.
    */
   private showSettings(back: () => void): void {
     const inRun = this.phase === 'paused';
     const redraw = () => this.showSettings(back);
-    const onOff = (on: boolean) => (on ? t('settings.on') : t('settings.off'));
-    const languageLabel =
-      settings.language === 'auto' ? t('settings.auto', { value: LANGUAGE_NAMES[language()] }) : LANGUAGE_NAMES[settings.language];
-
-    const buttons: MenuButton[] = [
-      {
-        label: t('settings.language', { value: languageLabel }),
-        onClick: () => {
-          updateSettings((s) => (s.language = next(LANGUAGE_CHOICES, s.language)));
-          setLanguage(settings.language);
-          this.hud.relabel();
-          redraw();
-        },
-      },
-      {
-        label: t('settings.character', { value: t(`character.${settings.character}`) }),
-        onClick: () => {
-          updateSettings((s) => (s.character = next(CHARACTERS, s.character)));
-          // On the title screen, show the new character straight away.
-          if (!inRun) this.prepareTrack();
-          redraw();
-        },
-      },
-      {
-        label: t('settings.music', { value: t(`music.${settings.music}`) }),
-        onClick: () => {
-          updateSettings((s) => (s.music = next(MUSIC_STYLES, s.music)));
-          this.audio.unlock();
-          this.music.play(settings.music);
-          redraw();
-        },
-      },
-      {
-        label: t('settings.sound', { value: onOff(settings.sound) }),
-        onClick: () => {
-          updateSettings((s) => (s.sound = !s.sound));
-          this.audio.setMuted(!settings.sound);
-          redraw();
-        },
-      },
-      ...EFFECT_KEYS.map((key) => ({
-        label: `${t(`effect.${key}`)}: ${onOff(settings.effects[key])}`,
-        onClick: () => {
-          updateSettings((s) => (s.effects[key] = !s.effects[key]));
-          setOutlines(settings.effects.outlines);
-          redraw();
-        },
-      })),
-      {
-        label: t('button.reset'),
-        onClick: () => {
-          updateSettings((s) => Object.assign(s, structuredClone(DEFAULT_SETTINGS)));
-          this.audio.setMuted(!settings.sound);
-          this.music.play(settings.music);
-          setLanguage(settings.language);
-          setOutlines(settings.effects.outlines);
-          this.hud.relabel();
-          if (!inRun) this.prepareTrack();
-          redraw();
-        },
-      },
-      { label: t('button.back'), primary: true, onClick: back },
-    ];
+    const languageValue = settings.language === 'auto' ? t('settings.auto') : LANGUAGE_NAMES[settings.language];
 
     this.menus.show({
       title: t('settings.title'),
       body: inRun && settings.character !== this.character ? t('settings.nextRun') : undefined,
       variant: 'is-settings',
-      buttons,
+      sections: [
+        {
+          title: t('settings.game'),
+          rows: [
+            // A globe, so anyone can find the language row whatever it says.
+            { label: `🌐 ${t('settings.language')}`, value: languageValue, onClick: () => this.showLanguages(redraw) },
+            {
+              label: t('settings.character'),
+              value: t(`character.${settings.character}`),
+              onClick: () => {
+                updateSettings((s) => (s.character = next(CHARACTERS, s.character)));
+                if (!inRun) this.prepareTrack();
+                redraw();
+              },
+            },
+          ],
+        },
+        {
+          title: t('settings.audio'),
+          rows: [
+            {
+              label: t('settings.music'),
+              value: t(`music.${settings.music}`),
+              onClick: () => {
+                updateSettings((s) => (s.music = next(MUSIC_STYLES, s.music)));
+                this.audio.unlock();
+                this.music.play(settings.music);
+                redraw();
+              },
+            },
+            {
+              label: t('settings.sound'),
+              toggle: settings.sound,
+              onClick: () => {
+                updateSettings((s) => (s.sound = !s.sound));
+                this.audio.setMuted(!settings.sound);
+                redraw();
+              },
+            },
+          ],
+        },
+        {
+          title: t('settings.effects'),
+          rows: EFFECT_KEYS.map((key) => ({
+            label: t(`effect.${key}`),
+            toggle: settings.effects[key],
+            onClick: () => {
+              updateSettings((s) => (s.effects[key] = !s.effects[key]));
+              setOutlines(settings.effects.outlines);
+              redraw();
+            },
+          })),
+        },
+        {
+          rows: [
+            {
+              label: t('button.reset'),
+              onClick: () => {
+                updateSettings((s) => Object.assign(s, structuredClone(DEFAULT_SETTINGS)));
+                this.audio.setMuted(!settings.sound);
+                this.music.play(settings.music);
+                setLanguage(settings.language);
+                setOutlines(settings.effects.outlines);
+                this.hud.relabel();
+                if (!inRun) this.prepareTrack();
+                redraw();
+              },
+            },
+          ],
+        },
+      ],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
+    });
+  }
+
+  /** Every language listed in its own name, so a player can always find theirs. */
+  private showLanguages(back: () => void): void {
+    const pick = (choice: (typeof LANGUAGE_CHOICES)[number]) => {
+      updateSettings((s) => (s.language = choice));
+      setLanguage(choice);
+      this.hud.relabel();
+      back();
+    };
+    this.menus.show({
+      title: `🌐 ${t('settings.language')}`,
+      variant: 'is-settings',
+      sections: [
+        {
+          rows: LANGUAGE_CHOICES.map((choice) => ({
+            label: choice === 'auto' ? t('settings.auto') : LANGUAGE_NAMES[choice],
+            hint: choice === 'auto' ? t('settings.autoHint') : undefined,
+            selected: settings.language === choice,
+            onClick: () => pick(choice),
+          })),
+        },
+      ],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
     });
   }
 

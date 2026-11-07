@@ -546,25 +546,240 @@ body {
   outline-offset: 3px;
 }
 
-/* Settings: toggles in two columns, the card scrolls if the screen is short. */
+/* Title: the logo, the story line, two character cards, then Run. */
+.menu.is-title .menu-card {
+  padding-top: 22px;
+}
+
+.menu.is-title .menu-title {
+  font-size: 52px;
+  margin-bottom: 6px;
+}
+
+.menu.is-title .menu-body {
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+
+.menu.is-title .menu-badge {
+  margin-bottom: 12px;
+}
+
+.menu-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6a7896;
+}
+
+.menu-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.menu-choice {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 8px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: var(--outline);
+  border-radius: 20px;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.menu-choice:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.menu-choice.is-selected {
+  background: #e6fbe9;
+  border-color: var(--leaf-dark);
+  box-shadow: 0 4px 0 var(--leaf-dark);
+  transform: translateY(-2px) rotate(-1deg);
+}
+
+.menu-choice.is-selected::after {
+  content: '✓';
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: #ffffff;
+  background: var(--leaf);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+
+.menu-choice-art svg {
+  width: 72px;
+  height: 72px;
+  display: block;
+}
+
+.menu-choice-label {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.menu-choice-caption {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #5a6886;
+  text-wrap: balance;
+}
+
+.menu-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a88a6;
+}
+
+/* Settings: grouped lists with switches, like a phone's own settings. */
 .menu.is-settings .menu-card {
   max-height: calc(100% - 20px);
   overflow-y: auto;
+  text-align: left;
 }
 
-.menu.is-settings .menu-buttons {
-  grid-template-columns: 1fr 1fr;
+.menu.is-settings .menu-title {
+  text-align: center;
+  font-size: 38px;
+}
+
+.menu-sections {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.menu-section-title {
+  margin: 8px 4px 2px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6a7896;
+}
+
+.menu-rows {
+  display: grid;
+  background: var(--paper-2);
+  border: var(--outline);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
-}
-
-.menu.is-settings .menu-button {
-  padding: 10px 8px 11px;
+  min-height: 50px;
+  padding: 10px 14px;
+  font: inherit;
   font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 2px solid rgba(31, 42, 68, 0.12);
+  cursor: pointer;
 }
 
-.menu.is-settings .menu-button.is-primary {
-  grid-column: 1 / -1;
+.menu-row:first-child {
+  border-top: 0;
+}
+
+.menu-row:active {
+  background: rgba(31, 42, 68, 0.06);
+}
+
+.menu-row-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.menu-row-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a88a6;
+}
+
+.menu-row-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--leaf-dark);
+  white-space: nowrap;
+}
+
+.menu-row-chevron {
   font-size: 22px;
+  line-height: 1;
+  color: #9aa6c0;
+}
+
+.menu-row-check {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--leaf-dark);
+}
+
+.menu-row.is-selected {
+  background: #e6fbe9;
+}
+
+/* A chunky on/off switch. */
+.menu-switch {
+  flex: none;
+  width: 50px;
+  height: 30px;
+  padding: 3px;
+  background: #c9d3e2;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+.menu-switch span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.menu-switch.is-on {
+  background: var(--leaf);
+}
+
+.menu-switch.is-on span {
+  transform: translateX(20px);
 }
 
 /* The world-intro card floats as big outlined text, without blocking the game. */
