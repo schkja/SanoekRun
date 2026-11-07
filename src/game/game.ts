@@ -97,6 +97,7 @@ export class Game {
   private board = { reachable: false, cutoff: 0 };
   private rankLine = '';
   private portalsThisRun = 0;
+  private recordSaved = false;
   private installPrompt: (Event & { prompt: () => Promise<void> }) | null = null;
 
   private phase: Phase = 'title';
@@ -684,8 +685,10 @@ export class Game {
     void drawShareCard(run, snapshot).then((card) => (this.shareCard = card));
     this.shareStatus = '';
 
-    // Made the leaderboard? Ask for a name first.
-    if (this.board.reachable && distance >= Math.max(50, this.board.cutoff)) this.askName(badge);
+    // A good run goes straight to the name prompt. Every other run (20 m+)
+    // can still be added with a button on the end screen.
+    this.recordSaved = false;
+    if (distance >= 50 && distance >= this.board.cutoff) this.askName(badge);
     else this.showRunOverMenu(badge);
   }
 
@@ -695,7 +698,7 @@ export class Game {
       eyebrow: `${formatNumber(run.distance)} ${t('hud.unit')}`,
       title: t('name.title'),
       body: t('name.body'),
-      input: { placeholder: t('name.placeholder'), value: profile.name, maxLength: 12, error },
+      input: { placeholder: t('name.placeholder'), value: profile.name, maxLength: 32, error },
       note: t('name.privacy'),
       buttons: [
         {
@@ -703,10 +706,12 @@ export class Game {
           primary: true,
           onClick: async () => {
             const name = this.menus.inputValue.trim();
-            if (!name) return this.askName(badge, t('name.invalid'));
+            if (!name || [...name].length > 16) return this.askName(badge, t('name.invalid'));
             const result = await submitRun({ ...run, name, character: settings.character, device: profile.device });
             if (!result.ok && result.error === 'name') return this.askName(badge, t('name.invalid'));
+            if (!result.ok && (!result.error || result.error === 'offline')) return this.askName(badge, t('records.down'));
             if (!result.ok) return this.askName(badge, t('name.failed'));
+            this.recordSaved = true;
             profile.name = name;
             saveProfile();
             this.rankLine = t('over.rank', { all: result.rank ?? 0, today: result.rankToday ?? 0 });
@@ -738,6 +743,7 @@ export class Game {
       variant: 'is-over',
       buttons: [
         { label: t('button.playAgain'), primary: true, onClick: () => this.newRun() },
+        ...(!this.recordSaved && distance >= 20 ? [{ label: t('button.saveRecord'), onClick: () => this.askName(badge) }] : []),
         { label: t('button.share'), onClick: () => void this.share(badge) },
         { label: t('button.mainMenu'), onClick: () => { this.prepareTrack(); this.showTitle(); } },
       ],

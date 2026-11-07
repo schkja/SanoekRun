@@ -86,13 +86,20 @@ function list(period) {
 // Checks
 // ---------------------------------------------------------------------------
 
+/**
+ * Any pseudonym players like: letters in any language, digits, emoji and
+ * symbols, up to 16 characters. Only invisible/control characters and rude
+ * words are refused.
+ */
 function cleanName(raw) {
   if (typeof raw !== 'string') return null;
   const name = raw.normalize('NFC').replace(/\s+/g, ' ').trim();
-  if (name.length < 1 || name.length > 12) return null;
-  // Letters in any language, digits, spaces and a few symbols.
-  if (!/^[\p{L}\p{N} _.\-]+$/u.test(name)) return null;
-  const folded = name.toLowerCase().replace(/[\s_.\-0-9]/g, '');
+  const length = [...name].length;
+  if (length < 1 || length > 16) return null;
+  // No control or invisible formatting characters (they can hide or flip text),
+  // but keep the joiners emoji are built from.
+  if (/[\p{Cc}\p{Co}\p{Cn}\u200B\u200E\u200F\u202A-\u202E\u2066-\u2069<>]/u.test(name)) return null;
+  const folded = name.toLowerCase().replace(/[^\p{L}]/gu, '');
   if (BLOCKED.some((word) => folded.includes(word))) return null;
   return name;
 }
