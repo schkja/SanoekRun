@@ -6,17 +6,34 @@
  * portals, and decides which screen is on top.
  */
 
+import * as THREE from 'three';
 import { Engine } from '../core/engine';
 import { Input, type Action } from '../core/input';
 import { Audio } from '../core/audio';
+import { Music } from '../core/music';
 import { Hud } from '../ui/hud';
-import { Menus } from '../ui/menus';
+import { Menus, type MenuButton } from '../ui/menus';
+import { SpeedLines } from '../ui/speed-lines';
+import { drawShareCard, shareRun, type RunSummary } from '../ui/share-card';
 import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
 import { Chaser } from './chaser';
 import { TUNING, speedAt } from './tuning';
 import { WORLDS, type WorldDef } from './worlds';
-import { animateSegment } from './visuals';
+import { animateSegment, setCollectible } from './visuals';
+import { Sparkles } from './sparkles';
+import {
+  CHARACTER_LABELS,
+  DEFAULT_SETTINGS,
+  EFFECT_LABELS,
+  GAME_NAME,
+  MUSIC_LABELS,
+  settings,
+  updateSettings,
+  type Character,
+  type Effects,
+  type MusicStyle,
+} from './settings';
 
 type Phase = 'title' | 'playing' | 'paused' | 'dying' | 'over';
 
@@ -41,6 +58,17 @@ export class Game {
   private readonly track = new Track();
   private readonly runner = new Runner();
   private readonly chaser = new Chaser();
+  private readonly music: Music;
+  private readonly speedLines: SpeedLines;
+  private readonly sparkles = new Sparkles();
+  private character: Character = 'explorer';
+  /** Below 1 during a slow-motion close call. */
+  private timeScale = 1;
+  private slowTimer = 0;
+  private lastRun: RunSummary | null = null;
+  private shareCard: HTMLCanvasElement | null = null;
+  private shareStatus = '';
+  private readonly scratch = new THREE.Vector3();
 
   private phase: Phase = 'title';
   private distance = 0;
@@ -67,10 +95,13 @@ export class Game {
   constructor(canvasContainer: HTMLElement, uiContainer: HTMLElement) {
     this.engine = new Engine(canvasContainer);
     this.input = new Input(this.engine.renderer.domElement);
+    this.speedLines = new SpeedLines(uiContainer);
     this.hud = new Hud(uiContainer, () => this.togglePause());
     this.menus = new Menus(uiContainer);
+    this.music = new Music(this.audio);
+    this.audio.setMuted(!settings.sound);
 
-    this.engine.scene.add(this.track.root, this.runner.model.root, this.chaser.root);
+    this.engine.scene.add(this.track.root, this.runner.model.root, this.chaser.root, this.sparkles.root);
     this.input.setPauseHandler(() => this.togglePause());
 
     // Pause when the phone locks or the tab is hidden.
@@ -79,7 +110,10 @@ export class Game {
     });
 
     // Browsers only allow sound after a user gesture.
-    const unlock = () => this.audio.unlock();
+    const unlock = () => {
+      this.audio.unlock();
+      if (!this.music.playing) this.music.play(settings.music);
+    };
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
   }
@@ -100,17 +134,39 @@ export class Game {
     this.hud.setVisible(false);
     this.menus.show({
       eyebrow: 'An endless runner',
-      title: 'Sanoek Run',
+      title: GAME_NAME,
       body: isTouch()
         ? 'Swipe left or right to turn at corners and switch lanes. Swipe up to jump, down to slide. Don’t let it catch you.'
         : 'Arrow keys or WASD: left and right turn at corners and switch lanes, up jumps, down slides. You can also drag with the mouse. Don’t let it catch you.',
       badge: this.best.distance > 0 ? `Your best: ${Math.floor(this.best.distance)} m` : undefined,
-      buttons: [{ label: 'Run', primary: true, onClick: () => this.newRun() }],
+      buttons: [
+        { label: 'Run', primary: true, onClick: () => this.newRun() },
+        { label: 'Settings', onClick: () => this.showSettings(() => this.showTitle()) },
+      ],
     });
+  }
+
+  /** Swap in the chosen character (and what it collects) before a track is built. */
+  private applyCharacter(): void {
+    setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
+    this.hud.setCollectible(settings.character === 'squirrel' ? 'acorn' : 'coin');
+    if (this.character === settings.character) return;
+    this.engine.scene.remove(this.runner.model.root);
+    this.runner.setCharacter(settings.character);
+    this.engine.scene.add(this.runner.model.root);
+    this.character = settings.character;
+  }
+
+  private get collectibleName(): string {
+    return settings.character === 'squirrel' ? 'nuts' : 'coins';
   }
 
   /** Build a fresh track with the runner standing at the start. */
   private prepareTrack(): void {
+    this.applyCharacter();
+    this.sparkles.clear();
+    this.slowTimer = 0;
+    this.timeScale = 1;
     this.track.reset();
     this.runner.reset(this.track, this.track.first);
     this.runner.frozen = true;
@@ -164,19 +220,79 @@ export class Game {
       title: 'Paused',
       stats: [
         ['Distance', `${Math.floor(this.distance)} m`],
-        ['Coins', String(this.coins)],
+        [capitalise(this.collectibleName), String(this.coins)],
       ],
       buttons: [
         { label: 'Resume', primary: true, onClick: () => this.resume() },
-        {
-          label: this.audio.muted ? 'Sound: off' : 'Sound: on',
-          onClick: () => {
-            this.audio.toggleMute();
-            this.showPauseMenu();
-          },
-        },
+        { label: 'Settings', onClick: () => this.showSettings(() => this.showPauseMenu()) },
         { label: 'Quit to title', onClick: () => { this.prepareTrack(); this.showTitle(); } },
       ],
+    });
+  }
+
+  /**
+   * The Settings screen: character, music, sound and every visual effect.
+   * Each button cycles or toggles its setting and redraws the screen.
+   */
+  private showSettings(back: () => void): void {
+    const inRun = this.phase === 'paused';
+    const redraw = () => this.showSettings(back);
+    const characters = Object.keys(CHARACTER_LABELS) as Character[];
+    const styles = Object.keys(MUSIC_LABELS) as MusicStyle[];
+    const next = <T,>(list: T[], current: T) => list[(list.indexOf(current) + 1) % list.length];
+
+    const buttons: MenuButton[] = [
+      {
+        label: `Character: ${CHARACTER_LABELS[settings.character]}`,
+        onClick: () => {
+          updateSettings((s) => (s.character = next(characters, s.character)));
+          // On the title screen, show the new character straight away.
+          if (!inRun) this.prepareTrack();
+          redraw();
+        },
+      },
+      {
+        label: `Music: ${MUSIC_LABELS[settings.music]}`,
+        onClick: () => {
+          updateSettings((s) => (s.music = next(styles, s.music)));
+          this.audio.unlock();
+          this.music.play(settings.music);
+          redraw();
+        },
+      },
+      {
+        label: `Sound: ${settings.sound ? 'on' : 'off'}`,
+        onClick: () => {
+          updateSettings((s) => (s.sound = !s.sound));
+          this.audio.setMuted(!settings.sound);
+          redraw();
+        },
+      },
+      ...(Object.keys(EFFECT_LABELS) as Array<keyof Effects>).map((key) => ({
+        label: `${EFFECT_LABELS[key]}: ${settings.effects[key] ? 'on' : 'off'}`,
+        onClick: () => {
+          updateSettings((s) => (s.effects[key] = !s.effects[key]));
+          redraw();
+        },
+      })),
+      {
+        label: 'Reset to defaults',
+        onClick: () => {
+          updateSettings((s) => Object.assign(s, structuredClone(DEFAULT_SETTINGS)));
+          this.audio.setMuted(!settings.sound);
+          this.music.play(settings.music);
+          if (!inRun) this.prepareTrack();
+          redraw();
+        },
+      },
+      { label: 'Back', primary: true, onClick: back },
+    ];
+
+    this.menus.show({
+      title: 'Settings',
+      body: inRun && settings.character !== this.character ? 'The new character joins from your next run.' : undefined,
+      variant: 'is-settings',
+      buttons,
     });
   }
 
@@ -206,6 +322,22 @@ export class Game {
     else if (previousBest - distance <= 150) badge = `Only ${previousBest - distance} m from your best`;
     else badge = `Your best: ${previousBest} m`;
 
+    // Snapshot the final frame for the share card while it's still on screen.
+    this.lastRun = {
+      distance,
+      coins: this.coins,
+      collectibleName: this.collectibleName,
+      world: this.furthestWorld,
+      newBest: newBest && previousBest > 0,
+    };
+    this.engine.render();
+    this.shareCard = drawShareCard(this.lastRun, this.engine.renderer.domElement);
+    this.shareStatus = '';
+    this.showRunOverMenu(badge);
+  }
+
+  private showRunOverMenu(badge: string): void {
+    const distance = Math.floor(this.distance);
     this.menus.show({
       eyebrow: 'Run over',
       title: this.deathTitle,
@@ -213,12 +345,29 @@ export class Game {
       badge,
       stats: [
         ['Score', Math.floor(this.score).toLocaleString('en-US')],
-        ['Coins', String(this.coins)],
+        [capitalise(this.collectibleName), String(this.coins)],
         ['Furthest world', this.furthestWorld],
       ],
+      body: this.shareStatus || undefined,
       variant: 'is-over',
-      buttons: [{ label: 'Play again', primary: true, onClick: () => this.newRun() }],
+      buttons: [
+        { label: 'Play again', primary: true, onClick: () => this.newRun() },
+        { label: 'Share your run', onClick: () => void this.share(badge) },
+        { label: 'Main menu', onClick: () => { this.prepareTrack(); this.showTitle(); } },
+      ],
     });
+  }
+
+  private async share(badge: string): Promise<void> {
+    if (!this.shareCard || !this.lastRun) return;
+    const result = await shareRun(this.shareCard, this.lastRun);
+    this.shareStatus = {
+      shared: 'Shared. Good luck to whoever tries to beat it.',
+      downloaded: 'Picture saved. Post it anywhere you like.',
+      cancelled: '',
+      failed: 'Sharing didn’t work on this device.',
+    }[result];
+    if (this.phase === 'over') this.showRunOverMenu(badge);
   }
 
   // ---------------------------------------------------------------------------
@@ -232,23 +381,37 @@ export class Game {
     this.lastFrame = now;
     this.time += dt;
 
+    // Slow motion: the world runs slower for a moment, the controls don't.
+    this.slowTimer = Math.max(0, this.slowTimer - dt);
+    const wantScale = this.slowTimer > 0 ? 0.3 : 1;
+    this.timeScale += (wantScale - this.timeScale) * Math.min(1, dt * (this.slowTimer > 0 ? 30 : 6));
+    const gameDt = dt * this.timeScale;
+    const speed01 = Math.max(0, (this.runner.speed - TUNING.startSpeed) / (TUNING.maxSpeed - TUNING.startSpeed));
+
     const actions = this.input.drain();
     if (this.phase === 'playing') {
       for (const action of actions) this.handleAction(action);
-      this.step(dt);
+      this.step(gameDt);
+      // The music builds as the run speeds up, and goes all-out when you're in danger.
+      this.music.setLayers(this.danger > 0 ? 4 : 2 + speed01 * 2.4);
     } else if (this.phase === 'dying') {
-      this.stepDying(dt);
+      this.stepDying(gameDt);
+    } else {
+      this.music.setLayers(this.phase === 'paused' ? 1 : 2);
     }
 
+    this.speedLines.update(dt, this.phase === 'playing' && settings.effects.speedLines ? 0.15 + speed01 * 0.85 : 0);
+    this.sparkles.update(gameDt);
+
     if (this.phase !== 'paused') {
-      this.runner.animate(dt);
+      this.runner.animate(gameDt);
       for (let i = Math.max(0, this.runner.seg.index - 1); i < this.track.segments.length; i++) {
         const group = this.track.segments[i].group;
         if (group) animateSegment(group, this.time);
       }
-      const speed01 = (this.runner.speed - TUNING.startSpeed) / (TUNING.maxSpeed - TUNING.startSpeed);
       const chaseView = this.chaser.root.visible ? 1 : 0;
-      this.engine.follow(this.runner.visual, headingYaw(this.runner.seg.heading), dt, Math.max(0, speed01), this.runner.falling, chaseView);
+      const zoom = settings.effects.speedZoom ? speed01 : 0;
+      this.engine.follow(this.runner.visual, headingYaw(this.runner.seg.heading), dt, zoom, this.runner.falling, chaseView);
     }
     this.engine.render();
   };
@@ -348,8 +511,10 @@ export class Game {
     const lateness = r.s - seg.length;
     r.turnOnto(this.track, this.track.next(seg));
     this.hud.hint(null);
+    const perfect = lateness >= -TUNING.perfectTurnWindow;
+    if (settings.effects.turnTilt) this.engine.tilt(dir, perfect ? 0.12 : 0.08);
 
-    if (lateness >= -TUNING.perfectTurnWindow) {
+    if (perfect) {
       this.multiplier = Math.min(TUNING.score.maxMultiplier, this.multiplier + 1);
       const points = TUNING.score.perfectTurn * this.multiplier;
       this.score += points;
@@ -400,6 +565,8 @@ export class Game {
           this.score += points;
           this.hud.toast(`Close call +${points}`, 'gold');
           this.audio.play('close');
+          if (settings.effects.slowMotion) this.slowTimer = 0.32;
+          if (settings.effects.screenFlash) this.hud.flash('white', 0.35);
         }
         continue;
       }
@@ -426,8 +593,8 @@ export class Game {
   private stumble(o: Obstacle): void {
     o.hit = true;
     if (o.object) o.object.visible = false;
-    this.engine.addShake(0.6);
-    this.hud.flash('red');
+    if (settings.effects.cameraShake) this.engine.addShake(0.6);
+    if (settings.effects.screenFlash) this.hud.flash('red');
     vibrate(this.danger > 0 ? 300 : 120);
 
     if (this.danger > 0) {
@@ -450,7 +617,7 @@ export class Game {
       this.runner.frozen = true;
       this.deathTimer = 1.1;
       this.audio.play('caught');
-      this.engine.addShake(1);
+      if (settings.effects.cameraShake) this.engine.addShake(1);
     } else {
       this.deathTimer = 0.9;
       this.audio.play('fall');
@@ -465,6 +632,11 @@ export class Game {
       if (Math.abs(c.s - r.s) > 0.9 || Math.abs(c.x - r.x) > 0.85 || Math.abs(c.y - centre) > 1.15) continue;
       c.taken = true;
       if (c.object) c.object.visible = false;
+      if (settings.effects.coinSparkle) {
+        const at = this.track.position(r.seg, c.s, c.x, this.scratch);
+        at.y = c.y;
+        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : '#ffd23f');
+      }
       this.coins += 1;
       this.score += TUNING.score.coin * this.multiplier;
 
@@ -484,8 +656,8 @@ export class Game {
 
     const bonus = 250 * this.multiplier;
     this.score += bonus;
-    this.engine.kickFov(16);
-    this.hud.flash('white');
+    if (settings.effects.speedZoom) this.engine.kickFov(16);
+    if (settings.effects.screenFlash) this.hud.flash('white');
     this.hud.toast(`New world +${bonus}`, 'white');
     this.audio.play('portal');
     this.menus.show({
@@ -559,6 +731,10 @@ export class Game {
     this.hud.hint(text);
     this.hintTimer = 1.4;
   }
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function loadBest(): Best {

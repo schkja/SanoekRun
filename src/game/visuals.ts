@@ -35,6 +35,32 @@ const GEO = {
   portalDisc: new THREE.CircleGeometry(2.75, 40),
 };
 
+/** What you collect: gold coins for the explorer, acorns for the squirrel. */
+export type Collectible = 'coin' | 'acorn';
+let collectible: Collectible = 'coin';
+
+export function setCollectible(kind: Collectible): void {
+  collectible = kind;
+}
+
+const ACORN_NUT = new THREE.MeshStandardMaterial({ color: '#b0702e', roughness: 0.55, emissive: '#5a2e08', emissiveIntensity: 0.35 });
+const ACORN_CAP = new THREE.MeshStandardMaterial({ color: '#5a3d24', roughness: 0.9, flatShading: true });
+
+function makeAcorn(): THREE.Group {
+  const g = new THREE.Group();
+  const nut = new THREE.Mesh(GEO.sphere, ACORN_NUT);
+  nut.scale.set(0.5, 0.62, 0.5);
+  nut.position.y = -0.06;
+  const cap = new THREE.Mesh(GEO.sphere, ACORN_CAP);
+  cap.scale.set(0.58, 0.3, 0.58);
+  cap.position.y = 0.17;
+  const stalk = new THREE.Mesh(GEO.box, ACORN_CAP);
+  stalk.scale.set(0.06, 0.16, 0.06);
+  stalk.position.y = 0.33;
+  g.add(nut, cap, stalk);
+  return g;
+}
+
 const COIN_MATERIAL = new THREE.MeshStandardMaterial({
   color: '#ffd23f',
   emissive: '#b88a00',
@@ -219,12 +245,19 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
 
   // --- Coins --------------------------------------------------------------------
   for (const c of seg.coins) {
-    const coin = new THREE.Mesh(GEO.coin, COIN_MATERIAL);
-    coin.rotation.x = Math.PI / 2;
-    coin.position.set(c.x, c.y, -c.s);
-    coin.userData.coin = true;
-    group.add(coin);
-    c.object = coin;
+    let item: THREE.Object3D;
+    if (collectible === 'acorn') {
+      item = makeAcorn();
+      item.userData.spin = 'y';
+    } else {
+      item = new THREE.Mesh(GEO.coin, COIN_MATERIAL);
+      item.rotation.x = Math.PI / 2;
+      item.userData.spin = 'z';
+    }
+    item.position.set(c.x, c.y, -c.s);
+    item.userData.coin = true;
+    group.add(item);
+    c.object = item;
   }
 
   // --- Portal ---------------------------------------------------------------------
@@ -381,6 +414,85 @@ export interface RunnerModel {
   legR: THREE.Group;
   armL: THREE.Group;
   armR: THREE.Group;
+  /** The squirrel's tail, which sways as it runs. */
+  tail?: THREE.Group;
+}
+
+export function makeCharacterModel(character: 'explorer' | 'squirrel'): RunnerModel {
+  return character === 'squirrel' ? makeSquirrelModel() : makeRunnerModel();
+}
+
+/** Sanök the squirrel: red fur, white legs and belly, big bushy tail. Faces -Z, origin at the feet. */
+export function makeSquirrelModel(): RunnerModel {
+  const root = new THREE.Group();
+  const body = new THREE.Group();
+  root.add(body);
+
+  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.75 });
+  const fur = mat('#c8642a');
+  const tailFur = mat('#d9772f');
+  const white = mat('#ffffff');
+  const dark = mat('#2b2b3d');
+  const scarf = mat('#3ac6b0');
+
+  const part = (m: THREE.Material, parent: THREE.Object3D, geo: THREE.BufferGeometry, x: number, y: number, z: number, sx: number, sy: number, sz: number) => {
+    const mesh = new THREE.Mesh(geo, m);
+    mesh.position.set(x, y, z);
+    mesh.scale.set(sx, sy, sz);
+    mesh.castShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  const limb = (x: number, y: number, z = 0) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, y, z);
+    body.add(pivot);
+    return pivot;
+  };
+
+  // White legs and feet.
+  const legL = limb(-0.17, 0.46);
+  const legR = limb(0.17, 0.46);
+  for (const leg of [legL, legR]) {
+    part(white, leg, GEO.box, 0, -0.22, 0, 0.18, 0.44, 0.2);
+    part(white, leg, GEO.box, 0, -0.44, -0.08, 0.2, 0.08, 0.32);
+  }
+
+  part(fur, body, GEO.sphere, 0, 0.86, 0.02, 0.72, 0.8, 0.78);
+  part(white, body, GEO.sphere, 0, 0.84, -0.22, 0.46, 0.58, 0.36);
+  part(scarf, body, GEO.cyl, 0, 1.2, 0, 0.62, 0.1, 0.6);
+
+  part(fur, body, GEO.sphere, 0, 1.46, -0.08, 0.6, 0.56, 0.58);
+  part(white, body, GEO.sphere, 0, 1.38, -0.32, 0.3, 0.22, 0.24);
+  part(dark, body, GEO.sphere, 0, 1.42, -0.44, 0.08, 0.07, 0.07);
+  part(dark, body, GEO.sphere, -0.14, 1.54, -0.3, 0.09, 0.1, 0.06);
+  part(dark, body, GEO.sphere, 0.14, 1.54, -0.3, 0.09, 0.1, 0.06);
+  const ear = new THREE.ConeGeometry(0.09, 0.26, 5);
+  part(fur, body, ear, -0.16, 1.78, -0.02, 1, 1, 1);
+  part(fur, body, ear, 0.16, 1.78, -0.02, 1, 1, 1);
+
+  // Little white forepaws.
+  const armL = limb(-0.26, 1.04, -0.12);
+  const armR = limb(0.26, 1.04, -0.12);
+  part(white, armL, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
+  part(white, armR, GEO.box, 0, -0.16, 0, 0.12, 0.32, 0.14);
+
+  // The tail curls up behind and a little to the side, so it never hides the path.
+  const tail = new THREE.Group();
+  tail.position.set(0.18, 0.6, 0.36);
+  tail.rotation.z = -0.3;
+  body.add(tail);
+  // [x, y, z, radius] — a plume sweeping up and out to the right.
+  const puffs: Array<[number, number, number, number]> = [
+    [0.05, 0.05, 0.1, 0.2],
+    [0.2, 0.32, 0.26, 0.24],
+    [0.36, 0.62, 0.3, 0.26],
+    [0.46, 0.9, 0.2, 0.24],
+    [0.48, 1.1, 0.04, 0.18],
+  ];
+  for (const [x, y, z, r] of puffs) part(tailFur, tail, GEO.sphere, x, y, z, r * 2, r * 2, r * 1.5);
+
+  return { root, body, legL, legR, armL, armR, tail };
 }
 
 /** A little explorer built from boxes, facing -Z. Origin is at the feet. */
@@ -440,7 +552,10 @@ export function makeRunnerModel(): RunnerModel {
 /** Spin coins and flicker fire jets. Called once per frame with the visible segments. */
 export function animateSegment(group: THREE.Group, time: number): void {
   for (const child of group.children) {
-    if (child.userData.coin) child.rotation.z = time * 4;
+    if (child.userData.coin) {
+      if (child.userData.spin === 'y') child.rotation.y = time * 3;
+      else child.rotation.z = time * 4;
+    }
     else if (child.userData.portal) child.rotation.z = time * 1.5;
     else if (child.children.length) {
       for (const part of child.children) {

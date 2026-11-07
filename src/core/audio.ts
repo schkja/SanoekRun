@@ -61,15 +61,23 @@ export class Audio {
     if (!Ctor) return;
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.25;
+    this.master.gain.value = this.muted ? 0 : 0.25;
     this.master.connect(this.ctx.destination);
     void this.preload();
   }
 
-  toggleMute(): boolean {
-    this.muted = !this.muted;
+  /** The audio context and the main output, once sound is unlocked. Music plays through these. */
+  get context(): AudioContext | null {
+    return this.ctx;
+  }
+
+  get output(): GainNode | null {
+    return this.master;
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.25;
-    return this.muted;
   }
 
   /** `pitch` scales the blip's frequency — coin streaks climb with it. */

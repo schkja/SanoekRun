@@ -11,7 +11,8 @@
 import * as THREE from 'three';
 import { TUNING } from './tuning';
 import { headingYaw, type Segment, type Track } from './track';
-import { makeRunnerModel, type RunnerModel } from './visuals';
+import { makeCharacterModel, type RunnerModel } from './visuals';
+import type { Character } from './settings';
 
 export class Runner {
   seg!: Segment;
@@ -27,7 +28,7 @@ export class Runner {
   /** Stops all movement (used while being caught). */
   frozen = false;
 
-  readonly model: RunnerModel = makeRunnerModel();
+  model: RunnerModel = makeCharacterModel('explorer');
   /** Logical position on the track. */
   readonly position = new THREE.Vector3();
   /** Where the model is drawn: the logical position, smoothed through turns. */
@@ -40,6 +41,11 @@ export class Runner {
   private phase = 0;
   private readonly smoothing = new THREE.Vector3();
   private readonly before = new THREE.Vector3();
+
+  /** Swap the character model. The caller puts the new `model.root` in the scene. */
+  setCharacter(character: Character): void {
+    this.model = makeCharacterModel(character);
+  }
 
   get sliding(): boolean {
     return this.slideTimer > 0;
@@ -206,5 +212,9 @@ export class Runner {
     m.body.position.y += (bodyY - m.body.position.y) * Math.min(1, dt * 20);
     m.body.rotation.x += (bodyTilt - m.body.rotation.x) * Math.min(1, dt * 18);
     m.body.rotation.z = lean;
+    if (m.tail) {
+      m.tail.rotation.x = Math.sin(this.phase * 0.5) * 0.18 + (this.grounded ? 0 : -0.35);
+      m.tail.rotation.z = Math.sin(this.phase * 0.5 + 1) * 0.12;
+    }
   }
 }
