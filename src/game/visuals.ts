@@ -966,6 +966,8 @@ export interface RunnerModel {
   armR: THREE.Group;
   /** The squirrel's tail, which sways as it runs. */
   tail?: THREE.Group;
+  /** How it runs: 'run' (left, right, like a person) or 'bound' (all four paws together, like a squirrel). */
+  gait?: 'run' | 'bound';
 }
 
 export function makeCharacterModel(character: 'lumberjack' | 'squirrel', outfit = ''): RunnerModel {
@@ -1184,10 +1186,13 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
   // back and curling over at the top, orange fading to a cream tip. It
   // leans out to the right so the head and tufted ears stay visible.
   const tail = new THREE.Group();
-  tail.position.set(0.18, 0.5, 0.42);
+  tail.position.set(0.16, 0.5, 0.4);
   body.add(tail);
   const plume = new THREE.Group();
-  plume.rotation.z = -0.38;
+  // Kept compact (about head height) so it doesn't hide the path ahead,
+  // and fat so it still reads as a squirrel's tail.
+  plume.rotation.z = -0.5;
+  plume.scale.set(0.82, 0.68, 0.82);
   tail.add(plume);
   part(TAIL_MATERIAL, plume, squirrelTailGeometry(), 0, 0, 0, 1, 1, 1);
   // A round tuft closes the tip.
@@ -1212,7 +1217,7 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
     crown(body, part, mat, 1.74, 0.36);
   }
 
-  return { root, body, legL, legR, armL, armR, tail };
+  return { root, body, legL, legR, armL, armR, tail, gait: 'bound' };
 }
 
 const BUBBLE = new THREE.MeshBasicMaterial({ color: '#d9f3ff', transparent: true, opacity: 0.35, depthWrite: false });

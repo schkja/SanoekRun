@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.4.3",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "The squirrel bounds like a real squirrel: paws together, hop, tail flowing behind",
+        "Smaller tail, so you can see the path ahead"
+      ],
+      "de": [
+        "Das Eichhörnchen hüpft wie ein echtes: Pfoten zusammen, Sprung, der Schwanz weht hinterher",
+        "Kleinerer Schwanz, damit du den Weg siehst"
+      ],
+      "ru": [
+        "Белка скачет как настоящая: лапы вместе, прыжок, хвост развевается следом",
+        "Хвост поменьше, чтобы видеть тропу впереди"
+      ],
+      "uk": [
+        "Білка стрибає як справжня: лапи разом, стрибок, хвіст розвівається слідом",
+        "Хвіст менший, щоб бачити стежку попереду"
+      ],
+      "es": [
+        "La ardilla salta como una de verdad: patas juntas, brinco y la cola ondeando",
+        "Cola más pequeña para ver el camino"
+      ]
+    }
+  },
+  {
     "version": "1.4.2",
     "date": "2026-11-07",
     "notes": {
