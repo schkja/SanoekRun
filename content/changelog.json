@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.14.0",
+    "date": "2026-11-08",
+    "notes": {
+      "en": [
+        "Texts fit on every phone size and in every language: hints wrap, buttons don't spill over, the hero arrows stay centred",
+        "New world near the start of the forest: the Dark thicket. The Blossom trail now comes after winter, like spring"
+      ],
+      "de": [
+        "Texte passen auf jede Handygröße und in jeder Sprache: Hinweise brechen um, Knöpfe laufen nicht über, die Heldenpfeile bleiben mittig",
+        "Neue Welt am Anfang des Waldes: das Finstere Dickicht. Der Blütenpfad kommt jetzt nach dem Winter, wie der Frühling"
+      ],
+      "ru": [
+        "Тексты помещаются на любом экране и на любом языке: подсказки переносятся, кнопки не вылезают, стрелки выбора героя по центру",
+        "Новый мир в начале леса: Тёмная чаща. Цветущая тропа теперь идёт после зимы, как весна"
+      ],
+      "uk": [
+        "Тексти вміщаються на будь-якому екрані й будь-якою мовою: підказки переносяться, кнопки не вилазять, стрілки вибору героя по центру",
+        "Новий світ на початку лісу: Темна хаща. Квітуча стежка тепер іде після зими, як весна"
+      ],
+      "es": [
+        "Los textos caben en cualquier móvil y en cualquier idioma: las pistas se ajustan, los botones no se desbordan y las flechas del héroe quedan centradas",
+        "Nuevo mundo al principio del bosque: la Espesura oscura. El Sendero en flor ahora llega después del invierno, como la primavera"
+      ]
+    }
+  },
+  {
     "version": "1.13.1",
     "date": "2026-11-08",
     "notes": {

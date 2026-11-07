@@ -2,12 +2,13 @@
   "routes": {
     "forest": [
       "forest-trail",
-      "blossom-trail",
+      "dark-thicket",
       "treetops",
       "rainy-treetops",
       "brook",
       "autumn-canopy",
       "snowy-pines",
+      "blossom-trail",
       "sunset-glade",
       "moonlit-forest",
       "firefly-night"
@@ -1044,6 +1045,51 @@
           "#1a4c4a"
         ],
         "trunk": "#4e3b3a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
+      "id": "dark-thicket",
+      "name": "Dark thicket",
+      "length": 650,
+      "chaser": "hawk",
+      "caughtBy": "Snatched by the hawk",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#1f3a3a",
+        "sky": "#3f6a5a",
+        "fog": "#2f5048",
+        "fogNear": 22,
+        "fogFar": 95,
+        "sun": "#cfe6c8",
+        "sunIntensity": 1.7,
+        "hemiSky": "#9fc0b0",
+        "hemiGround": "#1f3a2a",
+        "abyss": "#2f5a3a",
+        "abyssGlow": false,
+        "accent": "#9fffcf",
+        "ground": true,
+        "night": true
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#ecc98f",
+        "grout": "#c99a5e",
+        "body": "#b3874f",
+        "curb": "#5fbf4a"
+      },
+      "palette": {
+        "leaves": [
+          "#2f6a4a",
+          "#3f7f52",
+          "#1f5038"
+        ],
+        "trunk": "#4a3528"
       },
       "obstacles": {
         "low": 3,
