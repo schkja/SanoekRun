@@ -275,12 +275,28 @@ npm run build:single     # dist-single/index.html, one self-contained file (used
 - Traefik file provider in `/srv/traefik/conf.d/`: `sanoekrun.sascha.iodatalabs.dev.yaml` (site) and `sanoekrun-api.yaml` (`Host(...) && PathPrefix(/api)` → `http://sanoekrun-api:8080`, higher priority because the rule is longer).
 - nginx: `/assets/` immutable for 1 year; `/`, `/sw.js` and the manifest no-cache so updates show immediately. Never add a server-level `types {}` block (it replaces all MIME types and breaks JS).
 
-**One-time steps for PR #6 (after merge):**
+**One-time server setup for the leaderboard (done 2026-11-07):**
 1. GitHub → Packages → `sanoekrun-api` → make public (or `docker login ghcr.io` on the server).
-2. Create the API route from the existing site file:
+2. Create the API route:
    ```
-   cd /srv/traefik/conf.d && sed -e 's/sanoekrun:/sanoekrun-api:/g' -e 's/service: sanoekrun$/service: sanoekrun-api/' -e 's/Host(`sanoekrun.sascha.iodatalabs.dev`)/Host(`sanoekrun.sascha.iodatalabs.dev`) \&\& PathPrefix(`\/api`)/' -e 's#http://sanoekrun:80#http://sanoekrun-api:8080#' sanoekrun.sascha.iodatalabs.dev.yaml > sanoekrun-api.yaml
+   cat > /srv/traefik/conf.d/sanoekrun-api.yaml <<'EOF'
+   http:
+     routers:
+       sanoekrun-api:
+         rule: Host(`sanoekrun.sascha.iodatalabs.dev`) && PathPrefix(`/api`)
+         entryPoints:
+           - websecure
+         service: sanoekrun-api
+         tls:
+           certResolver: letsencrypt
+     services:
+       sanoekrun-api:
+         loadBalancer:
+           servers:
+             - url: http://sanoekrun-api:8080
+   EOF
    ```
+   (Done on 2026-11-07, `/api/health` answers `{"ok":true}`. An earlier sed one-liner produced port 80 instead of 8080 and gave a 502.)
 3. `cd /srv/sanoekrun.sascha.iodatalabs.dev && git pull && docker compose pull && docker compose up -d`
 4. Check `curl https://sanoekrun.sascha.iodatalabs.dev/api/health` → `{"ok":true}`.
 - **Backup:** `./data/scores.json` is the only state on the server. Copy it in any server backup.
