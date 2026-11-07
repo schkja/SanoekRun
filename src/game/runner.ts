@@ -201,6 +201,15 @@ export class Runner {
       m.legR.rotation.x = -0.4;
       m.armL.rotation.x = m.armR.rotation.x = -2.8;
       bodyTilt = this.falling ? -0.6 : -0.15;
+    } else if (m.gait === 'bound') {
+      // A squirrel bounds: hind paws push off together, front paws reach out
+      // together, the back arches and stretches, and the body hops.
+      const hop = Math.sin(this.phase * 0.85);
+      m.legL.rotation.x = m.legR.rotation.x = hop * 1.15;
+      m.legL.rotation.z = m.legR.rotation.z = 0;
+      m.armL.rotation.x = m.armR.rotation.x = -hop * 1.3 - 0.4;
+      bodyY = Math.max(0, Math.sin(this.phase * 0.85 + 0.6)) * 0.28;
+      bodyTilt = (this.stumbling ? -0.5 : -0.12) + Math.cos(this.phase * 0.85) * 0.2;
     } else {
       m.legL.rotation.x = swing * 0.95;
       m.legR.rotation.x = -swing * 0.95;
@@ -213,8 +222,10 @@ export class Runner {
     m.body.rotation.x += (bodyTilt - m.body.rotation.x) * Math.min(1, dt * 18);
     m.body.rotation.z = lean;
     if (m.tail) {
-      m.tail.rotation.x = Math.sin(this.phase * 0.5) * 0.18 + (this.grounded ? 0 : -0.35);
-      m.tail.rotation.z = Math.sin(this.phase * 0.5 + 1) * 0.12;
+      // The tail follows the hop a beat late, like it's flowing behind.
+      const wave = m.gait === 'bound' && this.grounded ? Math.sin(this.phase * 0.85 - 1.2) * 0.32 : Math.sin(this.phase * 0.5) * 0.18;
+      m.tail.rotation.x = wave + (this.grounded ? 0 : -0.35);
+      m.tail.rotation.z = Math.sin(this.phase * 0.5 + 1) * 0.1;
     }
   }
 }
