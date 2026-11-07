@@ -1,16 +1,6 @@
 {
   "routes": {
-    "lumberjack": [
-      "boardwalk",
-      "rainy-boardwalk",
-      "autumn-boardwalk",
-      "winter-boardwalk",
-      "evening-boardwalk",
-      "lantern-night",
-      "temple",
-      "lava"
-    ],
-    "squirrel": [
+    "forest": [
       "forest-trail",
       "blossom-trail",
       "treetops",
@@ -22,7 +12,17 @@
       "moonlit-forest",
       "firefly-night"
     ],
-    "bear": [
+    "boardwalk": [
+      "boardwalk",
+      "rainy-boardwalk",
+      "autumn-boardwalk",
+      "winter-boardwalk",
+      "evening-boardwalk",
+      "lantern-night",
+      "temple",
+      "lava"
+    ],
+    "honey": [
       "honey-meadow",
       "berry-woods",
       "honey-autumn",

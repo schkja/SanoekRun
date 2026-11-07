@@ -42,6 +42,8 @@ export interface Settings {
   language: LanguageChoice;
   music: MusicStyle;
   sound: boolean;
+  /** Which world to run in; any hero can run in any world. */
+  world: 'forest' | 'boardwalk' | 'honey';
   effects: Effects;
   /** Bumped when defaults change for everyone (2: slow motion off by default). */
   revision?: number;
@@ -81,6 +83,7 @@ export const DEFAULT_SETTINGS: Settings = {
   character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel', 'bear'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
+  world: envChoice('VITE_WORLD', ['forest', 'boardwalk', 'honey'] as const, 'forest'),
   revision: 2,
   effects: {
     coinSparkle: envFlag('VITE_FX_COIN_SPARKLE', true),
@@ -118,6 +121,7 @@ function load(): Settings {
     if ((saved.character as string) === 'explorer') saved.character = 'lumberjack';
     if (saved.character && !CHARACTERS.includes(saved.character)) delete saved.character;
     if (saved.language && !LANGUAGE_CHOICES.includes(saved.language)) delete saved.language;
+    if (saved.world && !['forest', 'boardwalk', 'honey'].includes(saved.world)) delete saved.world;
     const effects = { ...base.effects, ...(saved.effects ?? {}) };
     // Slow motion on close calls became opt-in; switch it off once for everyone.
     if ((saved.revision ?? 1) < 2) effects.slowMotion = base.effects.slowMotion;
