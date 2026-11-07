@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.4.6",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Share picture has a QR code and the game's address, placed clear of Instagram's buttons",
+        "Sharing also copies the link: paste it into Instagram's Link sticker"
+      ],
+      "de": [
+        "Das Teilen-Bild hat einen QR-Code und die Adresse, frei von Instagrams Knöpfen",
+        "Beim Teilen wird der Link kopiert: in den Instagram-Link-Sticker einfügen"
+      ],
+      "ru": [
+        "На картинке для шеринга QR-код и адрес игры, их не закрывают кнопки Instagram",
+        "При шеринге ссылка копируется: вставь её в стикер «Ссылка» в Instagram"
+      ],
+      "uk": [
+        "На картинці для поширення QR-код і адреса гри, їх не закривають кнопки Instagram",
+        "Під час поширення посилання копіюється: встав його в стікер «Посилання» в Instagram"
+      ],
+      "es": [
+        "La imagen para compartir lleva un código QR y la dirección, lejos de los botones de Instagram",
+        "Al compartir se copia el enlace: pégalo en el sticker Enlace de Instagram"
+      ]
+    }
+  },
+  {
     "version": "1.4.5",
     "date": "2026-11-07",
     "notes": {
