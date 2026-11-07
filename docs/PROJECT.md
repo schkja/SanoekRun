@@ -18,7 +18,7 @@ Read this first, then the code. Keep it up to date when architecture changes.
 | --- | --- |
 | Commits only as the owner | `git -c user.name=schkja -c user.email=148076556+schkja@users.noreply.github.com commit ...` |
 | No AI attribution | Never write Claude, AI, "Co-Authored-By" or "Generated with" in commits, PR titles or PR bodies. The owner holds the license. |
-| Branch + PR | Never push to `main`. Branch, push, open a PR. |
+| Branch + PR | Never push to `main`. **Ask the owner before opening or updating a pull request** (owner, 2026-11-07: "no merge requests without my approval"). For anything audible or visible, send previews first (screenshots, GIFs, MP3s) and wait for a yes. |
 | Opening PRs | `gh pr create` / GraphQL are blocked in the agent sandbox. Use REST: `gh api repos/schkja/SanoekRun/pulls --input pr.json` with `{title, head, base:"main", body}`. |
 | Shallow clone | After creating a branch, add a fetch refspec for it if `git push`/`fetch` complain. |
 | Mockups first | For big visual redesigns show 2–3 mockups and let the owner pick. |
@@ -236,6 +236,9 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 
 ### 6.10c Sky painting and night
 `engine.paintSky()` paints the 256×512 sky backdrop: gradient plus optional `theme.stars`, `theme.moon` (with halo and craters), `theme.sunDisc` (a low glowing sun, colour = hex). Seeded random, so each world's sky is always the same. It's screen-space (stays put when you turn), like a theatre backdrop. Night worlds (`theme.night`): no sunbeams; fireflies in three material groups that blink out of phase (`animateSegment` updates `NIGHT.fireflies` colours); on ground (trail) night worlds, dark bushes with two glowing eyes. Never put decorations in mid-air in branch worlds.
+
+### 6.10d Music
+`src/core/music.ts` is a small Web Audio studio (no files): compressor bus, convolver reverb (generated impulse), dotted-eighth echo. Instruments: detuned-saw pads through a low-pass, round sine+triangle bass, FM marimba pluck (sine carrier, 4× modulator with fast-decaying depth) for melody and arpeggio, soft kick, clap, hats. `SONGS` (exported for previews): `chase` (A minor, Am F C G, 124 bpm), `hop` (C major, C G Am F, 112 bpm, swung), `menu` (Fmaj7 Em7 Dm7 Cmaj7, 80 bpm, no drums). Each is 4 bars: chords, bass per bar with a rhythm, 64-step melody. Layers 1 pads+kick, 2 bass, 3 drums+arpeggio, 4 melody. The owner found the old square-wave music too "80s" but liked its energy and the build-up; a calm pads-and-marimba version was rejected as "makes me fall asleep". Keep it energetic: chase 150 bpm four-on-the-floor with supersaw hook and pumping pads, hop 132 bpm bouncy marimba, menu 104 bpm. Preview: import the module in the dev server and render with an `OfflineAudioContext` to WAV.
 
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:
