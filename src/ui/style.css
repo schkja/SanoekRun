@@ -147,6 +147,14 @@ body {
   border: 2.5px solid var(--ink);
 }
 
+.hud.is-carrot .hud-coin {
+  width: 12px;
+  height: 20px;
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  background: #ff8a1e;
+  box-shadow: inset 0 4px 0 #3fbf4a;
+}
+
 .hud.is-honey .hud-coin {
   width: 18px;
   height: 18px;
@@ -1096,4 +1104,10 @@ body {
   font-weight: 700;
   color: #5a6886;
   text-wrap: balance;
+}
+
+/* A world not reached yet: its name stays a secret. */
+.menu-row-label.is-blurred {
+  filter: blur(5px);
+  user-select: none;
 }

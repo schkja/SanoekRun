@@ -14,7 +14,7 @@ export const GAME_NAME = 'SanökRun';
 /** The link printed on share cards. */
 export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.sascha.iodatalabs.dev';
 
-export type Character = 'lumberjack' | 'squirrel' | 'bear';
+export type Character = 'lumberjack' | 'squirrel' | 'bear' | 'hare';
 export type MusicStyle = 'chase' | 'hop' | 'menu' | 'off';
 
 export interface Effects {
@@ -45,12 +45,12 @@ export interface Settings {
   /** Which world to run in; any hero can run in any world. */
   world: 'forest' | 'boardwalk' | 'honey';
   effects: Effects;
-  /** Bumped when defaults change for everyone (2: slow motion off by default). */
+  /** Bumped when defaults change for everyone (2: slow motion off, 3: chase music). */
   revision?: number;
 }
 
 /** The options, in the order the Settings buttons cycle through them. Their names live in src/i18n. */
-export const CHARACTERS: Character[] = ['lumberjack', 'squirrel', 'bear'];
+export const CHARACTERS: Character[] = ['squirrel', 'hare', 'bear', 'lumberjack'];
 export const MUSIC_STYLES: MusicStyle[] = ['chase', 'hop', 'menu', 'off'];
 export const EFFECT_KEYS: Array<keyof Effects> = [
   'coinSparkle',
@@ -80,11 +80,11 @@ function envChoice<T extends string>(name: string, options: readonly T[], fallba
 
 export const DEFAULT_SETTINGS: Settings = {
   language: envChoice('VITE_LANGUAGE', LANGUAGE_CHOICES, 'auto'),
-  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel', 'bear'] as const, 'lumberjack'),
+  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel', 'bear', 'hare'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
   world: envChoice('VITE_WORLD', ['forest', 'boardwalk', 'honey'] as const, 'forest'),
-  revision: 2,
+  revision: 3,
   effects: {
     coinSparkle: envFlag('VITE_FX_COIN_SPARKLE', true),
     speedLines: envFlag('VITE_FX_SPEED_LINES', true),
@@ -125,6 +125,8 @@ function load(): Settings {
     const effects = { ...base.effects, ...(saved.effects ?? {}) };
     // Slow motion on close calls became opt-in; switch it off once for everyone.
     if ((saved.revision ?? 1) < 2) effects.slowMotion = base.effects.slowMotion;
+    // The chase music became everyone's default once.
+    if ((saved.revision ?? 1) < 3) saved.music = base.music;
     return { ...base, ...saved, effects, revision: base.revision };
   } catch {
     return base;
