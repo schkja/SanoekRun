@@ -83,9 +83,10 @@ export class Chaser {
     // It glides from side to side above the path, like a bird circling,
     // and stays high enough that it never hides the runner.
     const sway = Math.sin(this.time * 0.9);
-    // Never closer than ~3 m behind the runner, so it can't fill the camera.
-    hawk.position.set(sway * 1.2, 4.0, -Math.max(0, this.gap - 3.2));
-    hawk.rotation.z = -sway * 0.35;
+    // High above and about 2 m behind the runner: the huge
+    // wings loom over the top of the screen without covering the runner.
+    hawk.position.set(sway * 0.9, 5.3, -Math.max(0, this.gap - 2.0));
+    hawk.rotation.z = -sway * 0.25;
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
   }
@@ -159,103 +160,114 @@ function buildBeast(o: { hide: string; dark: string; eyes: string; horns: boolea
 }
 
 /**
- * The hawk: a fierce cartoon bird of prey. It hovers behind the runner,
- * turned towards the camera, so you see what's after you: angry brows,
- * glaring yellow eyes, a hooked beak, a spiky crest and open talons.
- * Scary for a game, not gory.
+ * The hawk: a big bird of prey swooping after the runner. It flies the same
+ * way as the runner, above and behind, so from the camera you see what a
+ * mouse sees: a huge dark shape with wings spread wide, fingered wing tips,
+ * a barred tail fan, hooked beak and glaring eye in profile, talons out.
+ * Its shadow sweeps over the path.
  */
 function buildHawk(): Body {
   const root = new THREE.Group();
   const g = new THREE.Group();
   root.add(g);
-  g.scale.setScalar(0.34);
-  // Facing the camera (the track runs away from it).
-  g.rotation.y = Math.PI;
-  const feathers = mat('#5a3a22');
-  const wingDark = mat('#3b2616');
-  const band = mat('#c9a27a');
-  const chest = mat('#e9dcc4');
+  g.scale.setScalar(0.4);
+  const back = mat('#4a2f1c');
+  const covert = mat('#7a5232');
+  const pale = mat('#e6d6b8');
+  const bar = mat('#8a6a4a');
+  const tipDark = mat('#2a1a10');
   const beak = mat('#ffb21f');
   const claw = mat('#1f2a44');
-  const eyeWhite = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
+  const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
   const pupil = new THREE.MeshBasicMaterial({ color: '#111111' });
-  const brow = mat('#1f1610');
+  const brow = mat('#1f140c');
 
-  // Body: lean and long, chest barred.
-  part(SPHERE, feathers, g, 0, 0, 0.1, 1.3, 1.15, 2.0);
-  part(SPHERE, chest, g, 0, -0.1, -0.45, 0.95, 0.95, 1.0);
-  for (const y of [-0.05, -0.32]) part(BOX, band, g, 0, y, -0.93, 0.6, 0.06, 0.05);
+  // Body: long and streamlined, pale barred belly underneath.
+  part(SPHERE, back, g, 0, 0, 0, 1.15, 0.95, 2.4);
+  part(SPHERE, pale, g, 0, -0.2, -0.1, 0.95, 0.6, 1.9);
+  for (const z of [-0.5, -0.1, 0.3]) part(BOX, bar, g, 0, -0.46, z, 0.6, 0.04, 0.08);
 
-  // Head: flat-topped with a spiky crest, glaring eyes under heavy brows.
+  // Head: forward, with a heavy brow ridge over each fierce eye.
   const head = new THREE.Group();
-  head.position.set(0, 0.72, -0.8);
+  head.position.set(0, 0.35, -1.25);
   g.add(head);
-  part(SPHERE, feathers, head, 0, 0, 0, 1.0, 0.9, 1.0);
-  const spike = new THREE.ConeGeometry(0.1, 0.5, 4);
-  for (const [x, rz] of [[-0.18, 0.5], [0, 0], [0.18, -0.5]] as const) {
-    // Swept back, so it reads as a crest and not as owl ears.
-    const c = part(spike, wingDark, head, x * 0.6, 0.32, 0.38, 0.8, 1, 0.8);
-    c.rotation.set(1.25, 0, rz * 0.4);
-  }
+  part(SPHERE, back, head, 0, 0, 0, 0.85, 0.8, 0.95);
+  part(SPHERE, pale, head, 0, -0.18, -0.2, 0.6, 0.45, 0.55);
   for (const side of [-1, 1]) {
-    part(SPHERE, eyeWhite, head, side * 0.24, 0.06, -0.42, 0.3, 0.24, 0.12).castShadow = false;
-    part(SPHERE, pupil, head, side * 0.22, 0.04, -0.49, 0.1, 0.16, 0.05).castShadow = false;
-    // Brows slant down towards the beak: an angry glare.
-    const b = part(BOX, brow, head, side * 0.24, 0.22, -0.46, 0.38, 0.09, 0.08);
-    b.rotation.z = side * 0.45;
+    part(SPHERE, eye, head, side * 0.36, 0.08, -0.18, 0.12, 0.2, 0.24).castShadow = false;
+    part(SPHERE, pupil, head, side * 0.41, 0.08, -0.2, 0.05, 0.12, 0.1).castShadow = false;
+    const b = part(BOX, brow, head, side * 0.36, 0.24, -0.16, 0.12, 0.08, 0.36);
+    b.rotation.x = 0.35;
   }
-  // Hooked beak, slightly open.
-  const upper = part(new THREE.ConeGeometry(0.16, 0.5, 6), beak, head, 0, -0.08, -0.62, 1, 1, 1);
-  upper.rotation.x = -Math.PI / 2 - 0.5;
-  const lower = part(new THREE.ConeGeometry(0.11, 0.28, 6), beak, head, 0, -0.24, -0.52, 1, 1, 1);
-  lower.rotation.x = -Math.PI / 2 + 0.35;
+  // Big hooked beak.
+  const upper = part(new THREE.ConeGeometry(0.17, 0.55, 6), beak, head, 0, -0.02, -0.6, 1, 1, 1);
+  upper.rotation.x = -Math.PI / 2 - 0.55;
+  part(SPHERE, beak, head, 0, 0.03, -0.42, 0.3, 0.24, 0.3);
 
-  // Talons stretched forward, ready to grab.
+  // Tail fan, barred, spread wide.
+  for (const a of [-0.45, -0.15, 0.15, 0.45]) {
+    const f = part(SPHERE, covert, g, Math.sin(a) * 0.5, 0.05, 1.75, 0.42, 0.08, 1.3);
+    f.rotation.y = a;
+    part(BOX, tipDark, g, Math.sin(a) * 0.95, 0.07, 2.25, 0.3, 0.05, 0.08).rotation.y = a;
+  }
+
+  // Talons thrown forward under the body, ready to grab.
   const talons: THREE.Group[] = [];
   for (const side of [-1, 1]) {
     const leg = new THREE.Group();
-    leg.position.set(side * 0.3, -0.55, -0.2);
+    leg.position.set(side * 0.3, -0.5, -0.2);
     g.add(leg);
-    part(BOX, beak, leg, 0, -0.25, -0.15, 0.12, 0.5, 0.12).rotation.x = 0.6;
-    for (const dx of [-0.1, 0, 0.1]) {
-      const c = part(new THREE.ConeGeometry(0.05, 0.28, 4), claw, leg, dx, -0.5, -0.4, 1, 1, 1);
-      c.rotation.x = -2.2;
+    part(BOX, beak, leg, 0, -0.25, -0.2, 0.13, 0.55, 0.13).rotation.x = -0.7;
+    for (const dx of [-0.12, 0, 0.12]) {
+      const c = part(new THREE.ConeGeometry(0.06, 0.32, 4), claw, leg, dx, -0.48, -0.55, 1, 1, 1);
+      c.rotation.x = -1.9;
     }
     talons.push(leg);
   }
 
-  // Tail: barred fan.
-  for (const a of [-0.4, 0, 0.4]) {
-    const f = part(SPHERE, wingDark, g, Math.sin(a) * 0.4, 0.05, 1.2, 0.4, 0.1, 1.0);
-    f.rotation.y = a;
-  }
-
-  // Wings: broad, with spread "finger" feathers at the tips.
-  const wings: THREE.Group[] = [];
+  // Huge wings in two parts (arm and hand) so the beat bends at the wrist.
+  const shoulders: THREE.Group[] = [];
+  const wrists: THREE.Group[] = [];
   for (const side of [-1, 1]) {
-    const pivot = new THREE.Group();
-    pivot.position.set(side * 0.55, 0.25, 0);
-    g.add(pivot);
-    part(SPHERE, feathers, pivot, side * 1.1, 0, 0, 2.3, 0.28, 1.5);
-    part(BOX, band, pivot, side * 1.1, -0.06, 0.25, 1.8, 0.04, 0.12);
-    for (let k = 0; k < 4; k++) {
-      const f = part(BOX, wingDark, pivot, side * (2.25 + k * 0.08), 0, -0.3 + k * 0.22, 0.9, 0.06, 0.16);
-      f.rotation.y = side * (0.25 - k * 0.18);
+    const shoulder = new THREE.Group();
+    shoulder.position.set(side * 0.45, 0.2, -0.2);
+    g.add(shoulder);
+    part(SPHERE, back, shoulder, side * 1.05, 0.04, 0.1, 2.3, 0.22, 1.7);
+    part(SPHERE, pale, shoulder, side * 1.05, -0.06, 0.15, 2.1, 0.12, 1.5);
+    part(SPHERE, covert, shoulder, side * 1.0, 0.12, -0.25, 1.9, 0.12, 0.6);
+
+    const wrist = new THREE.Group();
+    wrist.position.set(side * 2.1, 0, 0);
+    shoulder.add(wrist);
+    part(SPHERE, back, wrist, side * 0.9, 0.02, 0.15, 2.0, 0.18, 1.4);
+    part(SPHERE, pale, wrist, side * 0.85, -0.06, 0.2, 1.7, 0.1, 1.2);
+    // Five long "finger" feathers, dark-tipped, fanned at the end.
+    for (let k = 0; k < 5; k++) {
+      const spread = -0.5 + k * 0.25;
+      const f = part(SPHERE, k % 2 ? back : covert, wrist, side * (1.9 + Math.cos(spread) * 0.45), 0, 0.15 + Math.sin(spread) * 0.9, 1.4, 0.07, 0.3);
+      f.rotation.y = -side * spread;
+      const t = part(SPHERE, tipDark, wrist, side * (2.45 + Math.cos(spread) * 0.5), 0, 0.15 + Math.sin(spread) * 1.05, 0.5, 0.06, 0.24);
+      t.rotation.y = -side * spread;
     }
-    wings.push(pivot);
+    shoulders.push(shoulder);
+    wrists.push(wrist);
   }
 
   return {
     root,
     animate: (_pace, time) => {
-      const flap = Math.sin(time * 6) * 0.55;
-      // Wings held up in a V (so you see them, not their edge) and beating.
-      wings[0].rotation.z = -0.5 + flap;
-      wings[1].rotation.z = 0.5 - flap;
-      g.position.y = Math.sin(time * 6) * 0.12;
-      g.rotation.x = -0.15;
-      head.rotation.z = Math.sin(time * 1.7) * 0.12;
-      for (const leg of talons) leg.rotation.x = Math.sin(time * 3) * 0.15;
+      // Slow, heavy beats: down-stroke bends at the wrist.
+      const beat = Math.sin(time * 4.2);
+      for (let i = 0; i < 2; i++) {
+        const side = i === 0 ? -1 : 1;
+        shoulders[i].rotation.z = side * (0.14 - beat * 0.38);
+        wrists[i].rotation.z = side * (0.04 - beat * 0.3);
+      }
+      g.position.y = -beat * 0.18;
+      // Nose down, diving at its prey: the camera sees the spread wings, not their edge.
+      g.rotation.x = 0.4;
+      head.rotation.y = Math.sin(time * 0.9) * 0.25;
+      for (const leg of talons) leg.rotation.x = Math.sin(time * 2.5) * 0.12;
     },
   };
 }

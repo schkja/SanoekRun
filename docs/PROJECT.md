@@ -143,7 +143,8 @@ Gap model: normally out of view. On stumble → danger mode (visible behind, HUD
   - Obstacle "faces" point to +z (toward the runner).
   - Nothing big near the camera line (leaf blobs blocked the view).
   - Things must be attached to something: toadstool families (`toadstool()`: stem, cream gills, red dome cap, white spots) sit on the branch shoulder; twigs grow out of the branch edge. Shelf mushrooms on trunks were removed (looked like plates).
-- The hawk is fierce but not gory (owner wanted it scarier than a 'chick'): dark plumage, glaring yellow eyes under angry brows, hooked open beak, swept crest, talons forward, wings in a V. It faces the camera (`g.rotation.y = π`), scale 0.34, flies at y 4 and never closer than ~3 m behind the runner.
+- The hawk is a big bird of prey (owner: 'big, fierce, scary'; a chubby/cute one and a camera-facing one were rejected as 'a chick' and 'backwards'). It flies the same way as the runner, ~2 m behind and at y 5.3, nose up 0.4 rad so the camera sees dark wing tops: two-joint wings (shoulder + wrist) with fingered dark-tipped primaries, barred tail fan, hooked beak, brows, talons forward, scale 0.4. Its shadow on the path is part of the threat.
+- The squirrel tail is one smooth `TubeGeometry` along an S-curve (`squirrelTailGeometry()`), fat in the middle with a ruffled edge, cream tuft at the tip, leaning out 0.38 rad on an inner `plume` group (the runner animates the outer `tail` group). Haunches make the back view read as squirrel.
 - Story props: `lumberjackCamp` (axe, stump, cut logs) and `squirrelHome` (hollow, acorn stash).
 - Heroes: `makeCharacterModel(character, outfit)` returns `{root, body, legL, legR, armL, armR, tail?}`. Outfits are built in `hat()` (lumberjack) and squirrel accessories; shared `crown()`.
 
