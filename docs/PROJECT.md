@@ -142,7 +142,8 @@ Gap model: normally out of view. On stumble → danger mode (visible behind, HUD
   - Every tree trunk ends in a visible crown (bare poles looked like sticks).
   - Obstacle "faces" point to +z (toward the runner).
   - Nothing big near the camera line (leaf blobs blocked the view).
-  - Things must be attached to something: shelf mushrooms are half-discs sunk into bark; twigs grow out of the branch edge.
+  - Things must be attached to something: toadstool families (`toadstool()`: stem, cream gills, red dome cap, white spots) sit on the branch shoulder; twigs grow out of the branch edge. Shelf mushrooms on trunks were removed (looked like plates).
+- The hawk is a chubby cartoon bird (big eyes, small beak), scaled 0.36, sways side to side above and slightly ahead of the chaser point so it never sits in the camera's face.
 - Story props: `lumberjackCamp` (axe, stump, cut logs) and `squirrelHome` (hollow, acorn stash).
 - Heroes: `makeCharacterModel(character, outfit)` returns `{root, body, legL, legR, armL, armR, tail?}`. Outfits are built in `hat()` (lumberjack) and squirrel accessories; shared `crown()`.
 
@@ -178,6 +179,9 @@ Defaults from `VITE_*` env at build time (see `.env.example`), overridden per us
 - `TARGETS` has 5 difficulty tiers; tier grows with level.
 - `report(stat, value)` → returns newly completed missions, pays `missionReward = 50 × min(5, level)`. Toasts appear during the run.
 - `tryLevelUp()` when all 3 are done: pays `levelBonus = 100 × level`, deals 3 new missions.
+
+### 6.2b Start worlds
+Every world a hero reaches is saved in `profile.reached[character]` (`markReached`, toast "New start point unlocked"). When more than one is unlocked, the title shows a "Start in" row that opens a picker; the choice is `profile.startWorld[character]`. `prepareTrack()` starts the track at that world (`?world=` still overrides for testing). The `runWorlds` mission counts portals passed in this run, so a later start doesn't complete it for free.
 
 ### 6.3 Shop
 `OUTFITS` (id, character, price, icon). Lumberjack: beanie-orange 0, beanie-blue 150, cap-green 300, viking 600, crown 1200. Squirrel: scarf-teal 0, scarf-red 150, sunglasses 300, flower 500, crown 1200.

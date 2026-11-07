@@ -80,8 +80,11 @@ export class Chaser {
 
     // The hawk flies: higher when far, diving lower as it closes in.
     const hawk = this.bodies.hawk.root;
-    // It stays off to one side so it never hides the runner.
-    hawk.position.set(1.5, 3.3 + Math.max(0, this.gap - 3) * 0.3, 0);
+    // It glides from side to side above the path, like a bird circling,
+    // and stays high enough that it never hides the runner.
+    const sway = Math.sin(this.time * 0.9);
+    hawk.position.set(sway * 1.1, 3.2 + Math.max(0, this.gap - 3) * 0.25, -Math.min(2.2, this.gap * 0.45));
+    hawk.rotation.z = -sway * 0.35;
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
   }
@@ -154,41 +157,64 @@ function buildBeast(o: { hide: string; dark: string; eyes: string; horns: boolea
   };
 }
 
+/**
+ * A chubby cartoon hawk: round body, big friendly eyes, small beak and soft
+ * rounded wings. Cheeky rather than scary, since the players are kids.
+ */
 function buildHawk(): Body {
   const root = new THREE.Group();
   const g = new THREE.Group();
   root.add(g);
-  g.scale.setScalar(0.55);
-  const feathers = mat('#7a5232');
-  const light = mat('#f2e6d0');
-  const beak = mat('#ffb020');
-  const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
+  g.scale.setScalar(0.36);
+  const feathers = mat('#b5763f');
+  const dark = mat('#8a5530');
+  const light = mat('#fff1d6');
+  const beak = mat('#ffc24d');
+  const white = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+  const pupil = new THREE.MeshBasicMaterial({ color: '#1f2a44' });
 
-  part(SPHERE, feathers, g, 0, 0, 0, 0.9, 0.7, 1.7);
-  part(SPHERE, light, g, 0, -0.12, -0.25, 0.7, 0.5, 1.1);
-  part(SPHERE, feathers, g, 0, 0.25, -0.9, 0.6, 0.55, 0.6);
-  part(new THREE.ConeGeometry(0.12, 0.35, 5), beak, g, 0, 0.18, -1.25, 1, 1, 1).rotation.x = -Math.PI / 2;
-  part(SPHERE, eye, g, -0.2, 0.35, -1.1, 0.12, 0.12, 0.08).castShadow = false;
-  part(SPHERE, eye, g, 0.2, 0.35, -1.1, 0.12, 0.12, 0.08).castShadow = false;
-  part(BOX, feathers, g, 0, 0.05, 1.05, 0.7, 0.08, 0.6);
+  // Body and fluffy belly.
+  part(SPHERE, feathers, g, 0, 0, 0, 1.5, 1.25, 1.9);
+  part(SPHERE, light, g, 0, -0.18, -0.35, 1.1, 0.9, 1.3);
+  // Head, a little tuft and cheeks.
+  const head = new THREE.Group();
+  head.position.set(0, 0.55, -0.85);
+  g.add(head);
+  part(SPHERE, feathers, head, 0, 0, 0, 1.15, 1.05, 1.05);
+  part(SPHERE, light, head, 0, -0.15, -0.3, 0.8, 0.6, 0.55);
+  part(SPHERE, dark, head, 0, 0.55, 0.05, 0.25, 0.35, 0.25).rotation.x = -0.4;
+  // Big round eyes looking slightly up and back at the runner.
+  for (const side of [-1, 1]) {
+    part(SPHERE, white, head, side * 0.27, 0.12, -0.42, 0.38, 0.42, 0.2).castShadow = false;
+    part(SPHERE, pupil, head, side * 0.25, 0.14, -0.52, 0.2, 0.24, 0.08).castShadow = false;
+    part(SPHERE, white, head, side * 0.21, 0.22, -0.57, 0.07, 0.07, 0.03).castShadow = false;
+  }
+  // Short hooked beak.
+  part(SPHERE, beak, head, 0, -0.12, -0.58, 0.26, 0.22, 0.3);
+  // Tail fan.
+  for (const a of [-0.35, 0, 0.35]) {
+    const feather = part(SPHERE, dark, g, Math.sin(a) * 0.35, 0.05, 1.05, 0.45, 0.12, 0.9);
+    feather.rotation.y = a;
+  }
 
   const wings: THREE.Group[] = [];
   for (const side of [-1, 1]) {
     const pivot = new THREE.Group();
-    pivot.position.set(side * 0.35, 0.15, -0.1);
+    pivot.position.set(side * 0.6, 0.2, -0.05);
     g.add(pivot);
-    part(BOX, feathers, pivot, side * 1.1, 0, 0, 2.2, 0.08, 0.9);
-    part(BOX, light, pivot, side * 2.1, 0, 0.1, 0.5, 0.06, 0.6);
+    part(SPHERE, feathers, pivot, side * 0.95, 0, 0, 2.0, 0.22, 1.0);
+    part(SPHERE, dark, pivot, side * 1.75, -0.02, 0.12, 0.8, 0.16, 0.7);
     wings.push(pivot);
   }
   return {
     root,
     animate: (_pace, time) => {
-      const flap = Math.sin(time * 9) * 0.6;
+      const flap = Math.sin(time * 7) * 0.5;
       wings[0].rotation.z = flap;
       wings[1].rotation.z = -flap;
-      g.position.y = Math.sin(time * 9) * 0.12;
-      g.rotation.x = 0.15;
+      g.position.y = Math.sin(time * 7) * 0.1;
+      g.rotation.x = 0.1;
+      head.rotation.y = Math.sin(time * 1.3) * 0.2;
     },
   };
 }

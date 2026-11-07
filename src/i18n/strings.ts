@@ -198,6 +198,11 @@ const en = {
   'share.headline.lumberjack': "I outran the bear for",
   'share.headline.squirrel': "I outran the hawk for",
   'pause.keys': "Esc or P pauses the game",
+  'start.label': 'Start in',
+  'start.title': 'Where to start',
+  'start.body': 'Every world you reach in a run becomes a start point. Pick one and run from there.',
+  'start.locked': 'Reach it in a run to unlock',
+  'toast.unlocked': 'New start point unlocked!',
 };
 
 export type StringKey = keyof typeof en;
@@ -371,6 +376,11 @@ const de: Dictionary = {
   'share.headline.lumberjack': "Ich bin dem Bären entkommen:",
   'share.headline.squirrel': "Ich bin dem Falken entkommen:",
   'pause.keys': "Esc oder P pausiert das Spiel",
+  'start.label': 'Start in',
+  'start.title': 'Wo startest du?',
+  'start.body': 'Jede Welt, die du in einem Lauf erreichst, wird ein Startpunkt. Wähle einen und lauf von dort los.',
+  'start.locked': 'Erreiche sie in einem Lauf',
+  'toast.unlocked': 'Neuer Startpunkt frei!',
 };
 
 const ru: Dictionary = {
@@ -542,6 +552,11 @@ const ru: Dictionary = {
   'share.headline.lumberjack': "Я убежал от медведя на",
   'share.headline.squirrel': "Я убежал от ястреба на",
   'pause.keys': "Esc или P ставит игру на паузу",
+  'start.label': 'Старт',
+  'start.title': 'Откуда начать',
+  'start.body': 'Каждый мир, до которого ты добежал, становится точкой старта. Выбери и беги оттуда.',
+  'start.locked': 'Добеги до него, чтобы открыть',
+  'toast.unlocked': 'Новый старт открыт!',
 };
 
 const uk: Dictionary = {
@@ -713,6 +728,11 @@ const uk: Dictionary = {
   'share.headline.lumberjack': "Я втік від ведмедя на",
   'share.headline.squirrel': "Я втекла від яструба на",
   'pause.keys': "Esc або P ставить гру на паузу",
+  'start.label': 'Старт',
+  'start.title': 'Звідки почати',
+  'start.body': 'Кожен світ, до якого ти добіг, стає точкою старту. Обери й біжи звідти.',
+  'start.locked': 'Добіжи до нього, щоб відкрити',
+  'toast.unlocked': 'Новий старт відкрито!',
 };
 
 const es: Dictionary = {
@@ -883,6 +903,11 @@ const es: Dictionary = {
   'share.headline.lumberjack': "Escapé del oso durante",
   'share.headline.squirrel': "Escapé del halcón durante",
   'pause.keys': "Esc o P pausa el juego",
+  'start.label': 'Salida',
+  'start.title': 'Dónde empezar',
+  'start.body': 'Cada mundo al que llegas en una carrera se convierte en punto de salida. Elige uno y corre desde ahí.',
+  'start.locked': 'Llega en una carrera para abrirlo',
+  'toast.unlocked': '¡Nueva salida desbloqueada!',
 };
 
 export const STRINGS = { en, de, ru, uk, es } as const;
