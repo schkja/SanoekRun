@@ -35,7 +35,7 @@ Endless 3D runner in the browser, Temple Run style, cartoon look (cel shading +
 thick outlines), bright forest. Portrait phone first, works on desktop.
 
 - **Two heroes, each with its own route of worlds** (`content/worlds.json` → `routes`):
-  - **Lumberjack** (route: boardwalk → autumn-boardwalk → evening-boardwalk → lantern-night → temple → lava) (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
+  - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `evening-boardwalk` (sunset) → `lantern-night` (moon, stars, fireflies, lanterns on the railing) → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
   - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `brook` → `autumn-canopy` → `snowy-pines` → `sunset-glade` → `moonlit-forest` → `firefly-night` (day, water, autumn, winter, evening, night; the owner loves the night worlds). Collects **acorns**. Chased by a **hawk**, later a **snowball**.
 - Each world is 650 m, then a portal to the next; the route loops faster.
 - **Controls:** swipe left/right = turn at a corner or change lane; up = jump; down = slide (or slam mid-air). Keyboard: arrows/WASD, Space = jump, **Esc or P = pause**.
