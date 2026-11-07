@@ -48,6 +48,8 @@ export interface WorldTheme {
   stars?: boolean;
   moon?: boolean;
   sunDisc?: string;
+  /** Something falling from the sky around you. */
+  weather?: 'rain' | 'snow' | 'petals' | 'leaves';
 }
 
 export interface WorldDef {

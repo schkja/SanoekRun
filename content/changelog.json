@@ -1,5 +1,41 @@
 [
   {
+    "version": "1.9.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Four new worlds: Blossom trail and Rainy treetops for the squirrel, Rainy boardwalk and Winter boardwalk for the lumberjack",
+        "Weather: rain, snow, falling petals and autumn leaves",
+        "Shop: new outfits (top hat, pirate hat, headphones, wizard hat) and higher prices, so there's more to save up for",
+        "Slow motion on close calls is now off by default (you can turn it on in Settings)"
+      ],
+      "de": [
+        "Vier neue Welten: Blütenpfad und Regen in den Kronen fürs Eichhörnchen, Steg im Regen und Winterlicher Steg für den Holzfäller",
+        "Wetter: Regen, Schnee, fallende Blüten und Herbstblätter",
+        "Shop: neue Outfits (Zylinder, Piratenhut, Kopfhörer, Zauberhut) und höhere Preise, damit es mehr zu sparen gibt",
+        "Zeitlupe bei knappen Ausweichern ist jetzt standardmäßig aus (in den Einstellungen einschaltbar)"
+      ],
+      "ru": [
+        "Четыре новых мира: Цветущая тропа и Дождь в кронах для белки, Мостки под дождём и Зимние мостки для лесоруба",
+        "Погода: дождь, снег, падающие лепестки и осенние листья",
+        "Магазин: новые наряды (цилиндр, пиратская шляпа, наушники, шляпа волшебника) и цены выше, чтобы было на что копить",
+        "Замедление «на волоске» теперь по умолчанию выключено (можно включить в настройках)"
+      ],
+      "uk": [
+        "Чотири нові світи: Квітуча стежка й Дощ у кронах для білки, Містки під дощем і Зимові містки для лісоруба",
+        "Погода: дощ, сніг, пелюстки й осіннє листя",
+        "Магазин: нові вбрання (циліндр, піратський капелюх, навушники, капелюх чарівника) і вищі ціни, щоб було на що збирати",
+        "Сповільнення «на волосині» тепер за замовчуванням вимкнене (можна ввімкнути в налаштуваннях)"
+      ],
+      "es": [
+        "Cuatro mundos nuevos: Sendero en flor y Lluvia en las copas para la ardilla, Pasarela bajo la lluvia y Pasarela invernal para el leñador",
+        "Clima: lluvia, nieve, pétalos y hojas de otoño cayendo",
+        "Tienda: ropa nueva (sombrero de copa, sombrero pirata, auriculares, sombrero de mago) y precios más altos, para tener algo por lo que ahorrar",
+        "La cámara lenta en los esquives por poco viene desactivada (se puede activar en Ajustes)"
+      ]
+    }
+  },
+  {
     "version": "1.8.1",
     "date": "2026-11-07",
     "notes": {

@@ -81,7 +81,12 @@ export class Engine {
     this.container = container;
   }
 
+  private weather: Weather | null = null;
+
   applyTheme(theme: WorldTheme): void {
+    this.weather?.dispose(this.scene);
+    this.weather = theme.weather ? new Weather(theme.weather) : null;
+    this.weather?.attach(this.scene);
     paintSky(this.skyCanvas, theme);
     this.sky.needsUpdate = true;
     const fog = this.scene.fog as THREE.Fog;
@@ -126,6 +131,7 @@ export class Engine {
    */
   follow(target: THREE.Vector3, yaw: number, dt: number, speed01: number, falling: boolean, chaseView = 0): void {
     const C = TUNING.camera;
+    this.weather?.update(dt, this.camera.position);
     // While the chaser is close, rise up so it shows at the bottom of the
     // screen chasing you instead of blocking the view.
     this.lift += (chaseView - this.lift) * Math.min(1, dt * 3);
@@ -257,4 +263,116 @@ function paintSky(canvas: HTMLCanvasElement, theme: WorldTheme): void {
     g.arc(x, y, 34, 0, Math.PI * 2);
     g.fill();
   }
+}
+
+/**
+ * Weather: rain streaks, snowflakes, blossom petals or autumn leaves falling
+ * in a box around the camera. Each particle wraps around when it leaves the
+ * box, so a few hundred are enough to fill the view wherever you run.
+ */
+class Weather {
+  private readonly count: number;
+  private readonly size = new THREE.Vector3(26, 16, 34);
+  private readonly pos: Float32Array;
+  private readonly speed: Float32Array;
+  private readonly object: THREE.Points | THREE.LineSegments;
+  private readonly rain: boolean;
+  private time = 0;
+
+  constructor(private readonly kind: 'rain' | 'snow' | 'petals' | 'leaves') {
+    this.rain = kind === 'rain';
+    this.count = this.rain ? 600 : kind === 'snow' ? 500 : 220;
+    this.pos = new Float32Array(this.count * 3);
+    this.speed = new Float32Array(this.count);
+    for (let i = 0; i < this.count; i++) {
+      this.pos[i * 3] = (Math.random() - 0.5) * this.size.x;
+      this.pos[i * 3 + 1] = Math.random() * this.size.y - 4;
+      this.pos[i * 3 + 2] = (Math.random() - 0.5) * this.size.z;
+      this.speed[i] = 0.7 + Math.random() * 0.6;
+    }
+    const geometry = new THREE.BufferGeometry();
+    if (this.rain) {
+      geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.count * 6), 3));
+      this.object = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: '#cfe3ff', transparent: true, opacity: 0.45 }));
+    } else {
+      geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.count * 3), 3));
+      const palette = kind === 'snow' ? ['#ffffff'] : kind === 'petals' ? ['#ffc2d6', '#ffd9e6', '#ffffff'] : ['#ff8a2a', '#ffb347', '#e0522b', '#ffd23f'];
+      const colors = new Float32Array(this.count * 3);
+      const c = new THREE.Color();
+      for (let i = 0; i < this.count; i++) {
+        c.set(palette[i % palette.length]);
+        colors.set([c.r, c.g, c.b], i * 3);
+      }
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      this.object = new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({ size: kind === 'snow' ? 0.18 : 0.26, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, map: roundSprite(), alphaTest: 0.3 }),
+      );
+    }
+    this.object.frustumCulled = false;
+  }
+
+  attach(scene: THREE.Scene): void {
+    scene.add(this.object);
+  }
+
+  dispose(scene: THREE.Scene): void {
+    scene.remove(this.object);
+    this.object.geometry.dispose();
+    (this.object.material as THREE.Material).dispose();
+  }
+
+  update(dt: number, camera: THREE.Vector3): void {
+    this.time += dt;
+    const fall = this.kind === 'rain' ? 24 : this.kind === 'snow' ? 1.6 : this.kind === 'petals' ? 1.3 : 1.9;
+    const sway = this.kind === 'rain' ? 0 : this.kind === 'snow' ? 0.5 : 1.1;
+    const out = this.object.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const arr = out.array as Float32Array;
+    const { x: W, y: H, z: D } = this.size;
+    for (let i = 0; i < this.count; i++) {
+      const k = i * 3;
+      this.pos[k + 1] -= fall * this.speed[i] * dt;
+      this.pos[k] += Math.sin(this.time * 1.3 + i) * sway * dt;
+      this.pos[k + 2] += Math.cos(this.time * 1.1 + i * 0.7) * sway * 0.6 * dt;
+      // Keep every particle in the box around the camera.
+      if (this.pos[k + 1] < -6) this.pos[k + 1] += H;
+      const wx = ((((this.pos[k] - camera.x + W / 2) % W) + W) % W) - W / 2;
+      const wz = ((((this.pos[k + 2] - camera.z + D / 2) % D) + D) % D) - D / 2;
+      const x = camera.x + wx;
+      const y = camera.y + this.pos[k + 1] - 4;
+      const z = camera.z + wz;
+      if (this.rain) {
+        arr[i * 6] = x;
+        arr[i * 6 + 1] = y;
+        arr[i * 6 + 2] = z;
+        arr[i * 6 + 3] = x + 0.05;
+        arr[i * 6 + 4] = y + 0.7;
+        arr[i * 6 + 5] = z;
+      } else {
+        arr[k] = x;
+        arr[k + 1] = y;
+        arr[k + 2] = z;
+      }
+    }
+    out.needsUpdate = true;
+  }
+}
+
+/** A soft round dot, so snowflakes and petals aren't little squares. */
+let sprite: THREE.Texture | null = null;
+function roundSprite(): THREE.Texture {
+  if (sprite) return sprite;
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d')!;
+  const grad = g.createRadialGradient(16, 16, 2, 16, 16, 15);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.6, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.beginPath();
+  g.arc(16, 16, 15, 0, Math.PI * 2);
+  g.fill();
+  sprite = new THREE.CanvasTexture(c);
+  return sprite;
 }

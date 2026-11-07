@@ -43,6 +43,8 @@ export interface Settings {
   music: MusicStyle;
   sound: boolean;
   effects: Effects;
+  /** Bumped when defaults change for everyone (2: slow motion off by default). */
+  revision?: number;
 }
 
 /** The options, in the order the Settings buttons cycle through them. Their names live in src/i18n. */
@@ -79,10 +81,11 @@ export const DEFAULT_SETTINGS: Settings = {
   character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel'] as const, 'lumberjack'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
+  revision: 2,
   effects: {
     coinSparkle: envFlag('VITE_FX_COIN_SPARKLE', true),
     speedLines: envFlag('VITE_FX_SPEED_LINES', true),
-    slowMotion: envFlag('VITE_FX_SLOW_MOTION', true),
+    slowMotion: envFlag('VITE_FX_SLOW_MOTION', false),
     turnTilt: envFlag('VITE_FX_TURN_TILT', true),
     cameraShake: envFlag('VITE_FX_CAMERA_SHAKE', true),
     screenFlash: envFlag('VITE_FX_SCREEN_FLASH', true),
@@ -115,11 +118,10 @@ function load(): Settings {
     if ((saved.character as string) === 'explorer') saved.character = 'lumberjack';
     if (saved.character && !CHARACTERS.includes(saved.character)) delete saved.character;
     if (saved.language && !LANGUAGE_CHOICES.includes(saved.language)) delete saved.language;
-    return {
-      ...base,
-      ...saved,
-      effects: { ...base.effects, ...(saved.effects ?? {}) },
-    };
+    const effects = { ...base.effects, ...(saved.effects ?? {}) };
+    // Slow motion on close calls became opt-in; switch it off once for everyone.
+    if ((saved.revision ?? 1) < 2) effects.slowMotion = base.effects.slowMotion;
+    return { ...base, ...saved, effects, revision: base.revision };
   } catch {
     return base;
   }

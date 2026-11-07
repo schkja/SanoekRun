@@ -65,16 +65,21 @@ export interface Outfit {
 }
 
 export const OUTFITS: Outfit[] = [
+  // Prices climb steeply: the first items come quickly, the crown takes a while.
   { id: 'beanie-orange', character: 'lumberjack', price: 0, icon: '🧡' },
-  { id: 'beanie-blue', character: 'lumberjack', price: 150, icon: '💙' },
-  { id: 'cap-green', character: 'lumberjack', price: 300, icon: '🧢' },
-  { id: 'viking', character: 'lumberjack', price: 600, icon: '⚔️' },
-  { id: 'crown-lumberjack', character: 'lumberjack', price: 1200, icon: '👑' },
+  { id: 'beanie-blue', character: 'lumberjack', price: 600, icon: '💙' },
+  { id: 'cap-green', character: 'lumberjack', price: 1500, icon: '🧢' },
+  { id: 'viking', character: 'lumberjack', price: 4000, icon: '⚔️' },
+  { id: 'tophat', character: 'lumberjack', price: 8000, icon: '🎩' },
+  { id: 'pirate', character: 'lumberjack', price: 12000, icon: '🏴‍☠️' },
+  { id: 'crown-lumberjack', character: 'lumberjack', price: 20000, icon: '👑' },
   { id: 'scarf-teal', character: 'squirrel', price: 0, icon: '🧣' },
-  { id: 'scarf-red', character: 'squirrel', price: 150, icon: '❤️' },
-  { id: 'sunglasses', character: 'squirrel', price: 300, icon: '😎' },
-  { id: 'flower', character: 'squirrel', price: 500, icon: '🌼' },
-  { id: 'crown-squirrel', character: 'squirrel', price: 1200, icon: '👑' },
+  { id: 'scarf-red', character: 'squirrel', price: 600, icon: '❤️' },
+  { id: 'sunglasses', character: 'squirrel', price: 1500, icon: '😎' },
+  { id: 'flower', character: 'squirrel', price: 4000, icon: '🌼' },
+  { id: 'headphones', character: 'squirrel', price: 8000, icon: '🎧' },
+  { id: 'wizard', character: 'squirrel', price: 12000, icon: '🧙' },
+  { id: 'crown-squirrel', character: 'squirrel', price: 20000, icon: '👑' },
 ];
 
 // ---------------------------------------------------------------------------
