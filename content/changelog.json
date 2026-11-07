@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.8.1",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New sound effects: a chime for coins, a wooden tok for acorns that climbs a little tune on streaks, soft whooshes, sparkles and cartoon bonks"
+      ],
+      "de": [
+        "Neue Soundeffekte: ein Glöckchen für Münzen, ein hölzernes Tok für Eicheln, das bei Serien eine kleine Melodie spielt, sanftes Rauschen, Funkeln und Cartoon-Bonks"
+      ],
+      "ru": [
+        "Новые звуки: колокольчик для монет, деревянное «ток» для орешков, которое на серии играет маленькую мелодию, мягкие шорохи, перезвоны и мультяшные «бонки»"
+      ],
+      "uk": [
+        "Нові звуки: дзвіночок для монет, дерев’яне «ток» для горішків, що на серії грає маленьку мелодію, м’які шелести, передзвони й мультяшні «бонки»"
+      ],
+      "es": [
+        "Efectos nuevos: una campanita para las monedas, un toc de madera para las bellotas que en racha toca una melodía, suaves silbidos, destellos y golpes de dibujos animados"
+      ]
+    }
+  },
+  {
     "version": "1.8.0",
     "date": "2026-11-07",
     "notes": {
