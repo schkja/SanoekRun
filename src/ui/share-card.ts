@@ -14,6 +14,7 @@ import { GAME_NAME, SHARE_URL, type Character } from '../game/settings';
 import { formatNumber, t } from '../i18n';
 import { PORTRAITS } from './portraits';
 import { ICON_SVG, svgImage } from './logo';
+import qrcode from 'qrcode-generator';
 
 export interface RunSummary {
   distance: number;
@@ -62,47 +63,78 @@ export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement
   g.fillStyle = shade;
   g.fillRect(0, 0, W, H);
 
+  // Instagram and TikTok cover roughly the top 250 px and the bottom 300 px
+  // with their own buttons, so everything that matters sits between.
+
   // Top: icon and name.
-  if (icon) g.drawImage(icon, 70, 90, 150, 150);
+  if (icon) g.drawImage(icon, 70, 235, 130, 130);
   g.textAlign = 'left';
-  outlined(g, GAME_NAME, 250, 195, 96, '#ffc93c', 16);
+  outlined(g, GAME_NAME, 225, 330, 86, '#ffc93c', 14);
 
   // The burst behind the number.
-  burst(g, W / 2, 820, 470, 340, 18);
+  burst(g, W / 2, 760, 460, 300, 18);
   g.textAlign = 'center';
-  outlined(g, t(`share.headline.${run.character}`), W / 2, 640, fitSize(g, t(`share.headline.${run.character}`), 64, W - 160), '#ffffff', 12);
+  const headline = t(`share.headline.${run.character}`);
+  outlined(g, headline, W / 2, 610, fitSize(g, headline, 62, W - 160), '#ffffff', 12);
   const number = `${formatNumber(run.distance)} ${t('hud.unit')}`;
-  outlined(g, number, W / 2, 880, fitSize(g, number, 220, W - 200), '#ffffff', 24);
+  outlined(g, number, W / 2, 830, fitSize(g, number, 210, W - 220), '#ffffff', 24);
 
-  // The hero, tilted, peeking in from the side.
+  // What happened.
+  const items = t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins');
+  const line = t('share.reached', { world: run.world, n: run.coins, items });
+  outlined(g, line, W / 2, 1035, fitSize(g, line, 58, W - 160), '#ffc93c', 12);
+
+  // The hero.
   if (portrait) {
     g.save();
-    g.translate(W / 2, 1335);
+    g.translate(W / 2, 1215);
     g.rotate(0.08);
     g.fillStyle = '#ffffff';
     g.strokeStyle = INK;
     g.lineWidth = 14;
     g.beginPath();
-    g.arc(0, 0, 170, 0, Math.PI * 2);
+    g.arc(0, 0, 140, 0, Math.PI * 2);
     g.fill();
     g.stroke();
-    g.drawImage(portrait, -160, -160, 320, 320);
+    g.drawImage(portrait, -130, -130, 260, 260);
     g.restore();
   }
+  if (run.newBest) sticker(g, W / 2 + 230, 1120, t('share.newBest'), '#ff5c7a', 0.12);
 
-  // What happened.
+  // The challenge, and how to get to the game: a QR code anyone can scan
+  // from the screen, plus the address in big letters.
   g.textAlign = 'center';
-  const items = t(run.collectible === 'nuts' ? 'share.nuts' : 'share.coins');
-  const line = t('share.reached', { world: run.world, n: run.coins, items });
-  outlined(g, line, W / 2, 1110, fitSize(g, line, 60, W - 160), '#ffc93c', 12);
-  if (run.newBest) sticker(g, W / 2 + 230, 1230, t('share.newBest'), '#ff5c7a', 0.12);
-
-  // The challenge.
-  g.textAlign = 'center';
-  pill(g, W / 2, 1600, t('share.challenge'), '#4fd07a', '#ffffff', 84);
-  outlined(g, SHARE_URL.replace(/^https?:\/\//, ''), W / 2, 1760, fitSize(g, SHARE_URL, 46, W - 120), '#ffffff', 8);
+  pill(g, W / 2, 1420, t('share.challenge'), '#4fd07a', '#ffffff', 76);
+  drawQr(g, SHARE_URL, 110, 1500, 220);
+  g.textAlign = 'left';
+  outlined(g, t('share.play'), 370, 1575, fitSize(g, t('share.play'), 56, 600), '#ffc93c', 10);
+  const address = SHARE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  outlined(g, address, 370, 1660, fitSize(g, address, 44, 620), '#ffffff', 8);
 
   return canvas;
+}
+
+/** A QR code on a white rounded card with an ink border. */
+function drawQr(g: CanvasRenderingContext2D, text: string, x: number, y: number, size: number): void {
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  const pad = 16;
+  g.fillStyle = '#ffffff';
+  g.strokeStyle = INK;
+  g.lineWidth = 10;
+  g.beginPath();
+  g.roundRect(x, y, size, size, 24);
+  g.fill();
+  g.stroke();
+  const cell = (size - pad * 2) / n;
+  g.fillStyle = INK;
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) g.fillRect(x + pad + c * cell, y + pad + r * cell, Math.ceil(cell), Math.ceil(cell));
+    }
+  }
 }
 
 /** Text with a thick cartoon outline. */
@@ -189,6 +221,14 @@ function sticker(g: CanvasRenderingContext2D, x: number, y: number, text: string
 export type ShareResult = 'shared' | 'downloaded' | 'cancelled' | 'failed';
 
 export async function shareRun(card: HTMLCanvasElement, run: RunSummary): Promise<ShareResult> {
+  // Instagram and TikTok drop any text or link sent with a picture, so put the
+  // link on the clipboard too: in a Story, the Link sticker can paste it.
+  // (This must happen first, while the tap still counts as a user action.)
+  try {
+    await navigator.clipboard?.writeText(SHARE_URL);
+  } catch {
+    // No clipboard here; the address and QR code are on the picture anyway.
+  }
   const blob = await new Promise<Blob | null>((resolve) => card.toBlob(resolve, 'image/png'));
   if (!blob) return 'failed';
   const file = new File([blob], 'sanoekrun.png', { type: 'image/png' });

@@ -205,7 +205,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 
 ### 6.6 Share picture (`share-card.ts`)
 `drawShareCard(run, snapshot|null): Promise<canvas>` builds 1080×1920 (TikTok/Stories): last run frame as background with shading, icon + wordmark, yellow comic burst with headline (`share.headline.<character>`) and huge outlined distance, world + collected line, hero portrait in a circle, "new record" sticker, green "Can you beat me?" pill, URL.
-`shareRun()` uses Web Share with the PNG file on phones, else downloads it.
+`shareRun()` uses Web Share with the PNG file on phones, else downloads it. Instagram/TikTok drop any text or link shared with an image and a web page cannot add their Link sticker, so: `shareRun()` first copies `SHARE_URL` to the clipboard (while the tap still counts as a user action) and the end screen tells the player to paste it into the 🔗 Link sticker; the picture carries a scannable QR code (`qrcode-generator`) and the address. Layout keeps everything between y≈250 and y≈1680 (story UI covers the top and bottom).
 
 ### 6.7 PWA / install
 - `public/manifest.webmanifest` (fullscreen, portrait, sky-blue theme, icons incl. maskable).

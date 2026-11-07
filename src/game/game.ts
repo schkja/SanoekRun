@@ -755,7 +755,7 @@ export class Game {
     const card = this.shareCard ?? (await drawShareCard(this.lastRun, null));
     const result = await shareRun(card, this.lastRun);
     this.shareStatus = {
-      shared: t('over.shared'),
+      shared: t('over.sharedLink'),
       downloaded: t('over.saved'),
       cancelled: '',
       failed: t('over.shareFailed'),
