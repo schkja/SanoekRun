@@ -55,6 +55,18 @@ const ICONS: Record<string, string> = {
       <circle cx="18" cy="28" r="9" fill="#ff8fb1"/><circle cx="32" cy="32" r="8" fill="#ffc93c"/>
     </g>`,
   'crown-squirrel': crown(),
+  tophat: `<path d="M8 46 Q32 54 56 46 L56 50 Q32 58 8 50 Z" fill="#24242e" ${S}/>
+    <rect x="18" y="14" width="28" height="34" rx="3" fill="#24242e" ${S}/>
+    <rect x="18" y="38" width="28" height="7" fill="#e8423a" ${S}/>`,
+  pirate: `<path d="M6 40 Q32 8 58 40 Q32 50 6 40 Z" fill="#24242e" ${S}/>
+    <circle cx="32" cy="30" r="5" fill="#ffffff" stroke="${INK}" stroke-width="3"/>
+    <path d="M10 44 Q32 52 54 44" stroke="#ffc93c" stroke-width="4" fill="none"/>`,
+  headphones: `<path d="M14 38 Q14 12 32 12 Q50 12 50 38" fill="none" stroke="#2b2b3d" stroke-width="7" stroke-linecap="round"/>
+    <rect x="6" y="32" width="14" height="20" rx="6" fill="#ff5c7a" ${S}/>
+    <rect x="44" y="32" width="14" height="20" rx="6" fill="#ff5c7a" ${S}/>`,
+  wizard: `<path d="M18 48 L32 6 L46 48 Z" fill="#5b4bd6" ${S}/>
+    <ellipse cx="32" cy="48" rx="24" ry="6" fill="#5b4bd6" ${S}/>
+    <path d="M30 24 L32 19 L34 24 L39 24 L35 27 L37 32 L32 29 L27 32 L29 27 L25 24 Z" fill="#ffd23f" stroke="${INK}" stroke-width="2"/>`,
 };
 
 export function outfitIcon(id: string): string {

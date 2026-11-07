@@ -35,8 +35,8 @@ Endless 3D runner in the browser, Temple Run style, cartoon look (cel shading +
 thick outlines), bright forest. Portrait phone first, works on desktop.
 
 - **Two heroes, each with its own route of worlds** (`content/worlds.json` → `routes`):
-  - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `evening-boardwalk` (sunset) → `lantern-night` (moon, stars, fireflies, lanterns on the railing) → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
-  - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `brook` → `autumn-canopy` → `snowy-pines` → `sunset-glade` → `moonlit-forest` → `firefly-night` (day, water, autumn, winter, evening, night; the owner loves the night worlds). Collects **acorns**. Chased by a **hawk**, later a **snowball**.
+  - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `rainy-boardwalk` → `autumn-boardwalk` → `winter-boardwalk` → `evening-boardwalk` (sunset) → `lantern-night` (moon, stars, fireflies, lanterns on the railing) → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
+  - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `blossom-trail` → `treetops` → `rainy-treetops` → `brook` → `autumn-canopy` → `snowy-pines` → `sunset-glade` → `moonlit-forest` → `firefly-night` (day, water, autumn, winter, evening, night; the owner loves the night worlds). Collects **acorns**. Chased by a **hawk**, later a **snowball**.
 - Each world is 650 m, then a portal to the next; the route loops faster.
 - **Controls:** swipe left/right = turn at a corner or change lane; up = jump; down = slide (or slam mid-air). Keyboard: arrows/WASD, Space = jump, **Esc or P = pause**.
 - **Fail:** miss a corner (fall), or stumble twice within the danger window (the chaser catches you). One stumble puts the chaser on your heels for a few seconds.
@@ -185,7 +185,7 @@ Defaults from `VITE_*` env at build time (see `.env.example`), overridden per us
 Every world a hero reaches is saved in `profile.reached[character]` (`markReached`, toast "New start point unlocked"). When more than one is unlocked, the title shows a "Start in" row that opens a picker; the choice is `profile.startWorld[character]`. `prepareTrack()` starts the track at that world (`?world=` still overrides for testing). The `runWorlds` mission counts portals passed in this run, so a later start doesn't complete it for free.
 
 ### 6.3 Shop
-`OUTFITS` (id, character, price, icon). Lumberjack: beanie-orange 0, beanie-blue 150, cap-green 300, viking 600, crown 1200. Squirrel: scarf-teal 0, scarf-red 150, sunglasses 300, flower 500, crown 1200.
+`OUTFITS` (id, character, price, icon). Owner found the first prices far too cheap ("bought everything in a few minutes"), so prices climb steeply. Lumberjack: beanie-orange 0, beanie-blue 600, cap-green 1500, viking 4000, tophat 8000, pirate 12000, crown 20000. Squirrel: scarf-teal 0, scarf-red 600, sunglasses 1500, flower 4000, headphones 8000, wizard 12000, crown 20000.
 `buyOrEquip(id)` → `'equipped' | 'bought' | 'too-expensive'`. Icons in `outfit-icons.ts` (SVG), 3D in `visuals.ts`. To add an outfit: entry in `OUTFITS`, icon in `ICONS`, mesh in `hat()`/squirrel accessories, `outfit.<id>` string in 5 languages.
 
 ### 6.4 Power-ups
@@ -242,6 +242,10 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 
 ### 6.10e Sound effects
 `src/core/audio.ts` synthesises all effects (`synth()`): FM bells (`bell`), gliding tones (`tone`, optional wobble), band-pass noise `whoosh`, low `thud`. Coin = two-note chime, acorn (`audio.collect = 'acorn'`, set in `applyCharacter`) = wooden tok-tok; streaks climb a pentatonic scale. Files in `public/sounds/` listed in `SOUND_FILES` still override. Owner approved the set after an MP3 preview (render with `OfflineAudioContext` by importing the module in the dev server).
+
+### 6.10f Weather and defaults
+`theme.weather` = `rain` (LineSegments streaks) | `snow` | `petals` | `leaves` (Points with a round sprite, vertex colours). `Weather` in `engine.ts` keeps a few hundred particles in a box around the camera and wraps them; updated from `engine.follow()`. Used by blossom-trail (petals), rainy-treetops / rainy-boardwalk (rain), autumn worlds (leaves), snowy-pines / winter-boardwalk (snow).
+Slow motion on close calls is off by default (owner's wish). `Settings.revision` (now 2) lets a default change reach existing players once: saved settings with an older revision get `slowMotion` reset to the default.
 
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:

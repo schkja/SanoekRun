@@ -1175,6 +1175,17 @@ function hat(outfit: string, body: THREE.Group, part: ModelPart, mat: MatFn, bea
     const horn = mat('#fff3d6');
     part(steel, body, GEO.sphere, 0, 1.86, 0, 0.66, 0.44, 0.66);
     for (const side of [-1, 1]) part(horn, body, GEO.cone, side * 0.38, 2.04, 0, 0.1, 0.36, 0.1).rotation.z = -side * 0.7;
+  } else if (outfit === 'tophat') {
+    const black = mat('#24242e');
+    part(black, body, GEO.cyl, 0, 1.82, 0, 0.92, 0.05, 0.92);
+    part(black, body, GEO.cyl, 0, 2.08, 0, 0.58, 0.52, 0.58);
+    part(mat('#e8423a'), body, GEO.cyl, 0, 1.9, 0, 0.6, 0.09, 0.6);
+  } else if (outfit === 'pirate') {
+    const black = mat('#24242e');
+    part(black, body, GEO.sphere, 0, 1.92, 0, 0.98, 0.36, 0.66);
+    part(black, body, GEO.sphere, 0, 2.02, 0, 0.6, 0.3, 0.5);
+    part(mat('#ffffff'), body, GEO.sphere, 0, 2.0, -0.3, 0.14, 0.14, 0.05);
+    part(mat('#ffc93c'), body, GEO.box, 0, 1.8, -0.31, 0.9, 0.04, 0.03);
   } else if (outfit === 'crown-lumberjack') {
     part(beanie, body, GEO.sphere, 0, 1.84, 0, 0.6, 0.3, 0.6);
     crown(body, part, mat, 1.96, 0.4);
@@ -1339,6 +1350,20 @@ export function makeSquirrelModel(outfit = 'scarf-teal'): RunnerModel {
       part(petal, head, GEO.sphere, 0.2 + Math.cos(a) * 0.1, 0.62 + Math.sin(a) * 0.1, -0.2, 0.12, 0.12, 0.06);
     }
     part(mat('#ffd23f'), head, GEO.sphere, 0.2, 0.62, -0.23, 0.1, 0.1, 0.06);
+  } else if (outfit === 'headphones') {
+    const band = mat('#2b2b3d');
+    const cup = mat('#ff5c7a');
+    part(band, head, GEO.box, 0, 0.66, 0.02, 0.72, 0.06, 0.1);
+    for (const side of [-1, 1]) {
+      part(band, head, GEO.box, side * 0.36, 0.5, 0.02, 0.06, 0.3, 0.08);
+      part(cup, head, GEO.sphere, side * 0.37, 0.32, 0.02, 0.14, 0.24, 0.24);
+    }
+  } else if (outfit === 'wizard') {
+    const blue = mat('#5b4bd6');
+    part(blue, head, GEO.cyl, 0, 0.6, 0.0, 0.7, 0.04, 0.7);
+    const cone = part(blue, head, GEO.cone, 0, 0.92, 0.04, 0.32, 0.66, 0.32);
+    cone.rotation.x = 0.25;
+    part(mat('#ffd23f'), head, GEO.sphere, 0.08, 0.82, -0.13, 0.1, 0.1, 0.05);
   } else if (outfit === 'crown-squirrel') {
     crown(head, part, mat, 0.6, 0.3);
   }

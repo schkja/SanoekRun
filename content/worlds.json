@@ -2,7 +2,9 @@
   "routes": {
     "lumberjack": [
       "boardwalk",
+      "rainy-boardwalk",
       "autumn-boardwalk",
+      "winter-boardwalk",
       "evening-boardwalk",
       "lantern-night",
       "temple",
@@ -10,7 +12,9 @@
     ],
     "squirrel": [
       "forest-trail",
+      "blossom-trail",
       "treetops",
+      "rainy-treetops",
       "brook",
       "autumn-canopy",
       "snowy-pines",
@@ -65,6 +69,51 @@
       }
     },
     {
+      "id": "blossom-trail",
+      "name": "Blossom trail",
+      "length": 650,
+      "chaser": "hawk",
+      "caughtBy": "Snatched by the hawk",
+      "decor": "trail",
+      "theme": {
+        "skyTop": "#7cc8ff",
+        "sky": "#ffe6f0",
+        "fog": "#f7dce8",
+        "fogNear": 38,
+        "fogFar": 130,
+        "sun": "#fff6d8",
+        "sunIntensity": 2.8,
+        "hemiSky": "#ffffff",
+        "hemiGround": "#9fc07a",
+        "abyss": "#92d06a",
+        "abyssGlow": false,
+        "accent": "#ff7aa8",
+        "ground": true,
+        "weather": "petals"
+      },
+      "path": {
+        "style": "trail",
+        "slab": "#ecc98f",
+        "grout": "#c99a5e",
+        "body": "#b3874f",
+        "curb": "#5fbf4a"
+      },
+      "palette": {
+        "leaves": [
+          "#ffb3c8",
+          "#ff8fb1",
+          "#ffd6e2"
+        ],
+        "trunk": "#6b4a3a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 0,
+        "block": 3
+      }
+    },
+    {
       "id": "boardwalk",
       "name": "Forest boardwalk",
       "length": 650,
@@ -108,6 +157,50 @@
       }
     },
     {
+      "id": "rainy-boardwalk",
+      "name": "Rainy boardwalk",
+      "length": 650,
+      "chaser": "bear",
+      "caughtBy": "Caught by the grumpy bear",
+      "decor": "boardwalk",
+      "theme": {
+        "skyTop": "#5f7486",
+        "sky": "#a9b8c2",
+        "fog": "#9fb0b8",
+        "fogNear": 30,
+        "fogFar": 115,
+        "sun": "#e6eef5",
+        "sunIntensity": 1.9,
+        "hemiSky": "#d6e2ea",
+        "hemiGround": "#4f7a5a",
+        "abyss": "#2f5a3a",
+        "abyssGlow": false,
+        "accent": "#ffb347",
+        "weather": "rain"
+      },
+      "path": {
+        "style": "planks",
+        "slab": "#a8774a",
+        "grout": "#8a5a33",
+        "body": "#7a4e2c",
+        "curb": "#9c6a3e"
+      },
+      "palette": {
+        "leaves": [
+          "#3f9a5a",
+          "#56b06a",
+          "#2f7a4a"
+        ],
+        "trunk": "#6a4a32"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
+      }
+    },
+    {
       "id": "autumn-boardwalk",
       "name": "Autumn boardwalk",
       "length": 650,
@@ -126,7 +219,8 @@
         "hemiGround": "#b0703a",
         "abyss": "#b8602a",
         "abyssGlow": false,
-        "accent": "#5ce1a0"
+        "accent": "#5ce1a0",
+        "weather": "leaves"
       },
       "path": {
         "style": "planks",
@@ -148,6 +242,50 @@
         "high": 3,
         "gap": 2,
         "block": 2
+      }
+    },
+    {
+      "id": "winter-boardwalk",
+      "name": "Winter boardwalk",
+      "length": 650,
+      "chaser": "bear",
+      "caughtBy": "Caught by the grumpy bear",
+      "decor": "boardwalk",
+      "theme": {
+        "skyTop": "#6cc4ff",
+        "sky": "#eef9ff",
+        "fog": "#e4f3ff",
+        "fogNear": 45,
+        "fogFar": 150,
+        "sun": "#ffffff",
+        "sunIntensity": 2.4,
+        "hemiSky": "#ffffff",
+        "hemiGround": "#9fbcd6",
+        "abyss": "#cfe2f2",
+        "abyssGlow": false,
+        "accent": "#ff5c7a",
+        "weather": "snow"
+      },
+      "path": {
+        "style": "planks",
+        "slab": "#c98b52",
+        "grout": "#8a5a33",
+        "body": "#7a4e2c",
+        "curb": "#7a5232"
+      },
+      "palette": {
+        "leaves": [
+          "#e8f4ff",
+          "#cfe6f7",
+          "#ffffff"
+        ],
+        "trunk": "#6b4a35"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
+        "block": 3
       }
     },
     {
@@ -370,6 +508,50 @@
       }
     },
     {
+      "id": "rainy-treetops",
+      "name": "Rainy treetops",
+      "length": 650,
+      "chaser": "hawk",
+      "caughtBy": "Snatched by the hawk",
+      "decor": "branch",
+      "theme": {
+        "skyTop": "#5f7486",
+        "sky": "#a9b8c2",
+        "fog": "#9fb0b8",
+        "fogNear": 30,
+        "fogFar": 115,
+        "sun": "#e6eef5",
+        "sunIntensity": 1.9,
+        "hemiSky": "#d6e2ea",
+        "hemiGround": "#4f7a5a",
+        "abyss": "#3a5a48",
+        "abyssGlow": false,
+        "accent": "#ffd23f",
+        "weather": "rain"
+      },
+      "path": {
+        "style": "bark",
+        "slab": "#a86b3c",
+        "grout": "#7d4b26",
+        "body": "#7d4b26",
+        "curb": "#5fb04a"
+      },
+      "palette": {
+        "leaves": [
+          "#3f9a5a",
+          "#56b06a",
+          "#2f7a4a"
+        ],
+        "trunk": "#6a4a32"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 3,
+        "block": 3
+      }
+    },
+    {
       "id": "autumn-canopy",
       "name": "Autumn canopy",
       "length": 650,
@@ -388,7 +570,8 @@
         "hemiGround": "#b06a30",
         "abyss": "#b8602a",
         "abyssGlow": false,
-        "accent": "#5ce1a0"
+        "accent": "#5ce1a0",
+        "weather": "leaves"
       },
       "path": {
         "style": "bark",
@@ -613,7 +796,8 @@
         "hemiGround": "#9fbcd6",
         "abyss": "#a9c8e4",
         "abyssGlow": false,
-        "accent": "#ff5c7a"
+        "accent": "#ff5c7a",
+        "weather": "snow"
       },
       "path": {
         "style": "snow",
