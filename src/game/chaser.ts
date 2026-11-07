@@ -41,6 +41,7 @@ export class Chaser {
       monster: buildBeast({ hide: '#5a1e2b', dark: '#2e0f16', eyes: '#ffd23f', horns: true }),
       bear: buildBeast({ hide: '#7a4a2a', dark: '#4a2a16', eyes: '#2b2b3d', horns: false }),
       hawk: buildHawk(),
+      owl: buildHawk(OWL),
       snowball: buildSnowball(),
       lava: buildLavaWave(),
     };
@@ -79,7 +80,7 @@ export class Chaser {
     this.root.visible = this.gap < TUNING.camera.distance + 4;
 
     // The hawk flies: higher when far, diving lower as it closes in.
-    const hawk = this.bodies.hawk.root;
+    const hawk = this.bodies[this.kind === 'owl' ? 'owl' : 'hawk'].root;
     // It glides from side to side above the path, like a bird circling,
     // and stays high enough that it never hides the runner.
     const sway = Math.sin(this.time * 0.9);
@@ -166,16 +167,28 @@ function buildBeast(o: { hide: string; dark: string; eyes: string; horns: boolea
  * a barred tail fan, hooked beak and glaring eye in profile, talons out.
  * Its shadow sweeps over the path.
  */
-function buildHawk(): Body {
+interface BirdColours {
+  back: string;
+  covert: string;
+  pale: string;
+  bar: string;
+  tip: string;
+}
+
+const HAWK: BirdColours = { back: '#4a2f1c', covert: '#7a5232', pale: '#e6d6b8', bar: '#8a6a4a', tip: '#2a1a10' };
+/** The night hunter: a big grey-brown owl, same build as the hawk. */
+const OWL: BirdColours = { back: '#5d5868', covert: '#8c8496', pale: '#efe8dc', bar: '#9a8f86', tip: '#2e2a36' };
+
+function buildHawk(c: BirdColours = HAWK): Body {
   const root = new THREE.Group();
   const g = new THREE.Group();
   root.add(g);
   g.scale.setScalar(0.4);
-  const back = mat('#4a2f1c');
-  const covert = mat('#7a5232');
-  const pale = mat('#e6d6b8');
-  const bar = mat('#8a6a4a');
-  const tipDark = mat('#2a1a10');
+  const back = mat(c.back);
+  const covert = mat(c.covert);
+  const pale = mat(c.pale);
+  const bar = mat(c.bar);
+  const tipDark = mat(c.tip);
   const beak = mat('#ffb21f');
   const claw = mat('#1f2a44');
   const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });

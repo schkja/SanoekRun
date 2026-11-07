@@ -1,5 +1,31 @@
 [
   {
+    "version": "1.5.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Two new squirrel worlds: Babbling brook (log hopping over a stream) and Moonlit forest (fireflies, glowing mushrooms and an owl on the hunt)",
+        "Snowy pines: obstacles are easy to see now (snowy logs, snowmen with red scarves)"
+      ],
+      "de": [
+        "Zwei neue Eichhörnchen-Welten: Plätschernder Bach (über Baumstämme am Bach) und Mondscheinwald (Glühwürmchen, leuchtende Pilze und eine jagende Eule)",
+        "Verschneite Kiefern: Hindernisse sind jetzt gut zu sehen (verschneite Stämme, Schneemänner mit roten Schals)"
+      ],
+      "ru": [
+        "Два новых мира белки: Журчащий ручей (прыжки по брёвнам над водой) и Лунный лес (светлячки, светящиеся грибы и сова на охоте)",
+        "Снежные ели: препятствия теперь хорошо видно (брёвна в снегу, снеговики с красными шарфами)"
+      ],
+      "uk": [
+        "Два нові світи білки: Дзюркотливий струмок (стрибки по колодах над водою) і Місячний ліс (світлячки, світні гриби й сова на полюванні)",
+        "Засніжені ялини: перешкоди тепер добре видно (колоди в снігу, сніговики з червоними шарфами)"
+      ],
+      "es": [
+        "Dos mundos nuevos para la ardilla: Arroyo cantarín (saltando troncos sobre el agua) y Bosque de luna (luciérnagas, setas que brillan y un búho cazando)",
+        "Pinos nevados: los obstáculos se ven bien (troncos nevados, muñecos con bufanda roja)"
+      ]
+    }
+  },
+  {
     "version": "1.4.7",
     "date": "2026-11-07",
     "notes": {
