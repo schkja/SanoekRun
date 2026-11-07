@@ -102,7 +102,7 @@ function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): M
 // ---------------------------------------------------------------------------
 
 /** What you collect: gold coins for the lumberjack, acorns for the squirrel, honey for the bear. */
-export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot';
+export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie';
 let collectible: Collectible = 'coin';
 
 export function setCollectible(kind: Collectible): void {
@@ -135,6 +135,29 @@ function makeHoney(): THREE.Group {
 
 const CARROT = toon('#ff8a1e', { emissive: '#a04000', emissiveIntensity: 0.4 });
 const CARROT_TOP = toon('#3fbf4a');
+
+const PIE_CRUST = toon('#f2b45a', { emissive: '#8a4a10', emissiveIntensity: 0.35 });
+const PIE_TOP = toon('#e09a3a');
+const PIE_JAM = toon('#e8423a');
+
+/** A little round pie with a golden crust and a dab of jam, like the ones in the fairy tale basket. */
+function makePie(): THREE.Group {
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(GEO.sphere, PIE_CRUST);
+  base.scale.set(0.72, 0.36, 0.72);
+  g.add(base);
+  const top = new THREE.Mesh(GEO.sphere, PIE_TOP);
+  top.scale.set(0.56, 0.24, 0.56);
+  top.position.y = 0.1;
+  g.add(top);
+  const jam = new THREE.Mesh(GEO.sphere, PIE_JAM);
+  jam.scale.set(0.2, 0.1, 0.2);
+  jam.position.y = 0.2;
+  g.add(jam);
+  // Stand it on its edge a little so you can see the top while running.
+  g.rotation.x = 0.5;
+  return g;
+}
 
 /** A carrot standing on its tip, leaves up. */
 function makeCarrot(): THREE.Group {
@@ -492,7 +515,10 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
-    if (collectible === 'carrot') {
+    if (collectible === 'pie') {
+      item = makePie();
+      item.userData.spin = 'y';
+    } else if (collectible === 'carrot') {
       item = makeCarrot();
       item.userData.spin = 'y';
     } else if (collectible === 'honey') {
@@ -1111,11 +1137,12 @@ export interface RunnerModel {
   gait?: 'run' | 'quad';
 }
 
-export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear' | 'hare', outfit = ''): RunnerModel {
+export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf', outfit = ''): RunnerModel {
   const model =
     character === 'squirrel' ? makeSquirrelModel(outfit)
     : character === 'bear' ? makeBearModel(outfit)
     : character === 'hare' ? makeHareModel(outfit)
+    : character === 'wolf' ? makeWolfModel(outfit)
     : makeLumberjackModel(outfit);
   outline(model.root);
   return model;
@@ -1612,6 +1639,93 @@ export function makeHareModel(outfit = 'bow-red'): RunnerModel {
     }
   } else if (outfit === 'crown-hare') {
     crown(head, part, mat, 0.56, 0.28);
+  }
+
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };
+}
+
+/**
+ * The wolf, on all fours: grey with a pale chest, a long snout, pointed ears
+ * and a big bushy tail. A friendly wolf with a yellow scarf who has a sweet tooth for pies.
+ * Same skeleton as the other animals, so it gallops the same way.
+ */
+export function makeWolfModel(outfit = 'scarf-yellow'): RunnerModel {
+  const { root, body, part } = characterKit();
+  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.8 });
+  const fur = mat('#8a93a3');
+  const pale = mat('#e3e6ec');
+  const dark = mat('#5a6170');
+  const ink = mat('#2b2b3d');
+  const amber = mat('#ffc23a');
+
+  const pivot = (x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    body.add(g);
+    return g;
+  };
+  const joint = (parent: THREE.Object3D, x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
+
+  part(fur, body, GEO.sphere, 0, 0.78, 0.04, 0.78, 0.66, 1.4);
+  part(pale, body, GEO.sphere, 0, 0.66, -0.34, 0.56, 0.5, 0.66);
+
+  const legL = pivot(-0.24, 0.76, 0.42);
+  const legR = pivot(0.24, 0.76, 0.42);
+  const knees: THREE.Group[] = [];
+  for (const leg of [legL, legR]) {
+    part(fur, leg, GEO.sphere, 0, -0.06, 0.02, 0.34, 0.5, 0.52);
+    const knee = joint(leg, 0, -0.28, -0.04);
+    part(fur, knee, LIMB, 0, -0.14, 0.06, 0.08, 0.16, 0.08).rotation.x = -0.4;
+    part(dark, knee, GEO.sphere, 0, -0.38, -0.05, 0.18, 0.1, 0.28);
+    knees.push(knee);
+  }
+  const armL = pivot(-0.2, 0.7, -0.56);
+  const armR = pivot(0.2, 0.7, -0.56);
+  const elbows: THREE.Group[] = [];
+  for (const arm of [armL, armR]) {
+    part(fur, arm, LIMB, 0, -0.14, 0, 0.08, 0.18, 0.08);
+    const elbow = joint(arm, 0, -0.3, 0);
+    part(fur, elbow, LIMB, 0, -0.1, 0, 0.07, 0.14, 0.07);
+    part(dark, elbow, GEO.sphere, 0, -0.27, -0.05, 0.17, 0.1, 0.24);
+    elbows.push(elbow);
+  }
+
+  const head = pivot(0, 1.08, -0.72);
+  part(fur, head, GEO.sphere, 0, 0.02, 0.1, 0.44, 0.44, 0.5);
+  part(fur, head, GEO.sphere, 0, 0.26, -0.06, 0.62, 0.56, 0.62);
+  part(pale, head, GEO.sphere, 0, 0.12, -0.4, 0.34, 0.26, 0.48);
+  part(ink, head, GEO.sphere, 0, 0.18, -0.64, 0.13, 0.1, 0.09);
+  for (const side of [-1, 1]) {
+    part(amber, head, GEO.sphere, side * 0.16, 0.36, -0.3, 0.13, 0.12, 0.07);
+    part(ink, head, GEO.sphere, side * 0.16, 0.36, -0.34, 0.06, 0.08, 0.03);
+    const ear = part(fur, head, GEO.cone, side * 0.19, 0.64, 0.02, 0.15, 0.3, 0.1);
+    ear.rotation.z = -side * 0.18;
+  }
+
+  // Big bushy tail, held out behind.
+  const tail = pivot(0, 0.92, 0.72);
+  const plume = new THREE.Group();
+  plume.rotation.x = 1.0;
+  tail.add(plume);
+  part(fur, plume, GEO.sphere, 0, 0.36, 0, 0.32, 0.8, 0.32);
+  part(pale, plume, GEO.sphere, 0, 0.74, 0, 0.22, 0.26, 0.22);
+
+  const scarf = mat('#ffd23f');
+  part(scarf, head, GEO.cyl, 0, -0.08, 0.14, 0.58, 0.12, 0.58);
+  if (outfit === 'shades-wolf') {
+    for (const x of [-0.16, 0.16]) part(ink, head, GEO.box, x, 0.37, -0.37, 0.22, 0.13, 0.04);
+    part(ink, head, GEO.box, 0, 0.39, -0.37, 0.12, 0.03, 0.03);
+  } else if (outfit === 'chef-hat') {
+    const white = mat('#ffffff');
+    part(white, head, GEO.cyl, 0, 0.62, 0.02, 0.5, 0.14, 0.5);
+    part(white, head, GEO.sphere, 0, 0.82, 0.02, 0.7, 0.4, 0.62);
+  } else if (outfit === 'crown-wolf') {
+    crown(head, part, mat, 0.58, 0.3);
   }
 
   return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };

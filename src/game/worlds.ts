@@ -17,7 +17,7 @@ import data from '../../content/worlds.json';
 import type { Character } from './settings';
 
 export type ObstacleKind = 'low' | 'high' | 'gap' | 'block';
-export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball' | 'bees' | 'wolf';
+export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball' | 'bees' | 'wolf' | 'lumberjack';
 export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail' | 'brook';
 export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail';
 
@@ -96,6 +96,7 @@ export function chaserFor(world: WorldDef, character: Character): ChaserKind {
   if (character === 'lumberjack') return 'bear';
   if (character === 'bear') return 'bees';
   if (character === 'hare') return 'wolf';
+  if (character === 'wolf') return 'lumberjack';
   return world.theme.night ? 'owl' : 'hawk';
 }
 

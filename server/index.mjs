@@ -26,7 +26,7 @@ const SHOW = 100;
 
 /** Fastest possible running speed in the game (metres per second), plus margin. */
 const MAX_SPEED = 24 * 1.08;
-const CHARACTERS = new Set(['lumberjack', 'squirrel', 'bear', 'hare']);
+const CHARACTERS = new Set(['lumberjack', 'squirrel', 'bear', 'hare', 'wolf']);
 
 // A short list of words a kids' game shouldn't show. Matched inside names, ignoring case.
 const BLOCKED = [

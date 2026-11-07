@@ -66,4 +66,17 @@ export const PORTRAITS = {
   <circle cx="41" cy="45" r="1.2" fill="#ffffff"/><circle cx="57" cy="45" r="1.2" fill="#ffffff"/>
   <path d="M58 32 L68 28 L66 38 Z M58 32 L52 26 L56 36 Z" fill="#e8423a" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>
 </svg>`,
+  wolf: `
+<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="48" cy="52" r="40" fill="#e6f7d8"/>
+  <ellipse cx="48" cy="82" rx="24" ry="17" fill="#8a93a3" stroke="${INK}" stroke-width="3.5"/>
+  <path d="M28 34 L24 10 L42 26 Z M68 34 L72 10 L54 26 Z" fill="#8a93a3" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+  <circle cx="48" cy="46" r="22" fill="#8a93a3" stroke="${INK}" stroke-width="3.5"/>
+  <path d="M34 54 Q48 74 62 54 Q48 60 34 54 Z" fill="#e3e6ec" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+  <ellipse cx="48" cy="57" rx="4.5" ry="3.5" fill="${INK}"/>
+  <circle cx="39" cy="42" r="4" fill="#ffc23a" stroke="${INK}" stroke-width="2"/><circle cx="57" cy="42" r="4" fill="#ffc23a" stroke="${INK}" stroke-width="2"/>
+  <circle cx="39" cy="42" r="1.6" fill="${INK}"/><circle cx="57" cy="42" r="1.6" fill="${INK}"/>
+  <rect x="28" y="66" width="40" height="7" rx="3.5" fill="#ffd23f" stroke="${INK}" stroke-width="3"/>
+  <g transform="translate(78 74)"><ellipse rx="10" ry="6" fill="#f2b45a" stroke="${INK}" stroke-width="2.5"/><ellipse cy="-2" rx="6" ry="3" fill="#e09a3a"/><circle cy="-3" r="2" fill="#e8423a"/></g>
+</svg>`,
 };

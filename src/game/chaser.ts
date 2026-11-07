@@ -15,6 +15,7 @@
 
 import * as THREE from 'three';
 import type { ChaserKind } from './worlds';
+import { makeLumberjackModel } from './visuals';
 import { TUNING } from './tuning';
 import { headingYaw, type Segment, type Track } from './track';
 import { outline, toon } from './toon';
@@ -45,6 +46,7 @@ export class Chaser {
       snowball: buildSnowball(),
       bees: buildBees(),
       wolf: buildWolf(),
+      lumberjack: buildLumberjack(),
       lava: buildLavaWave(),
     };
     for (const body of Object.values(this.bodies)) {
@@ -95,6 +97,8 @@ export class Chaser {
     // The wolf runs a little closer than the bear, so its head and ears show
     // at the bottom of the screen instead of under the camera.
     if (this.kind === 'wolf') this.bodies.wolf.root.position.set(0, 0, -Math.min(1.4, Math.max(0, this.gap - 1.6)));
+    // The lumberjack is as tall as the camera, so he runs a little further back.
+    if (this.kind === 'lumberjack') this.bodies.lumberjack.root.position.set(0.9, 0, -Math.min(1.6, Math.max(0, this.gap - 0.9)));
     if (this.kind === 'bees') this.bodies.bees.root.position.set(Math.sin(this.time * 1.3) * 0.5, 2.7, -Math.max(0, this.gap - 1.2));
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
@@ -349,6 +353,35 @@ function buildWolf(): Body {
       g.rotation.x = Math.sin(pace) * 0.05;
       tail.rotation.x = -0.3 + Math.sin(pace * 0.5) * 0.15;
       head.rotation.x = Math.sin(pace) * 0.06;
+    },
+  };
+}
+
+/**
+ * The lumberjack chasing the wolf that ran off with the basket of pies: running on
+ * two legs and waving both arms in the air. No weapon, just very cross.
+ */
+function buildLumberjack(): Body {
+  const model = makeLumberjackModel('beanie-orange');
+  // Seen from behind, the rolled mat on his back read like a face; hide it.
+  for (const child of model.body.children) if (child.position.z > 0.3 && Math.abs(child.position.y - 1.3) < 0.01) child.visible = false;
+  const g = new THREE.Group();
+  g.scale.setScalar(0.72);
+  g.add(model.root);
+  return {
+    root: g,
+    animate: (pace) => {
+      const s = Math.sin(pace);
+      model.legL.rotation.x = s * 0.9;
+      model.legR.rotation.x = -s * 0.9;
+      // Running hard: leaning forward, left arm pumping, right fist raised
+      // and shaking towards the wolf.
+      model.armL.rotation.x = -s * 0.9;
+      model.armL.rotation.z = 0;
+      model.armR.rotation.x = -2.2 + Math.sin(pace * 3) * 0.25;
+      model.armR.rotation.z = -0.25;
+      model.body.position.y = Math.abs(Math.cos(pace)) * 0.08;
+      model.body.rotation.x = -0.28;
     },
   };
 }

@@ -57,6 +57,13 @@ const ICONS: Record<string, string> = {
   'crown-squirrel': crown(),
   'crown-bear': crown(),
   'crown-hare': crown(),
+  'crown-wolf': crown(),
+  'scarf-yellow': scarf('#ffd23f', '#ffffff'),
+  'shades-wolf': `<path d="M6 24 H58" ${S}/>
+    <path d="M8 24 H28 Q28 40 18 40 Q8 40 8 24 Z" fill="#26324f" ${S}/>
+    <path d="M36 24 H56 Q56 40 46 40 Q36 40 36 24 Z" fill="#26324f" ${S}/>`,
+  'chef-hat': `<rect x="18" y="38" width="28" height="12" rx="3" fill="#ffffff" ${S}/>
+    <path d="M18 40 Q6 34 12 22 Q16 12 26 16 Q30 6 38 10 Q48 8 50 18 Q60 22 52 34 Q48 40 46 40 Z" fill="#ffffff" ${S}/>`,
   'bow-red': `<path d="M32 32 L10 18 L12 46 Z M32 32 L54 18 L52 46 Z" fill="#e8423a" ${S}/>
     <circle cx="32" cy="32" r="7" fill="#c8322a" ${S}/>`,
   'cap-hare': `<path d="M14 38 Q14 16 34 16 Q50 16 50 38 Z" fill="#3b82f6" ${S}/>

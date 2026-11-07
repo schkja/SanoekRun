@@ -88,6 +88,10 @@ export const OUTFITS: Outfit[] = [
   { id: 'cap-hare', character: 'hare', price: 1500, icon: '🧢' },
   { id: 'goggles', character: 'hare', price: 6000, icon: '🥽' },
   { id: 'crown-hare', character: 'hare', price: 20000, icon: '👑' },
+  { id: 'scarf-yellow', character: 'wolf', price: 0, icon: '🧣' },
+  { id: 'shades-wolf', character: 'wolf', price: 1500, icon: '😎' },
+  { id: 'chef-hat', character: 'wolf', price: 6000, icon: '👨‍🍳' },
+  { id: 'crown-wolf', character: 'wolf', price: 20000, icon: '👑' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -142,7 +146,7 @@ function load(): Profile {
     level: 1,
     missions: newMissions(1),
     owned: OUTFITS.filter((o) => o.price === 0).map((o) => o.id),
-    equipped: { lumberjack: 'beanie-orange', squirrel: 'scarf-teal', bear: 'bandana-blue', hare: 'bow-red' },
+    equipped: { lumberjack: 'beanie-orange', squirrel: 'scarf-teal', bear: 'bandana-blue', hare: 'bow-red', wolf: 'scarf-yellow' },
     totals: {},
     name: '',
     device: randomId(),
