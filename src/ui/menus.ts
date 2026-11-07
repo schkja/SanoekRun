@@ -34,6 +34,8 @@ export interface MenuRow {
   toggle?: boolean;
   /** Marks the chosen option in a pick-one list. */
   selected?: boolean;
+  /** Hide the label behind a blur (e.g. a world not reached yet). */
+  blurred?: boolean;
   /** A second, smaller line under the label. */
   hint?: string;
   /** Leave out for a read-only row (no chevron, not tappable). */
@@ -163,7 +165,7 @@ export class Menus {
         }
         el.innerHTML = `
           <span class="menu-row-text">
-            <span class="menu-row-label">${escapeHtml(row.label)}</span>
+            <span class="menu-row-label${row.blurred ? ' is-blurred' : ''}">${escapeHtml(row.label)}</span>
             ${row.hint ? `<span class="menu-row-hint">${escapeHtml(row.hint)}</span>` : ''}
           </span>
           ${row.value !== undefined ? `<span class="menu-row-value">${escapeHtml(row.value)}${row.onClick ? '<span class="menu-row-chevron" aria-hidden="true">›</span>' : ''}</span>` : ''}

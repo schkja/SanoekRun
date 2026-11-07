@@ -1,5 +1,41 @@
 [
   {
+    "version": "1.12.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "New hero: the Hare! A grey wolf is after him, and he collects carrots. Long ears, big hind feet and his own outfits",
+        "Worlds you haven't reached yet stay a secret: their names are blurred",
+        "Chase is the default music again",
+        "Honey pots now spin the right way up"
+      ],
+      "de": [
+        "Neuer Held: der Hase! Ein grauer Wolf ist hinter ihm her, und er sammelt Möhren. Lange Ohren, große Hinterpfoten und eigene Outfits",
+        "Welten, die du noch nicht erreicht hast, bleiben geheim: ihre Namen sind verschwommen",
+        "Verfolgungsjagd ist wieder die Standardmusik",
+        "Honigtöpfe drehen sich jetzt richtig herum"
+      ],
+      "ru": [
+        "Новый герой: Заяц! За ним гонится серый волк, а он собирает морковки. Длинные уши, большие задние лапы и свои наряды",
+        "Миры, до которых ты ещё не добежал, остаются тайной: их названия размыты",
+        "Музыка «Погоня» снова стоит по умолчанию",
+        "Горшочки с мёдом теперь крутятся правильно"
+      ],
+      "uk": [
+        "Новий герой: Заєць! За ним женеться сірий вовк, а він збирає морквинки. Довгі вуха, великі задні лапи й власні вбрання",
+        "Світи, до яких ти ще не добіг, лишаються таємницею: їхні назви розмиті",
+        "Музика «Погоня» знову стоїть за замовчуванням",
+        "Горщики з медом тепер крутяться правильно"
+      ],
+      "es": [
+        "Nuevo héroe: ¡la Liebre! Un lobo gris la persigue y recoge zanahorias. Orejas largas, grandes patas traseras y su propia ropa",
+        "Los mundos a los que aún no has llegado siguen siendo un secreto: sus nombres están borrosos",
+        "La persecución vuelve a ser la música por defecto",
+        "Los tarros de miel ahora giran del derecho"
+      ]
+    }
+  },
+  {
     "version": "1.11.0",
     "date": "2026-11-07",
     "notes": {

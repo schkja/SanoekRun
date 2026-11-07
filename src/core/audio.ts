@@ -38,7 +38,7 @@ export class Audio {
   private noise: AudioBuffer | null = null;
   muted = false;
   /** Which pick-up sound plays for 'coin': a coin chime or a wooden acorn "tok". */
-  collect: 'coin' | 'acorn' | 'honey' = 'coin';
+  collect: 'coin' | 'acorn' | 'honey' | 'carrot' = 'coin';
 
   /**
    * Browsers block audio until the user interacts with the page, so this is
@@ -101,7 +101,11 @@ export class Audio {
         // Climb a pentatonic scale with the streak instead of sliding pitch.
         const step = PENTATONIC[Math.min(PENTATONIC.length - 1, Math.max(0, Math.round((pitch - 1) / 0.06)))];
         const up = semitone(step);
-        if (this.collect === 'honey') {
+        if (this.collect === 'carrot') {
+          // A crunchy bite: a short click of noise and a bright little bell.
+          this.whoosh(t, 3200, 1800, 0.05, 0.25);
+          this.bell(t + 0.02, N(86) * up, 0.12, 0.2, 3, 1);
+        } else if (this.collect === 'honey') {
           // A sweet little "bloop": a round tone gliding up, then a soft bell.
           this.tone(t, N(72) * up, N(79) * up, 0.12, 0.2, 'sine');
           this.bell(t + 0.07, N(84) * up, 0.1, 0.25, 2, 0.6);

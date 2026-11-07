@@ -102,7 +102,7 @@ function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): M
 // ---------------------------------------------------------------------------
 
 /** What you collect: gold coins for the lumberjack, acorns for the squirrel, honey for the bear. */
-export type Collectible = 'coin' | 'acorn' | 'honey';
+export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot';
 let collectible: Collectible = 'coin';
 
 export function setCollectible(kind: Collectible): void {
@@ -130,6 +130,27 @@ function makeHoney(): THREE.Group {
   cloth.scale.set(0.46, 0.16, 0.46);
   cloth.position.y = 0.3;
   g.add(pot, rim, cloth);
+  return g;
+}
+
+const CARROT = toon('#ff8a1e', { emissive: '#a04000', emissiveIntensity: 0.4 });
+const CARROT_TOP = toon('#3fbf4a');
+
+/** A carrot standing on its tip, leaves up. */
+function makeCarrot(): THREE.Group {
+  const g = new THREE.Group();
+  const root = new THREE.Mesh(GEO.cone, CARROT);
+  root.scale.set(0.32, 0.8, 0.32);
+  root.rotation.x = Math.PI;
+  root.position.y = -0.05;
+  g.add(root);
+  for (const [x, rz] of [[-0.07, 0.35], [0, 0], [0.07, -0.35]] as const) {
+    const leaf = new THREE.Mesh(GEO.cone, CARROT_TOP);
+    leaf.scale.set(0.08, 0.36, 0.08);
+    leaf.position.set(x, 0.5, 0);
+    leaf.rotation.z = rz;
+    g.add(leaf);
+  }
   return g;
 }
 
@@ -471,8 +492,12 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
-    if (collectible === 'honey') {
+    if (collectible === 'carrot') {
+      item = makeCarrot();
+      item.userData.spin = 'y';
+    } else if (collectible === 'honey') {
       item = makeHoney();
+      item.userData.spin = 'y';
     } else if (collectible === 'acorn') {
       item = makeAcorn();
       item.userData.spin = 'y';
@@ -1086,8 +1111,12 @@ export interface RunnerModel {
   gait?: 'run' | 'quad';
 }
 
-export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear', outfit = ''): RunnerModel {
-  const model = character === 'squirrel' ? makeSquirrelModel(outfit) : character === 'bear' ? makeBearModel(outfit) : makeLumberjackModel(outfit);
+export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear' | 'hare', outfit = ''): RunnerModel {
+  const model =
+    character === 'squirrel' ? makeSquirrelModel(outfit)
+    : character === 'bear' ? makeBearModel(outfit)
+    : character === 'hare' ? makeHareModel(outfit)
+    : makeLumberjackModel(outfit);
   outline(model.root);
   return model;
 }
@@ -1480,6 +1509,109 @@ export function makeBearModel(outfit = 'bandana-blue'): RunnerModel {
     head.add(veil);
   } else if (outfit === 'crown-bear') {
     crown(head, part, mat, 0.6, 0.32);
+  }
+
+  return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };
+}
+
+/**
+ * The hare: grey-brown with a white belly, very long ears that flop back as
+ * it runs, big hind feet and a cotton tail. Same skeleton as the squirrel, so
+ * it gallops on all fours.
+ */
+export function makeHareModel(outfit = 'bow-red'): RunnerModel {
+  const { root, body, part } = characterKit();
+  const mat = (c: string) => std(c, { flatShading: false, roughness: 0.8 });
+  const fur = mat('#a89a8a');
+  const white = mat('#f7f3ec');
+  const pink = mat('#ffb3c1');
+  const ink = mat('#2b2b3d');
+
+  const pivot = (x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    body.add(g);
+    return g;
+  };
+  const joint = (parent: THREE.Object3D, x: number, y: number, z: number) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
+
+  // Slim, springy body.
+  part(fur, body, GEO.sphere, 0, 0.7, 0.06, 0.72, 0.62, 1.15);
+  part(white, body, GEO.sphere, 0, 0.6, -0.26, 0.5, 0.48, 0.62);
+
+  // Big hind legs with long white feet: the hare's spring.
+  const legL = pivot(-0.22, 0.68, 0.36);
+  const legR = pivot(0.22, 0.68, 0.36);
+  const knees: THREE.Group[] = [];
+  for (const leg of [legL, legR]) {
+    part(fur, leg, GEO.sphere, 0, -0.04, 0.04, 0.36, 0.52, 0.6);
+    const knee = joint(leg, 0, -0.26, -0.04);
+    part(fur, knee, LIMB, 0, -0.12, 0.08, 0.08, 0.14, 0.08).rotation.x = -0.5;
+    part(white, knee, LIMB, 0, -0.33, -0.04, 0.085, 0.27, 0.08).rotation.x = Math.PI / 2;
+    knees.push(knee);
+  }
+  // Slim front legs.
+  const armL = pivot(-0.17, 0.6, -0.44);
+  const armR = pivot(0.17, 0.6, -0.44);
+  const elbows: THREE.Group[] = [];
+  for (const arm of [armL, armR]) {
+    part(fur, arm, LIMB, 0, -0.12, 0, 0.07, 0.16, 0.07);
+    const elbow = joint(arm, 0, -0.26, 0);
+    part(white, elbow, LIMB, 0, -0.1, 0, 0.06, 0.12, 0.06);
+    part(white, elbow, GEO.sphere, 0, -0.22, -0.04, 0.15, 0.09, 0.2);
+    elbows.push(elbow);
+  }
+
+  // Head with a white muzzle, big eyes, buck teeth and long ears.
+  const head = pivot(0, 0.96, -0.6);
+  part(fur, head, GEO.sphere, 0, 0.02, 0.1, 0.4, 0.42, 0.46);
+  part(fur, head, GEO.sphere, 0, 0.28, -0.08, 0.6, 0.56, 0.62);
+  part(white, head, GEO.sphere, -0.12, 0.16, -0.34, 0.22, 0.18, 0.2);
+  part(white, head, GEO.sphere, 0.12, 0.16, -0.34, 0.22, 0.18, 0.2);
+  part(pink, head, GEO.sphere, 0, 0.23, -0.43, 0.09, 0.07, 0.07);
+  part(white, head, GEO.box, 0, 0.06, -0.41, 0.09, 0.1, 0.03);
+  for (const side of [-1, 1]) {
+    part(ink, head, GEO.sphere, side * 0.17, 0.36, -0.3, 0.12, 0.15, 0.08);
+    part(white, head, GEO.sphere, side * 0.15, 0.4, -0.34, 0.04, 0.05, 0.02).castShadow = false;
+  }
+  // Ears on their own pivots so they can flop back while running.
+  const ears: THREE.Group[] = [];
+  for (const side of [-1, 1]) {
+    const ear = joint(head, side * 0.14, 0.52, 0.02);
+    ear.rotation.set(0.35, 0, -side * 0.12);
+    part(fur, ear, GEO.sphere, 0, 0.36, 0, 0.18, 0.78, 0.09);
+    part(pink, ear, GEO.sphere, 0, 0.36, -0.03, 0.1, 0.6, 0.04);
+    ears.push(ear);
+  }
+  head.userData.ears = ears;
+
+  // Cotton tail.
+  const tail = pivot(0, 0.82, 0.66);
+  part(white, tail, GEO.sphere, 0, 0, 0, 0.3, 0.3, 0.28);
+
+  // Shop items.
+  if (outfit === 'bow-red' || !outfit) {
+    part(mat('#e8423a'), head, GEO.sphere, 0.18, 0.56, 0.02, 0.18, 0.12, 0.08);
+    part(mat('#e8423a'), head, GEO.sphere, 0.3, 0.56, 0.02, 0.16, 0.14, 0.08);
+  } else if (outfit === 'cap-hare') {
+    const blue = mat('#3b82f6');
+    part(blue, head, GEO.sphere, 0, 0.5, 0.0, 0.5, 0.24, 0.5);
+    part(blue, head, GEO.box, 0, 0.48, -0.3, 0.38, 0.04, 0.24);
+  } else if (outfit === 'goggles') {
+    const strap = mat('#2b2b3d');
+    const lens = new THREE.MeshBasicMaterial({ color: '#8fd8ff' });
+    part(strap, head, GEO.cyl, 0, 0.4, -0.02, 0.62, 0.06, 0.62);
+    for (const side of [-1, 1]) {
+      part(strap, head, GEO.cyl, side * 0.16, 0.38, -0.33, 0.2, 0.06, 0.2).rotation.x = Math.PI / 2;
+      part(lens, head, GEO.cyl, side * 0.16, 0.38, -0.36, 0.15, 0.03, 0.15).rotation.x = Math.PI / 2;
+    }
+  } else if (outfit === 'crown-hare') {
+    crown(head, part, mat, 0.56, 0.28);
   }
 
   return { root, body, legL, legR, armL, armR, tail, head, gait: 'quad', joints: { legL: knees[0], legR: knees[1], armL: elbows[0], armR: elbows[1] } };

@@ -326,7 +326,8 @@ export class Game {
           rows: route(settings.world).map((w, i) => {
             const open = unlocked.includes(w);
             return {
-              label: `${i + 1}. ${worldName(w)}`,
+              label: `${i + 1}. ${open ? worldName(w) : '????????'}`,
+              blurred: !open,
               hint: open ? undefined : t('start.locked'),
               selected: w === current,
               value: open ? undefined : '🔒',
@@ -378,7 +379,7 @@ export class Game {
     frame(
       undefined,
       board.entries.map((e) => ({
-        label: `${medal(e.rank)} ${e.character === 'squirrel' ? '🐿️' : e.character === 'bear' ? '🐻' : '🪓'} ${e.name}`,
+        label: `${medal(e.rank)} ${e.character === 'squirrel' ? '🐿️' : e.character === 'bear' ? '🐻' : e.character === 'hare' ? '🐰' : '🪓'} ${e.name}`,
         value: `${formatNumber(e.distance)} ${t('hud.unit')}`,
         selected: e.mine,
       })),
@@ -481,7 +482,7 @@ export class Game {
 
   /** Swap in the chosen character (and what it collects) before a track is built. */
   private applyCharacter(): void {
-    const pickup = settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : 'coin';
+    const pickup = settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrot' : 'coin';
     setCollectible(pickup);
     this.hud.setCollectible(pickup);
     this.audio.collect = pickup;
@@ -496,7 +497,7 @@ export class Game {
 
   /** "Coins" or "Nuts" in the current language, for stat rows. */
   private get collectibleLabel(): string {
-    return settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : t('stat.coins');
+    return settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : settings.character === 'hare' ? t('stat.carrots') : t('stat.coins');
   }
 
   /** Build a fresh track with the runner standing at the start. */
@@ -734,7 +735,7 @@ export class Game {
     const run: RunSummary = {
       distance,
       coins: this.coins,
-      collectible: settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : 'coins',
+      collectible: settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrots' : 'coins',
       character: settings.character,
       world: worldName(this.furthestWorld),
       newBest: newBest && previousBest > 0,
@@ -1142,7 +1143,7 @@ export class Game {
       if (settings.effects.coinSparkle) {
         const at = this.track.position(r.seg, c.s, c.x, this.scratch);
         at.y = c.y;
-        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : '#ffd23f');
+        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : settings.character === 'hare' ? '#ff8a1e' : '#ffd23f');
       }
       const worth = this.powers.double > 0 ? 2 : 1;
       this.coins += worth;

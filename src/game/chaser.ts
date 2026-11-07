@@ -44,6 +44,7 @@ export class Chaser {
       owl: buildHawk(OWL),
       snowball: buildSnowball(),
       bees: buildBees(),
+      wolf: buildWolf(),
       lava: buildLavaWave(),
     };
     for (const body of Object.values(this.bodies)) {
@@ -91,6 +92,9 @@ export class Chaser {
     hawk.rotation.z = -sway * 0.25;
 
     // The bee swarm hums along behind, a little above head height.
+    // The wolf runs a little closer than the bear, so its head and ears show
+    // at the bottom of the screen instead of under the camera.
+    if (this.kind === 'wolf') this.bodies.wolf.root.position.set(0, 0, -Math.min(1.4, Math.max(0, this.gap - 1.6)));
     if (this.kind === 'bees') this.bodies.bees.root.position.set(Math.sin(this.time * 1.3) * 0.5, 2.7, -Math.max(0, this.gap - 1.2));
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
@@ -293,6 +297,62 @@ function buildHawk(c: BirdColours = HAWK): Body {
  * An angry swarm of bees: a dozen striped little bees buzzing around a
  * moving centre, each on its own wobbly orbit, with blurred wings.
  */
+/**
+ * A big grey wolf on all fours: long snout, pointed ears, yellow eyes, bushy
+ * tail, loping after the runner. A plain forest wolf, no clothes.
+ */
+function buildWolf(): Body {
+  const root = new THREE.Group();
+  const g = new THREE.Group();
+  root.add(g);
+  g.scale.setScalar(0.75);
+  const fur = mat('#7d8696');
+  const dark = mat('#4f5664');
+  const pale = mat('#d6dae2');
+  const eye = new THREE.MeshBasicMaterial({ color: '#ffd23f' });
+  const ink = mat('#1f2a44');
+  part(SPHERE, fur, g, 0, 1.1, 0.1, 1.2, 1.0, 2.2);
+  part(SPHERE, pale, g, 0, 0.92, -0.45, 0.85, 0.7, 1.0);
+  const head = new THREE.Group();
+  head.position.set(0, 1.55, -1.2);
+  g.add(head);
+  part(SPHERE, fur, head, 0, 0, 0, 0.9, 0.8, 0.9);
+  part(SPHERE, pale, head, 0, -0.15, -0.5, 0.48, 0.38, 0.7);
+  part(SPHERE, ink, head, 0, -0.05, -0.85, 0.18, 0.14, 0.12);
+  for (const side of [-1, 1]) {
+    part(SPHERE, eye, head, side * 0.24, 0.16, -0.36, 0.16, 0.12, 0.08).castShadow = false;
+    part(new THREE.ConeGeometry(0.16, 0.42, 4), fur, head, side * 0.28, 0.5, 0.05, 1, 1, 0.6).rotation.z = -side * 0.2;
+  }
+  const legs: THREE.Group[] = [];
+  for (const [x, z] of [[-0.35, -0.55], [0.35, -0.55], [-0.35, 0.65], [0.35, 0.65]]) {
+    const leg = new THREE.Group();
+    leg.position.set(x, 0.95, z);
+    g.add(leg);
+    part(SPHERE, fur, leg, 0, -0.35, 0, 0.32, 0.8, 0.34);
+    part(SPHERE, dark, leg, 0, -0.82, -0.08, 0.28, 0.16, 0.4);
+    legs.push(leg);
+  }
+  const tail = new THREE.Group();
+  tail.position.set(0, 1.3, 1.15);
+  g.add(tail);
+  part(SPHERE, fur, tail, 0, 0.1, 0.45, 0.42, 0.42, 1.1);
+  part(SPHERE, pale, tail, 0, 0.12, 0.95, 0.3, 0.3, 0.4);
+  return {
+    root,
+    animate: (pace) => {
+      const s = Math.sin(pace);
+      legs[0].rotation.x = s * 0.8;
+      legs[1].rotation.x = Math.sin(pace + 0.4) * 0.8;
+      legs[2].rotation.x = -s * 0.8;
+      legs[3].rotation.x = -Math.sin(pace + 0.4) * 0.8;
+      g.position.y = Math.abs(Math.cos(pace)) * 0.15;
+      g.rotation.x = Math.sin(pace) * 0.05;
+      tail.rotation.x = -0.3 + Math.sin(pace * 0.5) * 0.15;
+      head.rotation.x = Math.sin(pace) * 0.06;
+    },
+  };
+}
+
 function buildBees(): Body {
   const root = new THREE.Group();
   const yellow = mat('#ffd23f');

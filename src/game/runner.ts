@@ -309,6 +309,9 @@ export class Runner {
     const frontL = step(m.armL, p + Math.PI + 0.25, 0.55, 1.1);
     const frontR = step(m.armR, p + 0.25, 0.55, 1.1);
     bend(hindL, hindR, frontL, frontR);
+    // Long ears (the hare) stream back and bounce with the stride.
+    const ears = head?.userData.ears as THREE.Group[] | undefined;
+    if (ears) for (const ear of ears) ear.rotation.x = 1.0 + Math.sin(p * 2 - 0.8) * 0.15;
     // Two bobs per stride (one per diagonal pair); the head stays level.
     const bob = (1 - Math.cos(p * 2)) * 0.03;
     const pitch = Math.sin(p * 2) * 0.035;
