@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.4.4",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "The squirrel runs on all four paws with a real gallop",
+        "Sliding: it flattens to the ground instead of sinking into it",
+        "Stretches out when jumping, like a flying squirrel"
+      ],
+      "de": [
+        "Das Eichhörnchen läuft auf allen vier Pfoten im Galopp",
+        "Rutschen: es drückt sich flach an den Boden, statt einzusinken",
+        "Streckt sich beim Springen wie ein Flughörnchen"
+      ],
+      "ru": [
+        "Белка бегает на четырёх лапах настоящим галопом",
+        "Подкат: прижимается к земле, а не проваливается сквозь неё",
+        "В прыжке вытягивается, как белка-летяга"
+      ],
+      "uk": [
+        "Білка бігає на чотирьох лапах справжнім галопом",
+        "Підкат: притискається до землі, а не провалюється крізь неї",
+        "У стрибку витягується, як білка-летяга"
+      ],
+      "es": [
+        "La ardilla corre a cuatro patas, al galope",
+        "Al deslizarse se pega al suelo en vez de hundirse",
+        "Se estira al saltar, como una ardilla voladora"
+      ]
+    }
+  },
+  {
     "version": "1.4.3",
     "date": "2026-11-07",
     "notes": {

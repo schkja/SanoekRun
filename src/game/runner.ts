@@ -191,7 +191,9 @@ export class Runner {
 
     let bodyTilt = 0;
     let bodyY = 0;
-    if (this.sliding) {
+    if (m.gait === 'quad') {
+      [bodyTilt, bodyY] = this.animateQuad(m);
+    } else if (this.sliding) {
       bodyTilt = 1.2;
       bodyY = 0.05;
       m.legL.rotation.x = m.legR.rotation.x = -1.2;
@@ -201,15 +203,6 @@ export class Runner {
       m.legR.rotation.x = -0.4;
       m.armL.rotation.x = m.armR.rotation.x = -2.8;
       bodyTilt = this.falling ? -0.6 : -0.15;
-    } else if (m.gait === 'bound') {
-      // A squirrel bounds: hind paws push off together, front paws reach out
-      // together, the back arches and stretches, and the body hops.
-      const hop = Math.sin(this.phase * 0.85);
-      m.legL.rotation.x = m.legR.rotation.x = hop * 1.15;
-      m.legL.rotation.z = m.legR.rotation.z = 0;
-      m.armL.rotation.x = m.armR.rotation.x = -hop * 1.3 - 0.4;
-      bodyY = Math.max(0, Math.sin(this.phase * 0.85 + 0.6)) * 0.28;
-      bodyTilt = (this.stumbling ? -0.5 : -0.12) + Math.cos(this.phase * 0.85) * 0.2;
     } else {
       m.legL.rotation.x = swing * 0.95;
       m.legR.rotation.x = -swing * 0.95;
@@ -222,10 +215,46 @@ export class Runner {
     m.body.rotation.x += (bodyTilt - m.body.rotation.x) * Math.min(1, dt * 18);
     m.body.rotation.z = lean;
     if (m.tail) {
-      // The tail follows the hop a beat late, like it's flowing behind.
-      const wave = m.gait === 'bound' && this.grounded ? Math.sin(this.phase * 0.85 - 1.2) * 0.32 : Math.sin(this.phase * 0.5) * 0.18;
-      m.tail.rotation.x = wave + (this.grounded ? 0 : -0.35);
+      // The tail flows a beat behind the stride; flat out behind in a slide.
+      const wave = m.gait === 'quad' ? Math.sin(this.phase * 0.9 - 1.3) * 0.22 : Math.sin(this.phase * 0.5) * 0.18;
+      const pose = this.sliding ? 0.9 : this.grounded ? 0 : -0.3;
+      m.tail.rotation.x += (wave + pose - m.tail.rotation.x) * Math.min(1, dt * 14);
       m.tail.rotation.z = Math.sin(this.phase * 0.5 + 1) * 0.1;
     }
+  }
+
+  /**
+   * Four-legged animation (the squirrel). Returns [body pitch, body height].
+   * Running is a gallop: the hind legs push off as a pair, the front legs land
+   * as a pair half a stride later, each pair slightly out of step, while the
+   * spine rocks and the head stays steady. Jumping stretches out like a
+   * flying squirrel; sliding flattens the belly to the ground with the legs
+   * splayed, so nothing ever sinks below the path.
+   */
+  private animateQuad(m: RunnerModel): [number, number] {
+    const p = this.phase * 0.9;
+    const head = m.head;
+    if (this.sliding) {
+      m.armL.rotation.x = m.armR.rotation.x = 1.45;
+      m.legL.rotation.x = m.legR.rotation.x = -1.45;
+      if (head) head.rotation.x = 0.25;
+      return [0, -0.42];
+    }
+    if (!this.grounded) {
+      const fall = this.falling;
+      m.armL.rotation.x = m.armR.rotation.x = fall ? 2.2 : 1.1;
+      m.legL.rotation.x = m.legR.rotation.x = fall ? -0.4 : -1.0;
+      if (head) head.rotation.x = -0.2;
+      return [fall ? -0.5 : this.vy > 0 ? 0.22 : -0.12, 0];
+    }
+    const hind = Math.sin(p);
+    m.legL.rotation.x = hind * 0.95;
+    m.legR.rotation.x = Math.sin(p + 0.45) * 0.95;
+    m.armL.rotation.x = Math.sin(p + Math.PI) * 0.9;
+    m.armR.rotation.x = Math.sin(p + Math.PI + 0.45) * 0.9;
+    // The spine rocks with the stride; the head counter-rocks to stay level.
+    const pitch = Math.cos(p) * 0.1;
+    if (head) head.rotation.x = -pitch + Math.sin(p * 2) * 0.04;
+    return [(this.stumbling ? 0.35 : 0) + pitch, Math.abs(Math.sin(p)) * 0.1];
   }
 }

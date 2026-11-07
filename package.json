@@ -1,7 +1,7 @@
 {
   "name": "sanoekrun",
   "private": true,
-  "version": "1.4.3",
+  "version": "1.4.4",
   "type": "module",
   "description": "Sanoek Run — an endless Temple Run style runner built with Three.js, Vite and TypeScript.",
   "scripts": {
