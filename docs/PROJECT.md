@@ -36,7 +36,7 @@ thick outlines), bright forest. Portrait phone first, works on desktop.
 
 - **Two heroes, each with its own route of worlds** (`content/worlds.json` → `routes`):
   - **Lumberjack** (cut one tree too many and woke the bear): `boardwalk` → `autumn-boardwalk` → `temple` → `lava`. Collects **coins**. Chased by a **bear** (monster/lava in later worlds).
-  - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `autumn-canopy` → `snowy-pines`. Collects **acorns**. Chased by a **hawk**, later a **snowball**.
+  - **Squirrel** (white legs, teal scarf, big leaning S-tail, tufted ears): `forest-trail` → `treetops` → `brook` → `autumn-canopy` → `moonlit-forest` → `snowy-pines`. Collects **acorns**. Chased by a **hawk**, later a **snowball**.
 - Each world is 650 m, then a portal to the next; the route loops faster.
 - **Controls:** swipe left/right = turn at a corner or change lane; up = jump; down = slide (or slam mid-air). Keyboard: arrows/WASD, Space = jump, **Esc or P = pause**.
 - **Fail:** miss a corner (fall), or stumble twice within the danger window (the chaser catches you). One stumble puts the chaser on your heels for a few seconds.
@@ -228,6 +228,11 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 
 ### 6.10 iPhone home-screen height
 `apple-mobile-web-app-status-bar-style` is `default`, NOT `black-translucent`: with translucent, iOS standalone apps get a viewport short by the status bar and a strip of page background shows at the bottom (CSS/JS height hacks did not fix it on the owner's iPhone). iOS reads this meta only when the icon is added, so after changing it the app must be re-added to the home screen.
+
+### 6.10b Brook and night worlds
+- `brook` decor: a log (bark path) over a stream. `theme.abyssY: -1.2` lifts the far plane to become the water (`abyss` colour = water blue); scenery: lily pads (some with a flower), reeds with cattails, stones, grassy banks; giant corner tree and hollow like the branch worlds. Obstacles reuse the branch set. Falling = `death.splash`.
+- `theme.night: true` (Moonlit forest, decor `branch`): `nightLights()` adds fireflies and glowing cyan toadstools (MeshBasic materials); dark blue sky/fog, low sun. Chaser `owl` = the hawk model with grey colours (`buildHawk(OWL)`).
+- Snow obstacles must contrast with the white path: low = snowy pine log with icicles (was an invisible snow drift), snowman has a red scarf, buttons and stick arms.
 
 ### 6.11 Visual QA checklist (run after scenery changes)
 Playwright autopilot (`window.game.step` + `handleAction`, see §8) through every world, screenshots every ~2 s and right after each turn. Known traps:

@@ -539,7 +539,7 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
   }
 
   // Branch worlds: the branch grows out of a giant trunk behind each corner.
-  if (kit.decor === 'branch' || kit.decor === 'snow') {
+  if (kit.decor === 'branch' || kit.decor === 'snow' || kit.decor === 'brook') {
     const r = 2.6;
     const s = seg.length + W / 2 + r;
     const x = -seg.turn * (W / 2 + r * 0.6);
@@ -553,7 +553,8 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
     }
   }
 
-  if (kit.decor === 'boardwalk' || kit.decor === 'branch' || kit.decor === 'snow' || kit.decor === 'trail') forest(seg, kit, add, blocked);
+  if (kit.decor === 'boardwalk' || kit.decor === 'branch' || kit.decor === 'snow' || kit.decor === 'trail' || kit.decor === 'brook') forest(seg, kit, add, blocked);
+  if (seg.world.theme.night) nightLights(seg, kit, add, blocked);
 
   for (const side of [-1, 1]) {
     for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += rand(4, 8.5)) {
@@ -569,6 +570,26 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
             add(GEO.trunk, kit.trunk, tx, (h - 20) / 2, s, 1.1, h + 20, 1.1);
             add(GEO.blob, leaf(), tx, h + 1.4, s, 2.6, 2.2, 2.6, true);
           }
+          break;
+        }
+        case 'brook': {
+          // A stream below the fallen log: reeds, lily pads, stones and
+          // grassy banks further out.
+          const water = seg.world.theme.abyssY ?? -1.2;
+          if (Math.random() < 0.55) {
+            const lx = out(rand(0.8, 3.2));
+            add(GEO.cyl, kit.leaves[1], lx, water + 0.03, s, rand(0.7, 1.1), 0.04, rand(0.7, 1.1));
+            if (Math.random() < 0.35) add(GEO.sphere, TRAIL.flowers[0], lx, water + 0.12, s, 0.22, 0.14, 0.22);
+          }
+          if (Math.random() < 0.5) {
+            const rx = out(rand(0.6, 2));
+            for (let i = 0; i < 4; i++) {
+              add(GEO.cone, kit.leaves[2], rx + rand(-0.3, 0.3), water + 0.6, s + rand(-0.4, 0.4), 0.08, rand(1.1, 1.6), 0.08);
+            }
+            add(GEO.cyl, kit.trunk, rx, water + 1.2, s, 0.12, 0.35, 0.12);
+          }
+          if (Math.random() < 0.3) add(GEO.rock, TRAIL.stone, out(rand(1, 3)), water + 0.1, s + 1, 0.6, 0.4, 0.55);
+          if (Math.random() < 0.6) add(GEO.blob, kit.leaves[0], out(rand(4.5, 7)), water + 0.2, s, rand(2.2, 3.2), 0.9, rand(2.2, 3));
           break;
         }
         case 'trail': {
@@ -688,6 +709,31 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
  * trunks right beside the path, a roof of leaves overhead and sunbeams.
  * This is what makes it feel like running through the trees, not over a lake.
  */
+/**
+ * Night scenery: fireflies drifting beside the path and toadstools with
+ * glowing caps on the branch, so the dark forest feels alive.
+ */
+function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
+  const W = TUNING.pathWidth;
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  for (let s = seg.index === 0 ? -10 : W / 2; s < seg.length + W / 2; s += rand(1.5, 3.5)) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    if (blocked(side, s)) continue;
+    const fly = add(GEO.sphere, NIGHT.firefly, side * (W / 2 + rand(0.6, 5)), rand(0.8, 6), s, 0.12, 0.12, 0.12);
+    fly.castShadow = false;
+    if (Math.random() < 0.25) {
+      const x = side * (W / 2 + 0.05);
+      add(GEO.trunk, kit.white, x, 0.15, s, 0.22, 0.3, 0.22);
+      add(GEO.dome, NIGHT.glowCap, x, 0.28, s, 0.5, 0.36, 0.5).castShadow = false;
+    }
+  }
+}
+
+const NIGHT = {
+  firefly: new THREE.MeshBasicMaterial({ color: '#fff27a' }),
+  glowCap: new THREE.MeshBasicMaterial({ color: '#6ff3ff' }),
+};
+
 /** A small decorative toadstool, tilted by `lean` (radians around z). */
 function toadstool(add: AddFn, kit: Kit, x: number, y: number, s: number, size: number, lean: number): void {
   const stemH = 0.9 * size;
@@ -710,7 +756,7 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
   const snow = kit.decor === 'snow';
 
   // 1. The carpet of treetops below, reaching to the horizon (not on the forest floor).
-  for (let s = from; s < (kit.decor === 'trail' ? from : to); s += 3.2) {
+  for (let s = from; s < (kit.decor === 'trail' || kit.decor === 'brook' ? from : to); s += 3.2) {
     for (const side of [-1, 1]) {
       if (blocked(side, s)) continue;
       const x = side * (W / 2 + rand(2, 11));
@@ -766,7 +812,7 @@ function forest(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: n
 
   // 2b. The story in the scenery.
   if (kit.decor === 'boardwalk') lumberjackCamp(seg, kit, add, blocked);
-  if (kit.decor === 'branch' || kit.decor === 'trail') squirrelHome(seg, kit, add);
+  if (kit.decor === 'branch' || kit.decor === 'trail' || kit.decor === 'brook') squirrelHome(seg, kit, add);
 
   // 3. A roof of leaves (or snowy pine tops) overhead.
   for (let s = from; s < to; s += rand(6, 10)) {
@@ -859,7 +905,8 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
     return m;
   };
   const laneXs = [0, 1, 2].filter((i) => lanes[i]).map((i) => (i - 1) * TUNING.laneOffset);
-  const d = kit.decor;
+  // The brook is a log over water: it uses the branch obstacles.
+  const d = kit.decor === 'brook' ? 'branch' : kit.decor;
 
   if (kind === 'low') {
     // Something across the path to jump.
@@ -867,7 +914,15 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
       part(GEO.box, kit.rockDark, 0, 0.4, 0, W + 0.4, 0.8, 0.8);
       part(GEO.box, kit.hot, 0, 0.82, 0, W + 0.2, 0.06, 0.5);
     } else if (d === 'snow') {
-      part(GEO.blob, kit.snow, 0, 0.18, 0, W / 2 + 0.3, 0.62, 0.7);
+      // A fallen pine log with snow on top: dark wood so it stands out on
+      // the white path (a plain snow drift was invisible).
+      part(GEO.cyl, kit.trunk, 0, 0.4, 0, 0.8, W + 0.6, 0.8).rotation.z = Math.PI / 2;
+      part(GEO.cyl, kit.woodEnd, W / 2 + 0.31, 0.4, 0, 0.66, 0.04, 0.66).rotation.z = Math.PI / 2;
+      part(GEO.blob, kit.snow, 0, 0.78, 0, W / 2 + 0.2, 0.22, 0.42);
+      for (let i = 0; i < 5; i++) {
+        const icicle = part(GEO.cone, kit.ice, -W / 2 + 0.6 + i * ((W - 1.2) / 4), 0.02, 0.3, 0.08, 0.3, 0.08);
+        icicle.rotation.x = Math.PI;
+      }
     } else if (d === 'branch') {
       // A knobbly twig lying across the branch.
       part(GEO.cyl, kit.trunk, 0, 0.36, 0, 0.6, W + 0.4, 0.6).rotation.z = Math.PI / 2;
@@ -941,6 +996,14 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
         part(GEO.sphere, kit.dark, x + 0.12, 2.05, 0.27, 0.08, 0.08, 0.06);
         part(GEO.cyl, kit.dark, x, 2.32, 0, 0.5, 0.06, 0.5);
         part(GEO.cyl, kit.dark, x, 2.48, 0, 0.32, 0.32, 0.32);
+        // Bright scarf, buttons and stick arms so it pops against the snow.
+        part(GEO.cyl, TRAIL.berry, x, 1.66, 0, 0.82, 0.14, 0.82);
+        part(GEO.box, TRAIL.berry, x + 0.22, 1.42, 0.36, 0.16, 0.42, 0.06).rotation.z = 0.2;
+        for (const y of [1.15, 1.4]) part(GEO.sphere, kit.dark, x, y, 0.42, 0.1, 0.1, 0.06);
+        for (const side of [-1, 1]) {
+          const arm = part(GEO.cyl, kit.trunk, x + side * 0.62, 1.55, 0, 0.06, 0.8, 0.06);
+          arm.rotation.z = -side * 1.0;
+        }
       } else {
         // A temple statue with glowing eyes.
         part(GEO.box, kit.stone, x, 1.1, 0, 1.25, 2.2, 1.2);

@@ -869,7 +869,7 @@ export class Game {
 
     if (r.falling && r.y < -1) {
       const decor = this.world.decor;
-      this.die(t(decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : 'death.trees'), false);
+      this.die(t(decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : decor === 'brook' ? 'death.splash' : 'death.trees'), false);
     }
   }
 

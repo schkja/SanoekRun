@@ -17,8 +17,8 @@ import data from '../../content/worlds.json';
 import type { Character } from './settings';
 
 export type ObstacleKind = 'low' | 'high' | 'gap' | 'block';
-export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'snowball';
-export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail';
+export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball';
+export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail' | 'brook';
 export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail';
 
 export interface WorldTheme {
@@ -40,6 +40,10 @@ export interface WorldTheme {
   accent: string;
   /** True for worlds on the forest floor: the `abyss` colour becomes grass right under the path. */
   ground?: boolean;
+  /** Height of the plane far below (default −22); a brook puts its water at about −1.2. */
+  abyssY?: number;
+  /** Night: fireflies and glowing mushrooms in the scenery. */
+  night?: boolean;
 }
 
 export interface WorldDef {
