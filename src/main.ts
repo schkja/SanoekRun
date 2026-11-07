@@ -3,6 +3,10 @@
  * Everything interesting happens in src/game/game.ts.
  */
 
+// Fonts are bundled with the game (no outside requests), so they also work offline.
+import '@fontsource/lilita-one/latin-400.css';
+import '@fontsource/nunito/latin-700.css';
+import '@fontsource/nunito/latin-800.css';
 import { Game } from './game/game';
 
 const canvasContainer = document.getElementById('game');

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Sanoek Run \u2014 an endless Temple Run style runner built with Three.js, Vite and TypeScript.",
+  "description": "Sanoek Run — an endless Temple Run style runner built with Three.js, Vite and TypeScript.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -12,6 +12,8 @@
     "build:single": "vite build --mode single"
   },
   "dependencies": {
+    "@fontsource/lilita-one": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
     "three": "^0.186.0"
   },
   "devDependencies": {

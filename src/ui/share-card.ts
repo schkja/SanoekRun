@@ -20,7 +20,7 @@ export interface RunSummary {
 
 const W = 1080;
 const H = 1350;
-const FONT = "'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif";
+const FONT = "'Lilita One', 'Trebuchet MS', system-ui, sans-serif";
 
 export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | null): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -61,17 +61,17 @@ export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | nul
   pill(g, W / 2, 110, GAME_NAME, '#5ce1a0', '#04342c', 44);
 
   g.fillStyle = '#ffffff';
-  g.font = `900 190px ${FONT}`;
+  g.font = `190px ${FONT}`;
   g.fillText(`${Math.floor(run.distance).toLocaleString('en-US')} m`, W / 2, 360);
 
-  g.font = `700 48px ${FONT}`;
+  g.font = `52px ${FONT}`;
   g.fillStyle = '#ffd23f';
   g.fillText(`Reached the ${run.world} · ${run.coins} ${run.collectibleName}`, W / 2, 440);
 
   if (run.newBest) pill(g, W / 2, 530, 'New personal best', '#ff5c7a', '#ffffff', 38);
 
   pill(g, W / 2, H - 230, 'Can you beat me?', '#ffd23f', '#3a2a00', 64);
-  g.font = `700 40px ${FONT}`;
+  g.font = `42px ${FONT}`;
   g.fillStyle = '#ffffff';
   g.fillText(SHARE_URL.replace(/^https?:\/\//, ''), W / 2, H - 110);
 
@@ -79,7 +79,7 @@ export function drawShareCard(run: RunSummary, snapshot: CanvasImageSource | nul
 }
 
 function pill(g: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, fg: string, size: number): void {
-  g.font = `800 ${size}px ${FONT}`;
+  g.font = `${size}px ${FONT}`;
   const width = g.measureText(text).width + size * 1.3;
   const height = size * 1.7;
   g.fillStyle = bg;
