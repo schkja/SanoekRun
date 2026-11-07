@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.11.0",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Pick your hero and your world separately: any hero can run in the Forest, on the Lumberjack's boardwalk or in the Honey meadows",
+        "The title screen shows your hero live in the forest, facing you; flip through heroes with the arrows",
+        "Each hero keeps its own chaser: the bear after the lumberjack, the hawk (or owl at night) after the squirrel, the bees after the bear"
+      ],
+      "de": [
+        "Held und Welt getrennt wählen: jeder Held kann im Wald, auf dem Holzfällersteg oder in den Honigwiesen laufen",
+        "Der Startbildschirm zeigt deinen Helden lebendig im Wald, dir zugewandt; mit den Pfeilen blätterst du durch die Helden",
+        "Jeder Held behält seinen Verfolger: den Bären beim Holzfäller, den Habicht (nachts die Eule) beim Eichhörnchen, die Bienen beim Bären"
+      ],
+      "ru": [
+        "Героя и мир теперь можно выбрать отдельно: любой герой может бегать в Лесу, на Мостках дровосека или на Медовых лугах",
+        "На главном экране герой стоит живой в лесу лицом к тебе, героев листаешь стрелками",
+        "У каждого героя свой преследователь: за дровосеком медведь, за белкой ястреб (ночью сова), за медведем пчёлы"
+      ],
+      "uk": [
+        "Героя й світ тепер можна обрати окремо: будь-який герой може бігати в Лісі, на Містках лісоруба або на Медових луках",
+        "На головному екрані герой стоїть живий у лісі обличчям до тебе, героїв гортаєш стрілками",
+        "У кожного героя свій переслідувач: за лісорубом ведмідь, за білкою яструб (уночі сова), за ведмедем бджоли"
+      ],
+      "es": [
+        "Elige héroe y mundo por separado: cualquier héroe puede correr en el Bosque, en la Pasarela del leñador o en los Prados de miel",
+        "La pantalla de inicio muestra a tu héroe en vivo en el bosque, mirándote; cambia de héroe con las flechas",
+        "Cada héroe tiene su perseguidor: el oso tras el leñador, el halcón (o el búho de noche) tras la ardilla, las abejas tras el oso"
+      ]
+    }
+  },
+  {
     "version": "1.10.0",
     "date": "2026-11-07",
     "notes": {

@@ -66,6 +66,8 @@ export interface MenuScreen {
   body?: string;
   /** Rows of "label: value" shown as a results table. */
   stats?: Array<[string, string]>;
+  /** Flip through options with ‹ › arrows, e.g. the hero standing in the scene. */
+  picker?: { label: string; caption?: string; onPrev: () => void; onNext: () => void };
   /** A short label above the choices, e.g. "Choose your hero". */
   choicesTitle?: string;
   choices?: MenuChoice[];
@@ -113,6 +115,7 @@ export class Menus {
         ${screen.chips?.length ? `<div class="menu-chips">${screen.chips.map((c) => `<span class="menu-chip">${escapeHtml(c)}</span>`).join('')}</div>` : ''}
         ${renderStats(screen.stats)}
         ${screen.input ? `<input class="menu-input" id="menu-input" type="text" autocomplete="nickname" enterkeyhint="done" maxlength="${screen.input.maxLength}" placeholder="${escapeHtml(screen.input.placeholder)}" value="${escapeHtml(screen.input.value)}" />${screen.input.error ? `<p class="menu-error">${escapeHtml(screen.input.error)}</p>` : ''}` : ''}
+        ${screen.picker ? `<div class="menu-picker"><button class="menu-picker-arrow" data-prev aria-label="‹">‹</button><div class="menu-picker-text"><span class="menu-picker-label">${escapeHtml(screen.picker.label)}</span>${screen.picker.caption ? `<span class="menu-picker-caption">${escapeHtml(screen.picker.caption)}</span>` : ''}</div><button class="menu-picker-arrow" data-next aria-label="›">›</button></div>` : ''}
         ${screen.choices?.length ? `${screen.choicesTitle ? `<p class="menu-label">${escapeHtml(screen.choicesTitle)}</p>` : ''}<div class="menu-choices"></div>` : ''}
         ${screen.sections?.length ? '<div class="menu-sections"></div>' : ''}
         <div class="menu-buttons"></div>
@@ -120,6 +123,12 @@ export class Menus {
         ${screen.note ? `<p class="menu-note">${escapeHtml(screen.note)}</p>` : ''}
       </div>
     `;
+
+    if (screen.picker) {
+      const picker = screen.picker;
+      this.root.querySelector('[data-prev]')?.addEventListener('click', () => picker.onPrev());
+      this.root.querySelector('[data-next]')?.addEventListener('click', () => picker.onNext());
+    }
 
     const choiceRow = this.root.querySelector<HTMLElement>('.menu-choices');
     for (const choice of screen.choices ?? []) {

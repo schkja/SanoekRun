@@ -72,13 +72,30 @@ export interface WorldDef {
 export const WORLDS = data.worlds as WorldDef[];
 const BY_ID = new Map(WORLDS.map((w) => [w.id, w]));
 
-export function route(character: Character): WorldDef[] {
-  const ids = (data.routes as Record<string, string[]>)[character] ?? data.routes.lumberjack;
-  return ids.map((id) => {
-    const world = BY_ID.get(id);
-    if (!world) throw new Error(`[worlds] Route for "${character}" names unknown world "${id}".`);
+/** The three worlds you can pick, each a route through several areas. */
+export type RouteId = 'forest' | 'boardwalk' | 'honey';
+export const ROUTES: RouteId[] = ['forest', 'boardwalk', 'honey'];
+
+export function route(id: RouteId): WorldDef[] {
+  const ids = (data.routes as Record<string, string[]>)[id] ?? data.routes.forest;
+  return ids.map((wid) => {
+    const world = BY_ID.get(wid);
+    if (!world) throw new Error(`[worlds] Route "${id}" names unknown world "${wid}".`);
     return world;
   });
+}
+
+/**
+ * Who chases you: the hero's own enemy (the bear after the lumberjack, the
+ * hawk after the squirrel, or the owl at night, the bees after the bear),
+ * except where the place itself is the danger: the temple beast, the lava
+ * flood and the snowball keep chasing whoever runs there.
+ */
+export function chaserFor(world: WorldDef, character: Character): ChaserKind {
+  if (world.chaser === 'monster' || world.chaser === 'lava' || world.chaser === 'snowball') return world.chaser;
+  if (character === 'lumberjack') return 'bear';
+  if (character === 'bear') return 'bees';
+  return world.theme.night ? 'owl' : 'hawk';
 }
 
 export interface WorldSlot {

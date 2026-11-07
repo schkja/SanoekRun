@@ -171,11 +171,47 @@ export class Runner {
     this.position.y = this.y;
   }
 
+  /**
+   * Title screen: the hero stands facing the camera and is alive: breathing,
+   * looking around, the lumberjack waving, the tails wagging.
+   */
+  idle(dt: number): void {
+    this.phase += dt * 2.2;
+    const p = this.phase;
+    const m = this.model;
+    m.root.position.copy(this.visual);
+    m.root.rotation.set(0, this.yaw, 0);
+    m.body.position.y = Math.sin(p * 1.2) * 0.03;
+    m.body.rotation.set(0, 0, 0);
+    if (m.gait === 'quad') {
+      for (const leg of [m.legL, m.legR, m.armL, m.armR]) leg.rotation.x = 0;
+      if (m.joints) for (const j of Object.values(m.joints)) j.rotation.x = 0;
+      // Sit up a little now and then to look at you.
+      const peek = Math.max(0, Math.sin(p * 0.45)) ** 3;
+      m.body.rotation.x = peek * 0.35;
+      m.armL.rotation.x = m.armR.rotation.x = peek * 0.9;
+      if (m.head) m.head.rotation.set(-peek * 0.25, Math.sin(p * 0.7) * 0.45, Math.sin(p * 0.9) * 0.12);
+      if (m.tail) {
+        m.tail.rotation.x = Math.sin(p * 1.6) * 0.15;
+        m.tail.rotation.z = Math.sin(p * 2.3) * 0.25;
+      }
+    } else {
+      // The lumberjack waves hello.
+      m.legL.rotation.x = m.legR.rotation.x = 0;
+      m.armL.rotation.x = Math.sin(p) * 0.08;
+      m.armR.rotation.x = -2.7 + Math.sin(p * 3) * 0.05;
+      m.armR.rotation.z = -0.35 + Math.sin(p * 4) * 0.35;
+    }
+  }
+
   /** Draw the character: smoothing, facing and limb animation. Purely cosmetic. */
   animate(dt: number): void {
     this.smoothing.multiplyScalar(Math.max(0, 1 - dt * 10));
     this.visual.copy(this.position).add(this.smoothing);
     const m = this.model;
+    // Undo the title-screen poses.
+    m.armR.rotation.z = 0;
+    if (m.head) m.head.rotation.y = m.head.rotation.z = 0;
     m.root.position.copy(this.visual);
 
     let delta = headingYaw(this.seg.heading) - this.yaw;

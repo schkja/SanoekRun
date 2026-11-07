@@ -119,6 +119,27 @@ export class Engine {
   }
 
   /** Put the camera straight into position with no easing. */
+  /**
+   * Title screen: the camera stands in front of the hero, looking at them, so
+   * they face you. It eases in, and `follow()` eases back out when a run starts.
+   */
+  showcase(target: THREE.Vector3, yaw: number, dt: number): void {
+    this.weather?.update(dt, this.camera.position);
+    this.forward.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+    // Look below the hero, so they stand in the top half of the screen,
+    // above the title card.
+    const want = this.look.set(target.x, target.y + 1.6, target.z).addScaledVector(this.forward, 6.4);
+    const k = dt === 0 ? 1 : Math.min(1, dt * 4);
+    this.camera.position.lerp(want, k);
+    this.camera.lookAt(target.x + this.forward.x * 0.6, target.y - 1.25, target.z + this.forward.z * 0.6);
+    this.yaw = yaw + Math.PI;
+    const fov = TUNING.camera.baseFov + this.portraitFov;
+    if (Math.abs(this.camera.fov - fov) > 0.05) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
   snap(target: THREE.Vector3, yaw: number): void {
     this.yaw = yaw;
     this.camY = target.y;

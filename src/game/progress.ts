@@ -101,9 +101,9 @@ export interface Profile {
   name: string;
   device: string;
   /** Worlds each hero has reached at least once: runs can start there. */
-  reached: Record<Character, string[]>;
+  reached: Record<string, string[]>;
   /** Where each hero's next run starts (a world id), if not the first world. */
-  startWorld: Partial<Record<Character, string>>;
+  startWorld: Record<string, string>;
 }
 
 const KEY = 'sanoekrun.profile';
@@ -124,6 +124,14 @@ function randomId(): string {
   }
 }
 
+/** Progress used to be kept per hero; each hero had its own world. Map it over. */
+function byRoute<T>(old: Record<string, T>): Record<string, T> {
+  const rename: Record<string, string> = { squirrel: 'forest', lumberjack: 'boardwalk', bear: 'honey' };
+  const out: Record<string, T> = {};
+  for (const [key, value] of Object.entries(old)) out[rename[key] ?? key] = value;
+  return out;
+}
+
 function load(): Profile {
   const fresh: Profile = {
     bank: 0,
@@ -134,7 +142,7 @@ function load(): Profile {
     totals: {},
     name: '',
     device: randomId(),
-    reached: { lumberjack: [], squirrel: [], bear: [] },
+    reached: { forest: [], boardwalk: [], honey: [] },
     startWorld: {},
   };
   try {
@@ -145,8 +153,8 @@ function load(): Profile {
       ...fresh,
       ...saved,
       equipped: { ...fresh.equipped, ...(saved.equipped ?? {}) },
-      reached: { ...fresh.reached, ...(saved.reached ?? {}) },
-      startWorld: { ...(saved.startWorld ?? {}) },
+      reached: { ...fresh.reached, ...byRoute(saved.reached ?? {}) },
+      startWorld: byRoute(saved.startWorld ?? {}),
     };
   } catch {
     return fresh;
@@ -214,8 +222,8 @@ export function buyOrEquip(outfit: Outfit): BuyResult {
 }
 
 /** Remember that a hero got to a world. Returns true the first time. */
-export function markReached(character: Character, worldId: string): boolean {
-  const list = profile.reached[character];
+export function markReached(routeId: string, worldId: string): boolean {
+  const list = (profile.reached[routeId] ??= []);
   if (list.includes(worldId)) return false;
   list.push(worldId);
   saveProfile();

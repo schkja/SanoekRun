@@ -14,7 +14,6 @@ import { Music } from '../core/music';
 import { Hud } from '../ui/hud';
 import { Menus } from '../ui/menus';
 import { SpeedLines } from '../ui/speed-lines';
-import { PORTRAITS } from '../ui/portraits';
 import { outfitIcon } from '../ui/outfit-icons';
 import { APP_VERSION, AUTHOR, CHANGELOG, LEGAL_URL } from '../about';
 import { drawShareCard, shareRun, type RunSummary } from '../ui/share-card';
@@ -22,7 +21,7 @@ import { Track, headingYaw, type Obstacle, type TurnDir } from './track';
 import { Runner } from './runner';
 import { Chaser } from './chaser';
 import { TUNING, speedAt } from './tuning';
-import { WORLDS, distanceOfWorld, route, type WorldDef } from './worlds';
+import { ROUTES, WORLDS, chaserFor, distanceOfWorld, route, type RouteId, type WorldDef } from './worlds';
 import { animateSegment, setCollectible } from './visuals';
 import { Sparkles } from './sparkles';
 import { setOutlines } from './toon';
@@ -191,31 +190,35 @@ export class Game {
     // The chaser only shows up once you start running.
     this.chaser.root.visible = false;
     const toTitle = () => this.showTitle();
+    const switchHero = (step: number) => {
+      const i = CHARACTERS.indexOf(settings.character);
+      const next = CHARACTERS[(i + step + CHARACTERS.length) % CHARACTERS.length];
+      updateSettings((s) => (s.character = next));
+      this.prepareTrack();
+      this.showTitle();
+    };
     this.menus.show({
       eyebrow: t('title.eyebrow'),
       title: GAME_NAME,
-      body: t(`story.${settings.character}`),
       chips: [
         t('chip.level', { n: profile.level }),
         t('chip.bank', { n: profile.bank }),
         ...(this.best.distance > 0 ? [t('title.best', { m: this.best.distance })] : []),
       ],
-      choicesTitle: t('title.choose'),
-      choices: CHARACTERS.map((c) => ({
-        label: t(`character.${c}`),
-        caption: t(`caption.${c}`),
-        art: PORTRAITS[c],
-        selected: settings.character === c,
-        onClick: () => {
-          if (settings.character === c) return;
-          updateSettings((s) => (s.character = c));
-          this.prepareTrack();
-          this.showTitle();
+      picker: {
+        label: t(`character.${settings.character}`),
+        caption: t(`story.${settings.character}`),
+        onPrev: () => switchHero(-1),
+        onNext: () => switchHero(1),
+      },
+      sections: [
+        {
+          rows: [
+            { label: t('title.world'), value: t(`route.${settings.world}`), onClick: () => this.showRoutePicker(toTitle) },
+            ...(this.unlockedWorlds().length > 1 ? [{ label: t('start.label'), value: worldName(this.startWorld()), onClick: () => this.showWorldPicker(toTitle) }] : []),
+          ],
         },
-      })),
-      sections: this.unlockedWorlds().length > 1
-        ? [{ rows: [{ label: t('start.label'), value: worldName(this.startWorld()), onClick: () => this.showWorldPicker(toTitle) }] }]
-        : undefined,
+      ],
       buttons: [{ label: t('button.run'), primary: true, onClick: () => this.newRun() }],
       toolbar: [
         { label: t('tool.records'), onClick: () => void this.showRecords('all', toTitle) },
@@ -227,6 +230,29 @@ export class Game {
       ],
       note: isTouch() ? undefined : t('title.keys'),
       variant: 'is-title',
+    });
+  }
+
+  /** Pick the world to run in: the forest (default), the boardwalk or the honey meadows. */
+  private showRoutePicker(back: () => void): void {
+    this.menus.show({
+      title: t('title.world'),
+      variant: 'is-settings',
+      sections: [
+        {
+          rows: ROUTES.map((id: RouteId) => ({
+            label: t(`route.${id}`),
+            hint: t(`route.${id}.hint`),
+            selected: settings.world === id,
+            onClick: () => {
+              updateSettings((s) => (s.world = id));
+              this.prepareTrack();
+              back();
+            },
+          })),
+        },
+      ],
+      buttons: [{ label: t('button.back'), primary: true, onClick: back }],
     });
   }
 
@@ -272,20 +298,20 @@ export class Game {
   // Start world: once a hero reaches a world, runs can start there.
 
   private unlockedWorlds(): WorldDef[] {
-    const worlds = route(settings.character);
-    const reached = profile.reached[settings.character];
+    const worlds = route(settings.world);
+    const reached = (profile.reached[settings.world] ?? []);
     return worlds.filter((w, i) => i === 0 || reached.includes(w.id));
   }
 
   private startWorld(): WorldDef {
-    const id = profile.startWorld[settings.character];
-    return this.unlockedWorlds().find((w) => w.id === id) ?? route(settings.character)[0];
+    const id = profile.startWorld[settings.world];
+    return this.unlockedWorlds().find((w) => w.id === id) ?? route(settings.world)[0];
   }
 
   /** The world id to start in, or null for the start of the route. */
   private startWorldId(): string | null {
     const world = this.startWorld();
-    return world === route(settings.character)[0] ? null : world.id;
+    return world === route(settings.world)[0] ? null : world.id;
   }
 
   private showWorldPicker(back: () => void): void {
@@ -297,7 +323,7 @@ export class Game {
       variant: 'is-settings',
       sections: [
         {
-          rows: route(settings.character).map((w, i) => {
+          rows: route(settings.world).map((w, i) => {
             const open = unlocked.includes(w);
             return {
               label: `${i + 1}. ${worldName(w)}`,
@@ -306,7 +332,7 @@ export class Game {
               value: open ? undefined : '🔒',
               onClick: open
                 ? () => {
-                    profile.startWorld[settings.character] = w.id;
+                    profile.startWorld[settings.world] = w.id;
                     saveProfile();
                     this.prepareTrack();
                     back();
@@ -481,7 +507,7 @@ export class Game {
     this.timeScale = 1;
     // Each character runs its own route of worlds. `?world=snowy-pines` in the
     // address starts the run in a given world — handy for testing.
-    const worlds = route(settings.character);
+    const worlds = route(settings.world);
     const startAt = new URLSearchParams(location.search).get('world') ?? this.startWorldId();
     this.track.reset(worlds, startAt ? distanceOfWorld(worlds, startAt) : 0);
     this.runner.reset(this.track, this.track.first);
@@ -843,7 +869,15 @@ export class Game {
     this.speedLines.update(dt, this.phase === 'playing' && settings.effects.speedLines ? 0.15 + speed01 * 0.85 : 0);
     this.sparkles.update(gameDt);
 
-    if (this.phase !== 'paused') {
+    if (this.phase === 'title') {
+      // The hero stands in the scene facing you.
+      this.runner.idle(dt);
+      for (let i = Math.max(0, this.runner.seg.index - 1); i < this.track.segments.length; i++) {
+        const group = this.track.segments[i].group;
+        if (group) animateSegment(group, this.time);
+      }
+      this.engine.showcase(this.runner.visual, this.runner.yaw, dt);
+    } else if (this.phase !== 'paused') {
       this.runner.animate(gameDt);
       for (let i = Math.max(0, this.runner.seg.index - 1); i < this.track.segments.length; i++) {
         const group = this.track.segments[i].group;
@@ -1067,7 +1101,7 @@ export class Game {
 
     if (this.danger > 0) {
       this.caught = true;
-      this.die(t(`caught.${this.world.chaser}`), true);
+      this.die(t(`caught.${chaserFor(this.world, settings.character)}`), true);
       return;
     }
     this.danger = TUNING.chaser.dangerTime;
@@ -1164,7 +1198,7 @@ export class Game {
     // "Reach world N in one run" counts worlds from where this run started.
     this.portalsThisRun++;
     this.reportMissions('runWorlds', this.portalsThisRun + 1);
-    const unlocked = markReached(settings.character, seg.world.id);
+    const unlocked = markReached(settings.world, seg.world.id);
     if (unlocked) window.setTimeout(() => this.hud.toast(t('toast.unlocked'), 'green'), 900);
     this.setWorld(seg.world);
     this.furthestWorld = seg.world;
@@ -1186,7 +1220,7 @@ export class Game {
   private setWorld(world: WorldDef): void {
     this.world = world;
     this.engine.applyTheme(world.theme);
-    this.chaser.setKind(world.chaser);
+    this.chaser.setKind(chaserFor(world, settings.character));
   }
 
   private updateChaser(dt: number): void {
