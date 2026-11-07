@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.4.5",
+    "date": "2026-11-07",
+    "notes": {
+      "en": [
+        "Add any run to the records with the new button on the end screen",
+        "Pick any nickname: any language, emoji and symbols, up to 16 characters",
+        "A clear message when the records book can't be reached"
+      ],
+      "de": [
+        "Trag jeden Lauf mit dem neuen Knopf am Ende in die Rekorde ein",
+        "Jeder Spitzname geht: jede Sprache, Emoji und Zeichen, bis zu 16",
+        "Klare Meldung, wenn das Rekordbuch nicht erreichbar ist"
+      ],
+      "ru": [
+        "Любой забег можно записать в рекорды новой кнопкой в конце",
+        "Любой ник: на любом языке, с эмодзи и символами, до 16 знаков",
+        "Понятное сообщение, если книга рекордов недоступна"
+      ],
+      "uk": [
+        "Будь-який забіг можна записати в рекорди новою кнопкою наприкінці",
+        "Будь-який нік: будь-якою мовою, з емодзі й символами, до 16 знаків",
+        "Зрозуміле повідомлення, якщо книга рекордів недоступна"
+      ],
+      "es": [
+        "Apunta cualquier carrera en los récords con el nuevo botón del final",
+        "Cualquier apodo: en cualquier idioma, con emojis y símbolos, hasta 16",
+        "Aviso claro si el libro de récords no responde"
+      ]
+    }
+  },
+  {
     "version": "1.4.4",
     "date": "2026-11-07",
     "notes": {

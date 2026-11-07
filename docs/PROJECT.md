@@ -193,14 +193,14 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 
 ### 6.5 Leaderboard
 - Client `leaderboard.ts`: `fetchBoard(period, device)`, `submitRun(run)`. Base `./api/scores`, 6 s timeout, **all failures are silent** (game works offline / in previews).
-- Name prompt appears when `board.reachable && distance >= max(50, cutoff)`.
+- Name prompt opens automatically for runs ≥ 50 m (and ≥ board cutoff); every run ≥ 20 m gets a "🏆 Add to the records" button on the end screen until saved. If the API can't be reached, the prompt says so (`records.down`) instead of failing silently.
 - Server `server/index.mjs`:
   - `GET /api/scores?period=all|today&device=` → `{period, total, entries[{rank,name,character,distance,mine}], cutoff}` (top 100).
   - `POST /api/scores {name, character, device, distance, coins, durationMs}` → `{ok, rank, rankToday}`; 400 `name|character|device`, 422 `run`, 429 rate limit.
   - `GET /api/health` → `{ok:true}`.
   - Storage `DATA_FILE` (default `/data/scores.json`), atomic write via tmp + rename. Keeps top 500 all-time + today's runs (day = Europe/Berlin).
   - Anti-cheat (plausibility, not security): `distance ≤ seconds × 24 × 1.08 + 30`, `coins ≤ distance × 0.5 + 20`. Rate limit: 8 s between submits, 40/hour per device and per IP.
-  - Names: 1–12 chars, letters/digits/space/`_.-`, bad-word list in 5 languages.
+  - Names: any pseudonym, 1–16 code points (any script, emoji, symbols). Refused: control/private/unassigned chars, bidi overrides, zero-width space, `<` `>`, and the bad-word list in 5 languages (matched on letters only).
   - Known limitation: a determined cheater can forge requests. Next step if needed: signed run tokens issued at run start + server-side duration check.
 
 ### 6.6 Share picture (`share-card.ts`)
