@@ -74,6 +74,20 @@ const isInstalled = () =>
   (window.matchMedia?.('(display-mode: standalone)').matches || window.matchMedia?.('(display-mode: fullscreen)').matches) ??
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
+/** Set for the rest of the visit once a player chooses to play in the browser. */
+const GATE_KEY = 'sanoekrun.browserOk';
+
+/** Phones that haven't installed the game get the install screen first. */
+function shouldOfferInstall(): boolean {
+  const platform = detectPlatform();
+  if ((platform !== 'ios' && platform !== 'android') || isInstalled()) return false;
+  try {
+    return sessionStorage.getItem(GATE_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
 const POWER_ICONS: Record<PowerupKind, string> = { magnet: '🧲', shield: '🛡️', double: '✖️2' };
 
 export class Game {
@@ -109,6 +123,8 @@ export class Game {
   private portalsThisRun = 0;
   private recordSaved = false;
   private installPrompt: (Event & { prompt: () => Promise<void> }) | null = null;
+  /** The install screen (showInstallGate) is on screen. */
+  private gateOpen = false;
 
   private phase: Phase = 'title';
   private distance = 0;
@@ -155,6 +171,8 @@ export class Game {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.installPrompt = e as Event & { prompt: () => Promise<void> };
+      // The prompt often arrives after the install screen is up: add its button.
+      if (this.gateOpen) this.showInstallGate();
     });
     void this.refreshBoard();
     this.input.setPauseHandler(() => this.togglePause());
@@ -176,7 +194,8 @@ export class Game {
   start(): void {
     this.lastFrame = performance.now();
     this.prepareTrack();
-    this.showTitle();
+    if (shouldOfferInstall()) this.showInstallGate();
+    else this.showTitle();
     requestAnimationFrame(this.frame);
   }
 
@@ -184,8 +203,56 @@ export class Game {
   // Screens
   // ---------------------------------------------------------------------------
 
+  /**
+   * First screen on a phone browser: asks to install the game to the home
+   * screen (full screen, smoother, offline), with this phone's steps and a
+   * way to play in the browser anyway.
+   */
+  private showInstallGate(): void {
+    this.phase = 'title';
+    this.gateOpen = true;
+    this.hud.setVisible(false);
+    this.chaser.root.visible = false;
+    const ios = detectPlatform() === 'ios';
+    const steps = ios ? (['install.ios1', 'install.ios2', 'install.ios3'] as const) : (['install.android1', 'install.android2'] as const);
+    const languageValue = settings.language === 'auto' ? t('settings.auto') : LANGUAGE_NAMES[settings.language];
+    const playInBrowser = () => {
+      try {
+        sessionStorage.setItem(GATE_KEY, '1');
+      } catch {}
+      this.gateOpen = false;
+      this.showTitle();
+    };
+    const prompt = this.installPrompt;
+    this.menus.show({
+      title: t('gate.title'),
+      body: t('gate.warning'),
+      variant: 'is-gate',
+      sections: [
+        { title: ios ? t('install.iosTitle') : t('install.androidTitle'), rows: steps.map((key) => ({ label: t(key) })) },
+        { rows: [{ label: `🌐 ${t('settings.language')}`, value: languageValue, onClick: () => this.showLanguages(() => this.showInstallGate()) }] },
+      ],
+      buttons: [
+        ...(prompt
+          ? [{
+              label: t('install.now'),
+              primary: true,
+              onClick: async () => {
+                await prompt.prompt();
+                this.installPrompt = null;
+                this.showInstallGate();
+              },
+            }]
+          : []),
+        { label: t('gate.browser'), onClick: playInBrowser },
+      ],
+      note: t('gate.note'),
+    });
+  }
+
   private showTitle(): void {
     this.phase = 'title';
+    this.gateOpen = false;
     this.hud.setVisible(false);
     // The chaser only shows up once you start running.
     this.chaser.root.visible = false;

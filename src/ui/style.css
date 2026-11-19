@@ -623,6 +623,25 @@ body {
   outline-offset: 3px;
 }
 
+/* Install screen on phone browsers: title, a yellow warning, the steps. */
+.menu.is-gate .menu-title {
+  font-size: 32px;
+  -webkit-text-stroke-width: 6px;
+}
+
+.menu.is-gate .menu-body {
+  max-width: none;
+  padding: 12px 14px;
+  color: var(--ink);
+  background: var(--sun);
+  border: var(--outline);
+  border-radius: var(--radius);
+}
+
+.menu.is-gate .menu-sections {
+  margin-bottom: 16px;
+}
+
 /* Title: the logo, the story line, two character cards, then Run. */
 .menu.is-title .menu-card {
   padding-top: 22px;

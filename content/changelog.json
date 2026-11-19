@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.16.0",
+    "date": "2026-11-19",
+    "notes": {
+      "en": ["On a phone browser the game first shows how to install it as an app: full screen, smoother and offline. You can still play in the browser"],
+      "de": ["Im Handy-Browser zeigt das Spiel zuerst, wie man es als App installiert: Vollbild, flüssiger und offline. Im Browser spielen geht weiterhin"],
+      "ru": ["В браузере на телефоне игра сначала показывает, как установить её как приложение: весь экран, плавнее и без интернета. Играть в браузере тоже можно"],
+      "uk": ["У браузері на телефоні гра спершу показує, як встановити її як застосунок: на весь екран, плавніше й без інтернету. Грати в браузері теж можна"],
+      "es": ["En el navegador del móvil el juego muestra primero cómo instalarlo como app: pantalla completa, más fluido y sin internet. También puedes jugar en el navegador"]
+    }
+  },
+  {
     "version": "1.15.0",
     "date": "2026-11-19",
     "notes": {
