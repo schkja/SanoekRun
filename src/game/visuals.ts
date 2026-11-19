@@ -104,7 +104,7 @@ function std(color: string, extra: THREE.MeshStandardMaterialParameters = {}): M
 // ---------------------------------------------------------------------------
 
 /** What you collect: gold coins for the lumberjack, acorns for the squirrel, honey for the bear. */
-export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie';
+export type Collectible = 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie' | 'token';
 let collectible: Collectible = 'coin';
 
 export function setCollectible(kind: Collectible): void {
@@ -179,6 +179,116 @@ function makeCarrot(): THREE.Group {
   return g;
 }
 
+// ---------------------------------------------------------------------------
+// Neon (Glitch.exe)
+// ---------------------------------------------------------------------------
+
+/**
+ * An unlit, glowing material. Colours are pushed above 1 so the bloom pass
+ * (engine.ts) makes them glow; `k` is how bright.
+ */
+export function neon(color: string, k = 2.4, extra: THREE.MeshBasicMaterialParameters = {}): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), ...extra });
+}
+
+const TOKEN_RIM = toon('#ffd23f', { emissive: '#ffb000', emissiveIntensity: 0.9 });
+const TOKEN_CHIP = neon('#3ff6ff', 2.6);
+const TOKEN_GEO = new THREE.CylinderGeometry(0.38, 0.38, 0.12, 8);
+
+/** Glitch's collectible: a gold octagonal token with a glowing chip in the middle. */
+function makeToken(): THREE.Group {
+  const g = new THREE.Group();
+  const coin = new THREE.Mesh(TOKEN_GEO, TOKEN_RIM);
+  coin.rotation.x = Math.PI / 2;
+  g.add(coin);
+  for (const z of [-0.07, 0.07]) {
+    const chip = new THREE.Mesh(GEO.box, TOKEN_CHIP);
+    chip.scale.set(0.3, 0.3, 0.02);
+    chip.position.z = z;
+    g.add(chip);
+  }
+  return g;
+}
+
+/** Words painted on a canvas, for signs on the obstacles ("404", "CAPTCHA"...). */
+const signs = new Map<string, THREE.MeshBasicMaterial>();
+function sign(key: string, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void, w = 256, h = 128, k = 1.6): THREE.MeshBasicMaterial {
+  const cached = signs.get(key);
+  if (cached) return cached;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  draw(canvas.getContext('2d')!, w, h);
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map, color: new THREE.Color(1, 1, 1).multiplyScalar(k), transparent: true });
+  signs.set(key, material);
+  return material;
+}
+
+const SIGN_FONT = "'Lilita One', 'Trebuchet MS', system-ui, sans-serif";
+const SIGN = {
+  get e404() {
+    return sign('404', (g, w, h) => {
+      g.fillStyle = '#0b0620';
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#ff4fd8';
+      g.lineWidth = 8;
+      g.strokeRect(6, 6, w - 12, h - 12);
+      g.font = `96px ${SIGN_FONT}`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillStyle = '#3ff6ff';
+      g.fillText('404', w / 2 - 4, h / 2 + 4);
+      g.fillStyle = '#ff4fd8';
+      g.globalAlpha = 0.7;
+      g.fillText('404', w / 2 + 4, h / 2 + 4);
+    });
+  },
+  get ad() {
+    return sign('ad', (g, w, h) => {
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = '#3b6cff';
+      g.fillRect(0, 0, w, 44);
+      g.fillStyle = '#ff2a4a';
+      g.fillRect(w - 44, 6, 36, 32);
+      g.fillStyle = '#ffffff';
+      g.font = `30px ${SIGN_FONT}`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('X', w - 26, 23);
+      g.textAlign = 'left';
+      g.fillText('POP-UP', 12, 23);
+      g.fillStyle = '#ff2a4a';
+      g.font = `58px ${SIGN_FONT}`;
+      g.textAlign = 'center';
+      g.fillText('YOU WON!!', w / 2, 112);
+      g.fillStyle = '#1f2a44';
+      g.font = `30px ${SIGN_FONT}`;
+      g.fillText('click here ▸▸', w / 2, 168);
+      g.fillStyle = '#ffd23f';
+      g.fillRect(40, 196, w - 80, 40);
+      g.fillStyle = '#1f2a44';
+      g.fillText('FREE TOKENS', w / 2, 217);
+    }, 256, 256, 1.1);
+  },
+  get captcha() {
+    return sign('captcha', (g, w, h) => {
+      g.fillStyle = '#f4f6fb';
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#1f2a44';
+      g.lineWidth = 6;
+      g.strokeRect(3, 3, w - 6, h - 6);
+      g.strokeRect(22, 34, 52, 52);
+      g.fillStyle = '#1f2a44';
+      g.font = `40px ${SIGN_FONT}`;
+      g.textBaseline = 'middle';
+      g.fillText("I'm not a robot", 92, 62);
+    }, 512, 128, 1.1);
+  },
+};
+
 function makeAcorn(): THREE.Group {
   const g = new THREE.Group();
   const nut = new THREE.Mesh(GEO.ball, ACORN_NUT);
@@ -224,6 +334,13 @@ interface Kit {
   fungus: Mat;
   portal: Mat;
   portalDisc: THREE.MeshBasicMaterial;
+  /** Glowing colours from the palette (Glitch.exe worlds). */
+  neon: [THREE.MeshBasicMaterial, THREE.MeshBasicMaterial, THREE.MeshBasicMaterial];
+  /** Dark panels for servers and walls. */
+  panel: Mat;
+  panelLight: Mat;
+  laser: THREE.MeshBasicMaterial;
+  bubble: Mat;
 }
 
 const kits = new Map<string, Kit>();
@@ -259,7 +376,18 @@ function kitFor(world: WorldDef): Kit {
     fungus: std('#f5b54a'),
     portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
     portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
+    neon: world.palette.leaves.map((c) => neon(c)) as Kit['neon'],
+    panel: std(world.palette.trunk),
+    panelLight: std(new THREE.Color(world.palette.trunk).offsetHSL(0, 0, 0.12).getStyle()),
+    laser: neon('#ff2a4a', 3.2),
+    bubble: std('#f4f2ff'),
   };
+  if (p.style === 'grid') {
+    // An unlit floor whose grid lines glow, and a glowing portal ring.
+    kit.floorTop = new THREE.MeshBasicMaterial({ map: makeFloorTexture(p.style, p.slab, p.grout), color: new THREE.Color(1, 1, 1).multiplyScalar(0.95) }) as unknown as Mat;
+    kit.curb = neon(p.curb, 2.2) as unknown as Mat;
+    kit.portal = neon(accent, 3) as unknown as Mat;
+  }
   kits.set(world.id, kit);
   return kit;
 }
@@ -277,7 +405,52 @@ function makeFloorTexture(style: PathStyle, main: string, line: string): THREE.T
   const base = new THREE.Color(main);
   const shade = (spread: number) => `#${base.clone().offsetHSL(0, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * spread).getHexString()}`;
 
-  if (style === 'planks') {
+  if (style === 'grid') {
+    // Dark glass tiles with glowing seams, and a dashed light down each lane line.
+    g.fillStyle = main;
+    g.fillRect(0, 0, size, size);
+    const tiles = 4;
+    const t = size / tiles;
+    for (let i = 0; i < tiles; i++) {
+      for (let j = 0; j < tiles; j++) {
+        g.fillStyle = `#${base.clone().offsetHSL(0, 0, (Math.random() - 0.3) * 0.05).getHexString()}`;
+        g.fillRect(i * t + 3, j * t + 3, t - 6, t - 6);
+      }
+    }
+    g.strokeStyle = line;
+    g.globalAlpha = 0.55;
+    g.lineWidth = 3;
+    for (let i = 0; i <= tiles; i++) {
+      g.beginPath();
+      g.moveTo(i * t, 0);
+      g.lineTo(i * t, size);
+      g.moveTo(0, i * t);
+      g.lineTo(size, i * t);
+      g.stroke();
+    }
+    // Circuit traces.
+    g.globalAlpha = 0.25;
+    g.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      let x = Math.random() * size;
+      let y = Math.random() * size;
+      g.beginPath();
+      g.moveTo(x, y);
+      for (let k = 0; k < 3; k++) {
+        if (k % 2) x += (Math.random() - 0.5) * 80;
+        else y += (Math.random() - 0.5) * 80;
+        g.lineTo(x, y);
+      }
+      g.stroke();
+      g.fillStyle = line;
+      g.fillRect(x - 3, y - 3, 6, 6);
+    }
+    g.globalAlpha = 1;
+    // Glowing edges.
+    g.fillStyle = line;
+    g.fillRect(0, 0, 6, size);
+    g.fillRect(size - 6, 0, 6, size);
+  } else if (style === 'planks') {
     // Boards laid across the path, with nails at both ends.
     g.fillStyle = line;
     g.fillRect(0, 0, size, size);
@@ -448,6 +621,10 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
       // Packed earth, flush with the forest floor. No ink outline: on the
       // ground it would draw lines across the path where pieces meet.
       add(GEO.box, kit.floorBody, 0, -0.14, mid, W, 0.26, len).userData.noOutline = true;
+    } else if (style === 'grid') {
+      // A floating slab of dark glass with a glowing underside.
+      add(GEO.box, kit.floorBody, 0, -0.4, mid, W, 0.78, len);
+      add(GEO.box, kit.neon[0], 0, -0.82, mid, W - 0.6, 0.06, len).userData.noOutline = true;
     } else if (style === 'planks') {
       // A thin deck on beams, with posts reaching down to the forest floor.
       add(GEO.box, kit.floorBody, 0, -0.3, mid, W, 0.56, len);
@@ -479,6 +656,10 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
         // floor directly, so corners don't get stripes where verges cross.
       } else if (style === 'snow') {
         add(GEO.log, kit.curb, x - side * 0.1, 0.05, (a + edgeEnd) / 2, 0.3, 0.26, run).userData.noOutline = true;
+      } else if (style === 'grid') {
+        // A low glowing rail.
+        add(GEO.box, kit.floorBody, x, 0.08, (a + edgeEnd) / 2, 0.3, 0.3, run);
+        add(GEO.box, kit.curb, x, 0.26, (a + edgeEnd) / 2, 0.18, 0.07, run).userData.noOutline = true;
       } else {
         add(GEO.box, kit.curb, x, 0.12, (a + edgeEnd) / 2, 0.36, 0.5, run);
       }
@@ -494,6 +675,11 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
         }
       } else if (style === 'bark' || style === 'snow') {
         add(GEO.blob, style === 'snow' ? kit.snow : kit.leaves[0], 0, 0.2, end + 0.4, W / 2 + 0.4, 0.7, 0.7, true);
+      } else if (style === 'grid') {
+        // A glowing barrier where the path turns.
+        add(GEO.box, kit.panel, 0, 0.5, end + 0.2, W + 0.6, 1.0, 0.3, true);
+        add(GEO.box, kit.curb, 0, 1.04, end + 0.2, W + 0.62, 0.08, 0.32).userData.noOutline = true;
+        for (let i = 0; i < 5; i++) add(GEO.box, kit.laser, -W / 2 + 0.5 + i * ((W - 1) / 4), 0.5, end + 0.04, 0.42, 0.14, 0.02).rotation.z = 0.5;
       } else {
         add(GEO.box, kit.curb, 0, 0.12, end + 0.18, W + 0.72, 0.5, 0.36);
       }
@@ -519,7 +705,10 @@ export function buildSegmentMesh(seg: Segment): THREE.Group {
   // --- Coins / acorns -------------------------------------------------------------
   for (const c of seg.coins) {
     let item: THREE.Object3D;
-    if (collectible === 'pie') {
+    if (collectible === 'token') {
+      item = makeToken();
+      item.userData.spin = 'y';
+    } else if (collectible === 'pie') {
       item = makePie();
       item.userData.spin = 'y';
     } else if (collectible === 'carrot') {
@@ -632,6 +821,10 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
 
   if (kit.decor === 'boardwalk' || kit.decor === 'branch' || kit.decor === 'snow' || kit.decor === 'trail' || kit.decor === 'brook') forest(seg, kit, add, blocked);
   if (seg.world.theme.night) nightLights(seg, kit, add, blocked);
+  if (kit.decor === 'data') {
+    dataWorld(seg, kit, add, blocked);
+    return;
+  }
 
   for (const side of [-1, 1]) {
     for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += rand(4, 8.5)) {
@@ -790,6 +983,119 @@ function decorate(seg: Segment, kit: Kit, add: AddFn): void {
  * Night scenery: fireflies drifting beside the path and toadstools with
  * glowing caps on the branch, so the dark forest feels alive.
  */
+/**
+ * Glitch.exe scenery: the inside of the cloud. Server towers with blinking
+ * lights in the server farm, floating chat bubbles and hearts in the social
+ * feed, floating islands and spires in the open web, and streams of data
+ * rising out of the void everywhere.
+ */
+function dataWorld(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
+  const W = TUNING.pathWidth;
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  const glow = () => kit.neon[Math.floor(Math.random() * 3)];
+  const id = seg.world.id;
+  const low = -16;
+
+  // A landmark behind every corner: a giant tower ringed with light.
+  {
+    const s = seg.length + W / 2 + 3.2;
+    const x = -seg.turn * (W / 2 + 2.6);
+    const top = 15;
+    add(GEO.box, kit.panel, x, (top + low) / 2, s, 4, top - low, 4);
+    for (let y = 1.5; y < top; y += 2.4) add(GEO.box, kit.neon[Math.floor(y) % 3], x, y, s, 4.06, 0.14, 4.06).userData.noOutline = true;
+    const ring = add(GEO.portal, kit.neon[0], x, top + 1.5, s, 0.9, 0.9, 0.9);
+    ring.rotation.x = Math.PI / 2;
+    add(GEO.crystal, kit.neon[2], x, top + 1.5, s, 1.1, 1.6, 1.1);
+  }
+
+  for (const side of [-1, 1]) {
+    for (let s = seg.index === 0 ? -14 : W / 2 + 1; s < seg.length + W / 2; s += rand(3.5, 7)) {
+      if (blocked(side, s)) continue;
+      const out = (d: number) => side * (W / 2 + d);
+
+      // Data streaming up out of the void.
+      if (Math.random() < 0.35) {
+        const x = out(rand(1.5, 12));
+        add(GEO.box, glow(), x, low / 2 + rand(-2, 6), s + rand(-1, 1), 0.05, rand(14, 30), 0.05).userData.noOutline = true;
+      }
+
+      if (id === 'social-feed') {
+        if (Math.random() < 0.45) {
+          // A chat bubble with three dots, turned towards you.
+          const x = out(rand(2.2, 6));
+          const y = rand(2.4, 6);
+          add(GEO.sphere, kit.bubble, x, y, s, 2.0, 1.2, 0.35);
+          add(GEO.cone, kit.bubble, x - side * 0.5, y - 0.6, s, 0.25, 0.5, 0.18).rotation.z = side * 0.5;
+          const dots = glow();
+          for (let i = -1; i <= 1; i++) add(GEO.sphere, dots, x + i * 0.45, y, s - 0.17, 0.24, 0.24, 0.1).userData.noOutline = true;
+        }
+        if (Math.random() < 0.3) {
+          // A glowing heart.
+          const x = out(rand(3, 9));
+          const y = rand(3, 8);
+          const pink = kit.neon[0];
+          const r = rand(0.5, 0.9);
+          add(GEO.sphere, pink, x - r * 0.32, y, s, r, r, r * 0.6);
+          add(GEO.sphere, pink, x + r * 0.32, y, s, r, r, r * 0.6);
+          add(GEO.cone, pink, x, y - r * 0.55, s, r * 0.72, r * 0.8, r * 0.3).rotation.z = Math.PI;
+        }
+        if (Math.random() < 0.3) {
+          // A tall feed pillar with stacked posts glowing on its face.
+          const x = out(rand(5, 10));
+          const h = rand(4, 10);
+          add(GEO.box, kit.panel, x, (h + low) / 2, s, 2.2, h - low, 2.2);
+          for (let y = h - 1; y > 0; y -= 1.6) add(GEO.box, glow(), x - side * 1.12, y, s, 0.04, 1.0, 1.6).userData.noOutline = true;
+        }
+      } else if (id === 'open-web') {
+        if (Math.random() < 0.35) {
+          // A floating island with a ring of light around it.
+          const x = out(rand(4, 11));
+          const y = rand(-3, 2);
+          const r = rand(1.2, 2.2);
+          add(GEO.rock, kit.panelLight, x, y, s, r, r * 0.8, r);
+          add(GEO.cone, kit.panel, x, y - r * 1.1, s, r * 0.8, r * 1.4, r * 0.8).rotation.z = Math.PI;
+          add(GEO.cyl, kit.neon[0], x, y + r * 0.1, s, r * 2.3, 0.05, r * 2.3).userData.noOutline = true;
+          if (Math.random() < 0.6) add(GEO.crystal, glow(), x, y + r + 0.8, s, 0.4, 0.7, 0.4);
+        }
+        if (Math.random() < 0.3) {
+          // A spire rising out of the void, tipped with light.
+          const x = out(rand(3, 9));
+          const h = rand(4, 10);
+          add(GEO.spire, kit.panel, x, (h + low) / 2, s, rand(0.8, 1.4), h - low, rand(0.8, 1.4));
+          add(GEO.crystal, kit.neon[1], x, h + 0.6, s, 0.35, 0.7, 0.35);
+        }
+        if (Math.random() < 0.18) {
+          const ring = add(GEO.portal, glow(), out(rand(4, 9)), rand(4, 8), s, 0.22, 0.22, 0.22);
+          ring.rotation.y = Math.PI / 2;
+        }
+      } else {
+        // Server farm: racks of servers with rows of blinking lights.
+        if (Math.random() < 0.65) {
+          const x = out(rand(2.4, 7));
+          const h = rand(2.5, 8);
+          const d = rand(1.2, 1.8);
+          add(GEO.box, kit.panel, x, (h + low) / 2, s, 1.6, h - low, d, true);
+          add(GEO.box, kit.panelLight, x, h + 0.08, s, 1.7, 0.16, d + 0.1);
+          const face = x - side * 0.81;
+          for (let y = h - 0.5; y > -1; y -= 0.55) {
+            if (Math.random() < 0.25) continue;
+            add(GEO.box, glow(), face, y, s + rand(-0.3, 0.3), 0.03, 0.07, rand(0.3, d - 0.2)).userData.noOutline = true;
+          }
+        }
+        if (Math.random() < 0.15) {
+          // A cube of data floating overhead.
+          const x = out(rand(2, 5));
+          const y = rand(4.5, 7);
+          const c = add(GEO.box, kit.panelLight, x, y, s, 0.9, 0.9, 0.9);
+          c.rotation.set(0.6, 0.6, 0);
+          const edge = add(GEO.box, glow(), x, y, s, 1.0, 0.05, 1.0);
+          edge.rotation.set(0.6, 0.6, 0);
+        }
+      }
+    }
+  }
+}
+
 function nightLights(seg: Segment, kit: Kit, add: AddFn, blocked: (side: number, s: number) => boolean): void {
   const W = TUNING.pathWidth;
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -1012,6 +1318,52 @@ function buildObstacle(kind: string, lanes: [boolean, boolean, boolean], kit: Ki
   // The brook is a log over water: it uses the branch obstacles.
   const d = kit.decor === 'brook' ? 'branch' : kit.decor;
 
+  if (d === 'data') {
+    if (kind === 'low') {
+      // A firewall: a low dark wall with burning red bars.
+      part(GEO.box, kit.panel, 0, 0.38, 0, W + 0.4, 0.76, 0.55);
+      for (const y of [0.22, 0.5]) part(GEO.box, kit.laser, 0, y, 0.28, W + 0.42, 0.09, 0.02).castShadow = false;
+      const top = part(GEO.box, neon('#ff8a1e', 2.8), 0, 0.8, 0, W + 0.4, 0.08, 0.5);
+      top.castShadow = false;
+      for (let i = 0; i < 6; i++) {
+        const flame = part(GEO.cone, kit.laser, -W / 2 + 0.4 + i * ((W - 0.8) / 5), 0.98, 0, 0.16, 0.34, 0.16);
+        flame.castShadow = false;
+        flame.userData.flicker = true;
+      }
+    } else if (kind === 'high') {
+      // A laser gate, with a CAPTCHA on top: you are not a robot, slide!
+      for (const side of [-1, 1]) {
+        part(GEO.box, kit.panel, side * (W / 2 + 0.25), 1.3, 0, 0.45, 2.6, 0.45);
+        part(GEO.box, kit.neon[0], side * (W / 2 + 0.25), 2.62, 0, 0.5, 0.06, 0.5).castShadow = false;
+      }
+      for (const y of [1.45, 1.8]) {
+        const beam = part(GEO.box, kit.laser, 0, y, 0, W + 0.1, 0.07, 0.07);
+        beam.castShadow = false;
+      }
+      part(GEO.box, kit.panel, 0, 2.35, -0.02, 2.6, 0.7, 0.08);
+      const captcha = part(GEO.beam, SIGN.captcha, 0, 2.35, 0.03, 2.4, 0.6, 1);
+      captcha.castShadow = false;
+    } else if (kind === 'block') {
+      for (const x of laneXs) {
+        if (Math.random() < 0.5) {
+          // A glitchy "404" block.
+          part(GEO.box, kit.panel, x, 1.0, 0, 1.3, 2.0, 1.2);
+          part(GEO.box, kit.neon[0], x, 2.02, 0, 1.36, 0.06, 1.26).castShadow = false;
+          part(GEO.box, kit.neon[2], x + 0.12, 0.05, 0, 1.4, 0.05, 1.3).castShadow = false;
+          part(GEO.beam, SIGN.e404, x, 1.35, 0.61, 1.2, 0.6, 1).castShadow = false;
+          for (let i = 0; i < 3; i++) part(GEO.box, kit.neon[i], x - 0.4 + i * 0.4, 0.55, 0.61, 0.22, 0.1, 0.02).castShadow = false;
+        } else {
+          // A pop-up ad that jumped into your way.
+          part(GEO.box, kit.bubble, x, 1.15, 0, 1.5, 1.5, 0.25);
+          part(GEO.beam, SIGN.ad, x, 1.15, 0.13, 1.44, 1.44, 1).castShadow = false;
+          part(GEO.box, kit.panel, x, 0.22, 0, 0.18, 0.44, 0.18);
+          part(GEO.box, kit.panel, x, 0.03, 0, 0.8, 0.06, 0.5);
+        }
+      }
+    }
+    return g;
+  }
+
   if (kind === 'low') {
     // Something across the path to jump.
     if (d === 'lava') {
@@ -1137,13 +1489,17 @@ export interface RunnerModel {
   joints?: { legL: THREE.Group; legR: THREE.Group; armL: THREE.Group; armR: THREE.Group };
   /** The squirrel's head, which bobs as it gallops. */
   head?: THREE.Group;
-  /** How it runs: 'run' (on two legs, like a person) or 'quad' (on all fours, galloping). */
-  gait?: 'run' | 'quad';
+  /** How it runs: 'run' (on two legs, like a person), 'quad' (on all fours) or 'float' (hovering, like Glitch). */
+  gait?: 'run' | 'quad' | 'float';
+  /** Glitch's eyes (they blink) and the pixels trailing behind it. */
+  eyes?: THREE.Object3D[];
+  pixels?: THREE.Object3D[];
 }
 
-export function makeCharacterModel(character: 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf', outfit = ''): RunnerModel {
+export function makeCharacterModel(character: 'glitch' | 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf', outfit = ''): RunnerModel {
   const model =
-    character === 'squirrel' ? makeSquirrelModel(outfit)
+    character === 'glitch' ? makeGlitchModel(outfit)
+    :     character === 'squirrel' ? makeSquirrelModel(outfit)
     : character === 'bear' ? makeBearModel(outfit)
     : character === 'hare' ? makeHareModel(outfit)
     : character === 'wolf' ? makeWolfModel(outfit)
@@ -1173,6 +1529,99 @@ function characterKit(): { root: THREE.Group; body: THREE.Group; part: PartFn; l
     return pivot;
   };
   return { root, body, part, limb };
+}
+
+/**
+ * Glitch, the little AI: a round white orb with a dark screen for a face,
+ * glowing pixel eyes and a smile, a magenta power ring on its back (that's
+ * what you see while running), tiny floating pixel hands, jets of light
+ * underneath and a trail of pixels. It faces -Z like every hero.
+ */
+const ORB = new THREE.SphereGeometry(0.5, 32, 24);
+
+export function makeGlitchModel(outfit = 'antenna'): RunnerModel {
+  const { root, body, part, limb } = characterKit();
+  const cache = new Map<string, THREE.Material>();
+  const mat = (c: string) => cache.get(c) ?? cache.set(c, toon(c)).get(c)!;
+  const shell = toon('#b8cdee');
+  const screen = toon('#0d1236');
+  const cyan = neon('#3ff6ff', 3);
+  const pink = neon('#ff4fd8', 2.8);
+  const Y = 1.0;
+
+  part(shell, body, ORB, 0, Y, 0, 1.2, 1.15, 1.2);
+  // The face screen, a smooth dark visor on the front.
+  part(screen, body, ORB, 0, Y + 0.04, -0.47, 0.86, 0.64, 0.34);
+  const eyeL = part(cyan, body, GEO.box, -0.19, Y + 0.1, -0.645, 0.14, 0.2, 0.03);
+  const eyeR = part(cyan, body, GEO.box, 0.19, Y + 0.1, -0.645, 0.14, 0.2, 0.03);
+  part(cyan, body, GEO.box, 0, Y - 0.13, -0.64, 0.2, 0.045, 0.03);
+  for (const side of [-1, 1]) part(cyan, body, GEO.box, side * 0.12, Y - 0.095, -0.635, 0.045, 0.075, 0.03);
+  // The back: a glowing power ring and button, so you can tell which way it faces.
+  const ring = part(pink, body, GEO.portal, 0, Y + 0.02, 0.56, 0.1, 0.1, 0.1);
+  ring.scale.z = 0.4;
+  part(pink, body, GEO.box, 0, Y + 0.12, 0.6, 0.06, 0.2, 0.04);
+  // A band round the middle, and side "ears".
+  part(mat('#9fb4ff'), body, GEO.cyl, 0, Y - 0.05, 0, 1.22, 0.06, 1.22);
+  for (const side of [-1, 1]) {
+    part(mat('#7a5cff'), body, GEO.cyl, side * 0.6, Y + 0.05, 0, 0.26, 0.12, 0.26).rotation.z = Math.PI / 2;
+    part(cyan, body, GEO.cyl, side * 0.67, Y + 0.05, 0, 0.14, 0.04, 0.14).rotation.z = Math.PI / 2;
+  }
+  glitchHat(outfit, body, part, mat, Y + 0.58);
+
+  // Floating pixel hands.
+  const armL = limb(-0.78, Y - 0.1);
+  const armR = limb(0.78, Y - 0.1);
+  for (const arm of [armL, armR]) part(shell, arm, GEO.box, 0, -0.12, 0, 0.18, 0.18, 0.18);
+  // Jets of light underneath.
+  const legL = limb(-0.2, Y - 0.62);
+  const legR = limb(0.2, Y - 0.62);
+  const jet = neon('#3ff6ff', 2.4, { transparent: true, opacity: 0.8, depthWrite: false });
+  for (const leg of [legL, legR]) part(jet, leg, GEO.cone, 0, -0.2, 0, 0.14, 0.4, 0.14).rotation.x = Math.PI;
+  // A trail of pixels behind it.
+  const pixels: THREE.Object3D[] = [];
+  for (let i = 0; i < 7; i++) {
+    const px = part(i % 2 ? pink : cyan, root, GEO.box, 0, Y, 0, 0.1, 0.1, 0.1);
+    px.userData.seed = Math.random() * 10;
+    px.userData.i = i;
+    pixels.push(px);
+  }
+
+  return { root, body, legL, legR, armL, armR, gait: 'float', eyes: [eyeL, eyeR], pixels };
+}
+
+/** Glitch's outfits, sitting on top of the orb (`y` is the top of its head). */
+function glitchHat(outfit: string, body: THREE.Group, part: ModelPart, mat: MatFn, y: number): void {
+  if (outfit === 'headset') {
+    const dark = mat('#2b2b3d');
+    const band = part(dark, body, GEO.portal, 0, y - 0.55, 0, 0.23, 0.23, 0.23);
+    band.rotation.y = Math.PI / 2;
+    for (const side of [-1, 1]) part(neon('#3ff6ff', 2.2), body, GEO.cyl, side * 0.64, y - 0.5, 0, 0.36, 0.14, 0.36).rotation.z = Math.PI / 2;
+    const mic = part(dark, body, GEO.cyl, -0.5, y - 0.75, -0.35, 0.05, 0.5, 0.05);
+    mic.rotation.x = 1.2;
+  } else if (outfit === 'pixel-shades') {
+    const black = mat('#14142a');
+    part(black, body, GEO.box, 0, y - 0.48, -0.62, 0.9, 0.08, 0.06);
+    for (const side of [-1, 1]) part(black, body, GEO.box, side * 0.22, y - 0.58, -0.63, 0.32, 0.2, 0.06);
+    part(antenna(mat), body, GEO.cyl, 0, y + 0.12, 0, 0.05, 0.3, 0.05);
+  } else if (outfit === 'propeller') {
+    part(mat('#ff4fd8'), body, GEO.dome, 0, y - 0.12, 0, 0.9, 0.5, 0.9);
+    part(mat('#2b2b3d'), body, GEO.cyl, 0, y + 0.18, 0, 0.06, 0.2, 0.06);
+    const blade = part(mat('#ffd23f'), body, GEO.box, 0, y + 0.28, 0, 1.0, 0.04, 0.16);
+    blade.userData.spinner = true;
+  } else if (outfit === 'halo') {
+    const halo = part(neon('#ffd23f', 3), body, GEO.portal, 0, y + 0.25, 0, 0.11, 0.11, 0.11);
+    halo.rotation.x = Math.PI / 2;
+  } else if (outfit === 'crown-glitch') {
+    crown(body, part, mat, y - 0.02, 0.32);
+  } else {
+    // The antenna with a glowing tip.
+    part(antenna(mat), body, GEO.cyl, 0, y + 0.12, 0, 0.05, 0.3, 0.05);
+    part(neon('#ff4fd8', 3), body, GEO.sphere, 0, y + 0.32, 0, 0.18, 0.18, 0.18);
+  }
+}
+
+function antenna(mat: MatFn): THREE.Material {
+  return mat('#2b2b3d');
 }
 
 /** A red-and-black check pattern for the lumberjack's shirt. */
@@ -1794,7 +2243,7 @@ export function animateSegment(group: THREE.Group, time: number): void {
     }
     else if (child.children.length) {
       for (const part of child.children) {
-        if (part.userData.flicker) part.scale.y = 0.34 * (0.8 + Math.sin(time * 30 + part.id) * 0.25);
+        if (part.userData.flicker) part.scale.y = (part.userData.baseY ??= part.scale.y) * (0.8 + Math.sin(time * 30 + part.id) * 0.25);
       }
     }
   }

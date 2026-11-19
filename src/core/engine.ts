@@ -9,6 +9,10 @@
 import * as THREE from 'three';
 import { TUNING } from '../game/tuning';
 import type { WorldTheme } from '../game/worlds';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 export class Engine {
   readonly renderer: THREE.WebGLRenderer;
@@ -35,6 +39,13 @@ export class Engine {
   private portraitFov = 0;
 
   private container: HTMLElement | null = null;
+  /** Neon glow: the scene is drawn, then everything brighter than white bleeds light. */
+  private readonly composer: EffectComposer;
+  private readonly bloomPass: UnrealBloomPass;
+  /** Set from the "Neon glow" effect setting. */
+  bloom = true;
+  /** A glowing grid far below the path (Glitch.exe worlds). */
+  private gridTexture: THREE.Texture | null = null;
   /** Adaptive quality: see `adapt()`. */
   readonly quality = new Quality();
 
@@ -75,6 +86,12 @@ export class Engine {
     this.abyss.position.y = -22;
     this.scene.add(this.abyss);
 
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1.0, 0.55, 0.9);
+    this.composer.addPass(this.bloomPass);
+    this.composer.addPass(new OutputPass());
+
     this.resize();
     window.addEventListener('resize', this.resize);
     // The container's size can change without a window resize (iOS home-screen
@@ -100,8 +117,15 @@ export class Engine {
     this.hemi.color.set(theme.hemiSky);
     this.hemi.groundColor.set(theme.hemiGround);
     this.abyssMaterial.color.set(theme.abyss);
+    if (theme.grid) {
+      // A neon grid stretching to the horizon, like an old synthwave poster.
+      this.abyssMaterial.map = (this.gridTexture ??= makeGridTexture());
+      this.abyssMaterial.color.multiplyScalar(1.8);
+    } else {
+      this.abyssMaterial.map = null;
+    }
     // A glowing abyss shouldn't fade into the fog — lava stays bright.
-    this.abyssMaterial.fog = !theme.abyssGlow;
+    this.abyssMaterial.fog = !theme.abyssGlow || !!theme.grid;
     this.abyssMaterial.needsUpdate = true;
     this.abyss.position.y = theme.ground ? -0.06 : theme.abyssY ?? (theme.abyssGlow ? -9 : -22);
   }
@@ -198,6 +222,8 @@ export class Engine {
     this.sun.position.set(target.x, 0, target.z).add(this.sunOffset);
     this.abyss.position.x = target.x;
     this.abyss.position.z = target.z;
+    // The plane follows you, but its grid stays put in the world, so it streams past.
+    if (this.gridTexture) this.gridTexture.offset.set((target.x * 70) / 500, (-target.z * 70) / 500);
   }
 
   /**
@@ -222,7 +248,9 @@ export class Engine {
   }
 
   render(): void {
-    this.renderer.render(this.scene, this.camera);
+    // Bloom costs a few extra passes: it goes when the phone is struggling.
+    if (this.bloom && !this.quality.lowest) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
   }
 
   private resize = (): void => {
@@ -236,6 +264,12 @@ export class Engine {
     this.camera.fov = TUNING.camera.baseFov + this.portraitFov;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    if (this.composer) {
+      this.composer.setPixelRatio(this.quality.pixelRatio);
+      this.composer.setSize(width, height);
+      // The glow is soft anyway: half resolution is plenty and much cheaper.
+      this.bloomPass.resolution.set(width / 2, height / 2);
+    }
   };
 }
 
@@ -306,7 +340,34 @@ function paintSky(canvas: HTMLCanvasElement, theme: WorldTheme): void {
     g.beginPath();
     g.arc(x, y, 34, 0, Math.PI * 2);
     g.fill();
+    if (theme.grid) {
+      // Synthwave sun: cut into stripes towards the bottom.
+      g.fillStyle = theme.sky;
+      for (let i = 0; i < 5; i++) g.fillRect(x - 40, y + 4 + i * 6.5, 80, 1 + i * 0.8);
+    }
   }
+}
+
+/** One tile of the grid under the path: white lines on black, tinted by the abyss colour. */
+function makeGridTexture(): THREE.Texture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const g = canvas.getContext('2d')!;
+  g.fillStyle = '#000000';
+  g.fillRect(0, 0, size, size);
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, size, 3);
+  g.fillRect(0, 0, 3, size);
+  g.globalAlpha = 0.25;
+  g.fillRect(0, size / 2, size, 1);
+  g.fillRect(size / 2, 0, 1, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(70, 70);
+  texture.anisotropy = 8;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 /**
@@ -447,6 +508,11 @@ class Quality {
 
   get shadows(): boolean {
     return this.ladder[this.level].shadows;
+  }
+
+  /** True on the last, cheapest step of the ladder. */
+  get lowest(): boolean {
+    return this.level === this.ladder.length - 1;
   }
 
   /** Current step, for debugging: 0 is the best. */

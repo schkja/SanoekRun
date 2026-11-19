@@ -17,9 +17,9 @@ import data from '../../content/worlds.json';
 import type { Character } from './settings';
 
 export type ObstacleKind = 'low' | 'high' | 'gap' | 'block';
-export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball' | 'bees' | 'wolf' | 'lumberjack';
-export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail' | 'brook';
-export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail';
+export type ChaserKind = 'monster' | 'lava' | 'bear' | 'hawk' | 'owl' | 'snowball' | 'bees' | 'wolf' | 'lumberjack' | 'bugs';
+export type DecorKind = 'jungle' | 'lava' | 'boardwalk' | 'branch' | 'snow' | 'trail' | 'brook' | 'data';
+export type PathStyle = 'stone' | 'planks' | 'bark' | 'snow' | 'trail' | 'grid';
 
 export interface WorldTheme {
   /** Sky colour at the top of the screen and at the horizon. */
@@ -50,6 +50,8 @@ export interface WorldTheme {
   sunDisc?: string;
   /** Something falling from the sky around you. */
   weather?: 'rain' | 'snow' | 'petals' | 'leaves';
+  /** A glowing grid far below instead of a plain colour (Glitch.exe). */
+  grid?: boolean;
 }
 
 export interface WorldDef {
@@ -73,11 +75,11 @@ export const WORLDS = data.worlds as WorldDef[];
 const BY_ID = new Map(WORLDS.map((w) => [w.id, w]));
 
 /** The three worlds you can pick, each a route through several areas. */
-export type RouteId = 'forest' | 'boardwalk' | 'honey';
-export const ROUTES: RouteId[] = ['forest', 'boardwalk', 'honey'];
+export type RouteId = 'cloud' | 'forest' | 'boardwalk' | 'honey';
+export const ROUTES: RouteId[] = ['cloud'];
 
 export function route(id: RouteId): WorldDef[] {
-  const ids = (data.routes as Record<string, string[]>)[id] ?? data.routes.forest;
+  const ids = (data.routes as Record<string, string[]>)[id] ?? data.routes.cloud;
   return ids.map((wid) => {
     const world = BY_ID.get(wid);
     if (!world) throw new Error(`[worlds] Route "${id}" names unknown world "${wid}".`);
@@ -92,6 +94,7 @@ export function route(id: RouteId): WorldDef[] {
  * flood and the snowball keep chasing whoever runs there.
  */
 export function chaserFor(world: WorldDef, character: Character): ChaserKind {
+  if (character === 'glitch') return world.chaser;
   if (world.chaser === 'monster' || world.chaser === 'lava' || world.chaser === 'snowball') return world.chaser;
   if (character === 'lumberjack') return 'bear';
   if (character === 'bear') return 'bees';

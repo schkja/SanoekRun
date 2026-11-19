@@ -33,6 +33,7 @@ import {
   DEFAULT_SETTINGS,
   EFFECT_KEYS,
   GAME_NAME,
+  RECORDS,
   LANGUAGE_CHOICES,
   MUSIC_STYLES,
   settings,
@@ -52,7 +53,7 @@ interface Best {
   runs: number;
 }
 
-const STORAGE_KEY = 'sanoekrun.best';
+const STORAGE_KEY = 'glitchexe.best';
 /** Hints for jumping, sliding and turning are shown during this many first runs. */
 const TUTORIAL_RUNS = 2;
 
@@ -75,11 +76,13 @@ const isInstalled = () =>
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 /** Set for the rest of the visit once a player chooses to play in the browser. */
-const GATE_KEY = 'sanoekrun.browserOk';
+const GATE_KEY = 'glitchexe.browserOk';
 
 /** Phones that haven't installed the game get the install screen first. */
 function shouldOfferInstall(): boolean {
   const platform = detectPlatform();
+  // The one-file build (an embedded preview) can't be installed: no manifest or service worker.
+  if (import.meta.env.MODE === 'single') return false;
   if ((platform !== 'ios' && platform !== 'android') || isInstalled()) return false;
   try {
     return sessionStorage.getItem(GATE_KEY) !== '1';
@@ -159,6 +162,7 @@ export class Game {
     this.audio.setMuted(!settings.sound);
     setLanguage(settings.language);
     setOutlines(settings.effects.outlines);
+    this.engine.bloom = settings.effects.bloom;
 
     this.shieldBubble = new THREE.Mesh(
       new THREE.SphereGeometry(1.25, 20, 14),
@@ -277,6 +281,7 @@ export class Game {
         caption: t(`story.${settings.character}`),
         onPrev: () => switchHero(-1),
         onNext: () => switchHero(1),
+        single: CHARACTERS.length < 2,
       },
       sections: [
         {
@@ -288,11 +293,11 @@ export class Game {
       ],
       buttons: [{ label: t('button.run'), primary: true, onClick: () => this.newRun() }],
       toolbar: [
-        { label: t('tool.records'), onClick: () => void this.showRecords('all', toTitle) },
+        ...(RECORDS ? [{ label: t('tool.records'), onClick: () => void this.showRecords('all', toTitle) }] : []),
         { label: t('tool.missions'), onClick: () => this.showMissions(toTitle) },
         { label: t('tool.shop'), onClick: () => this.showShop(toTitle) },
         { label: t('tool.settings'), onClick: () => this.showSettings(toTitle) },
-        ...(isInstalled() ? [] : [{ label: t('tool.install'), onClick: () => this.install(toTitle) }]),
+        ...(isInstalled() || import.meta.env.MODE === 'single' ? [] : [{ label: t('tool.install'), onClick: () => this.install(toTitle) }]),
         { label: t('tool.info'), onClick: () => this.showInfo(toTitle) },
       ],
       note: isTouch() ? undefined : t('title.keys'),
@@ -446,7 +451,7 @@ export class Game {
     frame(
       undefined,
       board.entries.map((e) => ({
-        label: `${medal(e.rank)} ${e.character === 'squirrel' ? '🐿️' : e.character === 'bear' ? '🐻' : e.character === 'hare' ? '🐰' : e.character === 'wolf' ? '🐺' : '🪓'} ${e.name}`,
+        label: `${medal(e.rank)} ${e.character === 'glitch' ? '👾' : e.character === 'squirrel' ? '🐿️' : e.character === 'bear' ? '🐻' : e.character === 'hare' ? '🐰' : e.character === 'wolf' ? '🐺' : '🪓'} ${e.name}`,
         value: `${formatNumber(e.distance)} ${t('hud.unit')}`,
         selected: e.mine,
       })),
@@ -549,7 +554,7 @@ export class Game {
 
   /** Swap in the chosen character (and what it collects) before a track is built. */
   private applyCharacter(): void {
-    const pickup = settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrot' : settings.character === 'wolf' ? 'pie' : 'coin';
+    const pickup = settings.character === 'glitch' ? 'token' : settings.character === 'squirrel' ? 'acorn' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrot' : settings.character === 'wolf' ? 'pie' : 'coin';
     setCollectible(pickup);
     this.hud.setCollectible(pickup);
     this.audio.collect = pickup;
@@ -564,7 +569,7 @@ export class Game {
 
   /** "Coins" or "Nuts" in the current language, for stat rows. */
   private get collectibleLabel(): string {
-    return settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : settings.character === 'hare' ? t('stat.carrots') : settings.character === 'wolf' ? t('stat.pies') : t('stat.coins');
+    return settings.character === 'glitch' ? t('stat.tokens') : settings.character === 'squirrel' ? t('stat.nuts') : settings.character === 'bear' ? t('stat.honey') : settings.character === 'hare' ? t('stat.carrots') : settings.character === 'wolf' ? t('stat.pies') : t('stat.coins');
   }
 
   /** Build a fresh track with the runner standing at the start. */
@@ -709,6 +714,7 @@ export class Game {
             onClick: () => {
               updateSettings((s) => (s.effects[key] = !s.effects[key]));
               setOutlines(settings.effects.outlines);
+    this.engine.bloom = settings.effects.bloom;
               redraw();
             },
           })),
@@ -723,6 +729,7 @@ export class Game {
                 this.music.play(settings.music);
                 setLanguage(settings.language);
                 setOutlines(settings.effects.outlines);
+    this.engine.bloom = settings.effects.bloom;
                 this.hud.relabel();
                 if (!inRun) this.prepareTrack();
                 redraw();
@@ -802,7 +809,7 @@ export class Game {
     const run: RunSummary = {
       distance,
       coins: this.coins,
-      collectible: settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrots' : settings.character === 'wolf' ? 'pies' : 'coins',
+      collectible: settings.character === 'glitch' ? 'tokens' : settings.character === 'squirrel' ? 'nuts' : settings.character === 'bear' ? 'honey' : settings.character === 'hare' ? 'carrots' : settings.character === 'wolf' ? 'pies' : 'coins',
       character: settings.character,
       world: worldName(this.furthestWorld),
       newBest: newBest && previousBest > 0,
@@ -821,7 +828,7 @@ export class Game {
     // A good run goes straight to the name prompt. Every other run (20 m+)
     // can still be added with a button on the end screen.
     this.recordSaved = false;
-    if (distance >= 50 && distance >= this.board.cutoff) this.askName(badge);
+    if (RECORDS && distance >= 50 && distance >= this.board.cutoff) this.askName(badge);
     else this.showRunOverMenu(badge);
   }
 
@@ -876,7 +883,7 @@ export class Game {
       variant: 'is-over',
       buttons: [
         { label: t('button.playAgain'), primary: true, onClick: () => this.newRun() },
-        ...(!this.recordSaved && distance >= 20 ? [{ label: t('button.saveRecord'), onClick: () => this.askName(badge) }] : []),
+        ...(RECORDS && !this.recordSaved && distance >= 20 ? [{ label: t('button.saveRecord'), onClick: () => this.askName(badge) }] : []),
         { label: t('button.share'), onClick: () => void this.share(badge) },
         { label: t('button.mainMenu'), onClick: () => { this.prepareTrack(); this.showTitle(); } },
       ],
@@ -1031,7 +1038,7 @@ export class Game {
 
     if (r.falling && r.y < -1) {
       const decor = this.world.decor;
-      this.die(t(decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : decor === 'brook' ? 'death.splash' : 'death.trees'), false);
+      this.die(t(decor === 'data' ? 'death.void' : decor === 'lava' ? 'death.lava' : decor === 'jungle' ? 'death.abyss' : decor === 'brook' ? 'death.splash' : 'death.trees'), false);
     }
   }
 
@@ -1231,7 +1238,7 @@ export class Game {
       if (settings.effects.coinSparkle) {
         const at = this.track.position(r.seg, c.s, c.x, this.scratch);
         at.y = c.y;
-        this.sparkles.burst(at, settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : settings.character === 'hare' ? '#ff8a1e' : settings.character === 'wolf' ? '#f2b45a' : '#ffd23f');
+        this.sparkles.burst(at, settings.character === 'glitch' ? '#5ff7ff' : settings.character === 'squirrel' ? '#d9a05b' : settings.character === 'bear' ? '#ffb21f' : settings.character === 'hare' ? '#ff8a1e' : settings.character === 'wolf' ? '#f2b45a' : '#ffd23f');
       }
       const worth = this.powers.double > 0 ? 2 : 1;
       this.coins += worth;

@@ -65,6 +65,12 @@ export interface Outfit {
 }
 
 export const OUTFITS: Outfit[] = [
+  { id: 'antenna', character: 'glitch', price: 0, icon: '📡' },
+  { id: 'headset', character: 'glitch', price: 600, icon: '🎧' },
+  { id: 'pixel-shades', character: 'glitch', price: 1500, icon: '😎' },
+  { id: 'propeller', character: 'glitch', price: 4000, icon: '🚁' },
+  { id: 'halo', character: 'glitch', price: 8000, icon: '😇' },
+  { id: 'crown-glitch', character: 'glitch', price: 20000, icon: '👑' },
   // Prices climb steeply: the first items come quickly, the crown takes a while.
   { id: 'beanie-orange', character: 'lumberjack', price: 0, icon: '🧡' },
   { id: 'beanie-blue', character: 'lumberjack', price: 600, icon: '💙' },
@@ -114,7 +120,7 @@ export interface Profile {
   startWorld: Record<string, string>;
 }
 
-const KEY = 'sanoekrun.profile';
+const KEY = 'glitchexe.profile';
 
 function newMissions(level: number, previous: Stat[] = []): Mission[] {
   const tier = Math.min(4, level - 1);
@@ -146,11 +152,11 @@ function load(): Profile {
     level: 1,
     missions: newMissions(1),
     owned: OUTFITS.filter((o) => o.price === 0).map((o) => o.id),
-    equipped: { lumberjack: 'beanie-orange', squirrel: 'scarf-teal', bear: 'bandana-blue', hare: 'bow-red', wolf: 'scarf-yellow' },
+    equipped: { glitch: 'antenna', lumberjack: 'beanie-orange', squirrel: 'scarf-teal', bear: 'bandana-blue', hare: 'bow-red', wolf: 'scarf-yellow' },
     totals: {},
     name: '',
     device: randomId(),
-    reached: { forest: [], boardwalk: [], honey: [] },
+    reached: { cloud: [], forest: [], boardwalk: [], honey: [] },
     startWorld: {},
   };
   try {

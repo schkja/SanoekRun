@@ -1,6 +1,6 @@
 /**
- * The SanökRun logo: a fat yellow "S" and an acorn on a sky-blue tile, and
- * the word mark, where the two dots over the ö are tiny acorns.
+ * The Glitch.exe logo: the little AI orb with its pixel face on a neon grid.
+ * (ACORN_SVG is left over from the template's SanökRun word mark.)
  *
  * The same drawing is used for the app icon (scripts/make-icons.mjs renders
  * it to PNG), the title screen and the share picture.
@@ -18,17 +18,19 @@ export const ACORN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
  * everywhere without the font.
  */
 export const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#4fb8ff"/>
-  <circle cx="110" cy="450" r="120" fill="#4fd07a" stroke="${INK}" stroke-width="16"/>
-  <circle cx="400" cy="470" r="110" fill="#3fae4f" stroke="${INK}" stroke-width="16"/>
-  <path d="M332 150 C314 112 276 92 230 92 C162 92 118 130 118 184 C118 296 300 262 300 334 C300 364 272 384 236 384 C196 384 168 362 156 326 L96 352 C116 418 170 452 238 452 C322 452 376 406 376 336 C376 222 194 252 194 182 C194 156 214 140 240 140 C266 140 284 152 294 174 Z"
-    fill="#ffc93c" stroke="${INK}" stroke-width="20" stroke-linejoin="round" paint-order="stroke"/>
-  <g transform="translate(388 150) rotate(16)">
-    <ellipse cx="0" cy="22" rx="50" ry="60" fill="#d48a42" stroke="${INK}" stroke-width="16"/>
-    <path d="M-64 -6 Q0 -76 64 -6 Z" fill="#6b4325" stroke="${INK}" stroke-width="16" stroke-linejoin="round"/>
-    <path d="M0 -48 V-74" stroke="${INK}" stroke-width="16" stroke-linecap="round"/>
-    <ellipse cx="-18" cy="10" rx="10" ry="18" fill="#ffffff" opacity="0.45"/>
-  </g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05061a"/><stop offset="1" stop-color="#3b0a52"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M0 400 H512 M0 440 H512 M0 486 H512 M256 360 V512 M150 360 L60 512 M362 360 L452 512 M60 360 L-120 512 M452 360 L632 512" stroke="#ff4fd8" stroke-width="6" opacity="0.6"/>
+  <path d="M256 70 V112" stroke="${INK}" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="256" cy="62" r="24" fill="#ff4fd8" stroke="${INK}" stroke-width="14"/>
+  <circle cx="256" cy="258" r="150" fill="#e8f6ff" stroke="${INK}" stroke-width="18"/>
+  <rect x="146" y="180" width="220" height="160" rx="56" fill="#101436" stroke="${INK}" stroke-width="12"/>
+  <rect x="186" y="218" width="34" height="46" fill="#5ff7ff"/>
+  <rect x="292" y="218" width="34" height="46" fill="#5ff7ff"/>
+  <path d="M206 290 H226 V304 H286 V290 H306" fill="none" stroke="#5ff7ff" stroke-width="14"/>
+  <rect x="58" y="160" width="30" height="30" fill="#5ff7ff"/><rect x="420" y="300" width="26" height="26" fill="#ff4fd8"/><rect x="84" y="330" width="20" height="20" fill="#ff4fd8"/><rect x="430" y="140" width="18" height="18" fill="#5ff7ff"/>
 </svg>`;
 
 export const ICON_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ICON_SVG)}`;

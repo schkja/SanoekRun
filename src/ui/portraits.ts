@@ -6,6 +6,17 @@
 const INK = '#1f2a44';
 
 export const PORTRAITS = {
+  glitch: `
+<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="48" cy="52" r="40" fill="#1a1450"/>
+  <path d="M48 10 V22" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="48" cy="9" r="5" fill="#ff4fd8" stroke="${INK}" stroke-width="3"/>
+  <circle cx="48" cy="54" r="30" fill="#e8f6ff" stroke="${INK}" stroke-width="3.5"/>
+  <rect x="26" y="38" width="44" height="32" rx="12" fill="#101436" stroke="${INK}" stroke-width="3"/>
+  <rect x="34" y="46" width="7" height="9" fill="#5ff7ff"/><rect x="55" y="46" width="7" height="9" fill="#5ff7ff"/>
+  <path d="M38 61 H42 V64 H54 V61 H58" fill="none" stroke="#5ff7ff" stroke-width="3"/>
+  <rect x="12" y="30" width="6" height="6" fill="#ff4fd8"/><rect x="78" y="62" width="5" height="5" fill="#5ff7ff"/><rect x="16" y="70" width="4" height="4" fill="#5ff7ff"/>
+</svg>`,
   lumberjack: `
 <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
   <circle cx="48" cy="52" r="40" fill="#bfe9ff"/>

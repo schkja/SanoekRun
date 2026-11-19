@@ -1,19 +1,41 @@
-# SanökRun
+# Glitch.exe
 
-An endless runner in the spirit of Temple Run, set high in the forest. Pick
-who you play:
+A tiny AI just woke up inside the cloud, and the bugs want it back. Run it
+through three neon worlds, grab every token and reach the open web:
 
-- **Lumberjack** — runs wooden boardwalks above the treetops, through autumn
-  woods, the temple ruins and the lava cave, chased by a grumpy bear (and worse).
-- **Squirrel** — runs along the branches of giant trees and through snowy pines,
-  chased by a hawk and a runaway snowball, collecting acorns.
+- **Server farm**: racks of blinking servers and data streaming out of the void.
+- **Social feed**: floating chat bubbles, glowing hearts and feed pillars.
+- **The open web**: floating islands, spires and a synthwave sun.
 
-Swipe to turn at corners, jump gaps and logs, slide under branches, and stay
-ahead of whatever is chasing you.
+Jump firewalls, slide under laser gates (with a CAPTCHA on top), dodge 404
+blocks and pop-up ads, and stay ahead of the bug swarm.
 
-Built with **Three.js**, **Vite** and **TypeScript**. Runs in any phone or
-desktop browser. Everything you see is built from simple shapes for now, so it
-ships with zero asset files.
+Built with **Three.js**, **Vite** and **TypeScript**, on top of the SanökRun
+endless-runner template. Runs in any phone or desktop browser. Everything you
+see is built from simple shapes in code, with a bloom pass for the neon glow,
+so it ships with zero asset files.
+
+### What's new compared to the template
+
+| Where | What |
+| --- | --- |
+| `content/worlds.json` | Route `cloud`: `server-farm`, `social-feed`, `open-web` (decor `data`, path style `grid`, chaser `bugs`, `theme.grid`) |
+| `src/game/visuals.ts` | `makeGlitchModel()` + `glitchHat()` outfits, `makeToken()`, `dataWorld()` scenery, data obstacles, `neon()` glowing materials, canvas signs (404, pop-up ad, CAPTCHA) |
+| `src/game/runner.ts` | `animateFloat()`: hover, forward flip on jumps, squash on slides, blinking eyes, pixel trail |
+| `src/game/chaser.ts` | `buildBugs()`: a swarm of bugs with glowing red eyes and a big boss bug |
+| `src/core/engine.ts` | Bloom (`UnrealBloomPass`, off on the lowest quality step), neon grid floor far below, striped synthwave sun |
+| `src/ui/` | Dark neon UI, glitching title, new icon, portrait and outfit icons |
+| Settings | `effects.bloom` ("Neon glow"); `VITE_RECORDS=off` hides the online records (default off in `build:single`) |
+
+The template's other heroes and forest worlds are still in the code, so you can
+bring them back by adding them to `CHARACTERS` and `ROUTES`.
+
+### Swapping in real 3D models
+
+Every model is built in one function, so art can be swapped one piece at a
+time. Generate a model from concept art with an image-to-3D tool (Meshy,
+Tripo, Rodin), export it as `.glb`, put it in `public/models/` and load it in
+place of the matching builder (`makeGlitchModel`, `buildBugs`, `makeToken`...).
 
 ---
 

@@ -13,6 +13,7 @@ import { ACORN_URL } from './logo';
  */
 function titleHtml(title: string): string {
   const safe = escapeHtml(title);
+  if (title === 'Glitch.exe') return `<span class="glitch-title" data-text="Glitch.exe">Glitch<span class="glitch-ext">.exe</span></span>`;
   if (!/^Sanök/.test(title)) return safe;
   const acorn = `<img src="${ACORN_URL}" alt="" draggable="false">`;
   return safe.replace('ö', `<span class="acorn-o" aria-label="ö">o<span class="acorn-dots" aria-hidden="true">${acorn}${acorn}</span></span>`);
@@ -69,7 +70,7 @@ export interface MenuScreen {
   /** Rows of "label: value" shown as a results table. */
   stats?: Array<[string, string]>;
   /** Flip through options with ‹ › arrows, e.g. the hero standing in the scene. */
-  picker?: { label: string; caption?: string; onPrev: () => void; onNext: () => void };
+  picker?: { label: string; caption?: string; onPrev: () => void; onNext: () => void; single?: boolean };
   /** A short label above the choices, e.g. "Choose your hero". */
   choicesTitle?: string;
   choices?: MenuChoice[];
@@ -117,7 +118,7 @@ export class Menus {
         ${screen.chips?.length ? `<div class="menu-chips">${screen.chips.map((c) => `<span class="menu-chip">${escapeHtml(c)}</span>`).join('')}</div>` : ''}
         ${renderStats(screen.stats)}
         ${screen.input ? `<input class="menu-input" id="menu-input" type="text" autocomplete="nickname" enterkeyhint="done" maxlength="${screen.input.maxLength}" placeholder="${escapeHtml(screen.input.placeholder)}" value="${escapeHtml(screen.input.value)}" />${screen.input.error ? `<p class="menu-error">${escapeHtml(screen.input.error)}</p>` : ''}` : ''}
-        ${screen.picker ? `<div class="menu-picker"><button class="menu-picker-arrow" data-prev aria-label="‹"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="menu-picker-text"><span class="menu-picker-label">${escapeHtml(screen.picker.label)}</span>${screen.picker.caption ? `<span class="menu-picker-caption">${escapeHtml(screen.picker.caption)}</span>` : ''}</div><button class="menu-picker-arrow" data-next aria-label="›"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>` : ''}
+        ${screen.picker ? `<div class="menu-picker${screen.picker.single ? ' is-single' : ''}"><button class="menu-picker-arrow" data-prev aria-label="‹"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="menu-picker-text"><span class="menu-picker-label">${escapeHtml(screen.picker.label)}</span>${screen.picker.caption ? `<span class="menu-picker-caption">${escapeHtml(screen.picker.caption)}</span>` : ''}</div><button class="menu-picker-arrow" data-next aria-label="›"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>` : ''}
         ${screen.choices?.length ? `${screen.choicesTitle ? `<p class="menu-label">${escapeHtml(screen.choicesTitle)}</p>` : ''}<div class="menu-choices"></div>` : ''}
         ${screen.sections?.length ? '<div class="menu-sections"></div>' : ''}
         <div class="menu-buttons"></div>

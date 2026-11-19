@@ -183,7 +183,9 @@ export class Runner {
     m.root.rotation.set(0, this.yaw, 0);
     m.body.position.y = Math.sin(p * 1.2) * 0.03;
     m.body.rotation.set(0, 0, 0);
-    if (m.gait === 'quad') {
+    if (m.gait === 'float') {
+      this.animateFloat(m, dt, true);
+    } else if (m.gait === 'quad') {
       for (const leg of [m.legL, m.legR, m.armL, m.armR]) leg.rotation.x = 0;
       if (m.joints) for (const j of Object.values(m.joints)) j.rotation.x = 0;
       // Sit up a little now and then to look at you.
@@ -225,6 +227,11 @@ export class Runner {
     this.phase += dt * (6 + this.speed * 0.55);
     const swing = Math.sin(this.phase);
 
+    if (m.gait === 'float') {
+      this.animateFloat(m, dt, false, lean);
+      return;
+    }
+
     let bodyTilt = 0;
     let bodyY = 0;
     if (m.gait === 'quad') {
@@ -257,6 +264,74 @@ export class Runner {
       const pose = this.sliding ? (m.gait === 'quad' ? -0.15 : 0.9) : this.grounded ? 0 : -0.3;
       m.tail.rotation.x += (wave + pose - m.tail.rotation.x) * Math.min(1, dt * 14);
       m.tail.rotation.z = Math.sin(this.phase * 0.5 + 1) * 0.1;
+    }
+  }
+
+  /** Forward flip while in the air (Glitch). */
+  private flip = 0;
+  private blink = 3;
+
+  /**
+   * Hovering animation (Glitch, the AI orb). It bobs and leans forward as it
+   * zooms along, does a forward flip when it jumps, squashes flat to slide
+   * and wobbles when it stumbles. Its eyes blink now and then, the jets
+   * underneath flicker, the little hands swing and a trail of pixels streams
+   * out behind it.
+   */
+  private animateFloat(m: RunnerModel, dt: number, title: boolean, lean = 0): void {
+    const p = this.phase;
+    const ease = (from: number, to: number, rate: number) => from + (to - from) * Math.min(1, dt * rate);
+    let y = 0.12 + Math.sin(p * 0.5) * 0.06;
+    let tilt = title ? 0 : this.stumbling ? Math.sin(p * 3) * 0.3 : -0.3;
+    let squash = 1;
+    if (!title && this.sliding) {
+      squash = 0.55;
+      y = -0.02;
+      tilt = -0.1;
+    }
+    if (!title && !this.grounded && !this.falling) {
+      this.flip = Math.min(Math.PI * 2, this.flip + dt * 11);
+    } else {
+      this.flip = 0;
+    }
+    if (!title && this.falling) tilt = -0.8;
+    m.body.position.y = ease(m.body.position.y, y, 14);
+    const sx = 1 + (1 - squash) * 0.5;
+    m.body.scale.set(ease(m.body.scale.x, sx, 18), ease(m.body.scale.y, squash, 18), ease(m.body.scale.z, sx, 18));
+    m.body.rotation.x = this.flip > 0 ? -this.flip : ease(m.body.rotation.x, tilt, 12);
+    m.body.rotation.z = title ? Math.sin(p * 0.6) * 0.06 : lean * 1.4;
+    if (title) m.body.rotation.y = Math.sin(p * 0.35) * 0.25;
+    else m.body.rotation.y = 0;
+
+    // Hands swing; on the title screen one of them waves.
+    m.armL.position.y = m.armR.position.y = 0.9 + Math.sin(p * 0.5 + 1) * 0.05;
+    m.armL.rotation.x = Math.sin(p * 0.5) * 0.5;
+    m.armR.rotation.x = title ? 0 : -Math.sin(p * 0.5) * 0.5;
+    if (title) {
+      m.armR.position.y = 1.25 + Math.sin(p * 2.5) * 0.12;
+      m.armR.position.x = 0.85;
+    } else {
+      m.armR.position.x = 0.78;
+    }
+    // Flickering jets.
+    const jet = 0.8 + Math.sin(p * 7) * 0.2 + Math.random() * 0.15;
+    m.legL.scale.set(1, jet * (this.sliding ? 0.4 : 1), 1);
+    m.legR.scale.set(1, jet * (this.sliding ? 0.4 : 1), 1);
+    // Blink.
+    this.blink -= dt;
+    const closed = this.blink < 0.12;
+    if (this.blink < 0) this.blink = 2 + Math.random() * 3;
+    for (const eye of m.eyes ?? []) eye.scale.y = closed ? 0.03 : 0.21;
+    // The propeller cap spins.
+    for (const child of m.body.children) if (child.userData.spinner) child.rotation.y += dt * 25;
+    // A trail of pixels streaming out behind (local +Z is behind).
+    for (const px of m.pixels ?? []) {
+      const i = px.userData.i as number;
+      const k = (p * 0.35 + i / 7 + (px.userData.seed as number)) % 1;
+      const back = title ? 0.6 + k * 0.6 : 0.7 + k * 2.4;
+      px.position.set(Math.sin(px.userData.seed + p * 0.7) * 0.45 * (1 - k), m.body.position.y + 1.0 + Math.cos(px.userData.seed * 3 + p * 0.5) * 0.35, back);
+      px.scale.setScalar(0.12 * (1 - k) + 0.02);
+      px.visible = !title || i < 4;
     }
   }
 

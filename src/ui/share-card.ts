@@ -20,7 +20,7 @@ export interface RunSummary {
   distance: number;
   coins: number;
   /** What the character collects. */
-  collectible: 'coins' | 'nuts' | 'honey' | 'carrots' | 'pies';
+  collectible: 'coins' | 'nuts' | 'honey' | 'carrots' | 'pies' | 'tokens';
   character: Character;
   world: string;
   newBest: boolean;
@@ -45,8 +45,8 @@ export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement
 
   // Background: the last frame of the run, cropped to fill, or a sky.
   const sky = g.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#4fb8ff');
-  sky.addColorStop(1, '#bfe9ff');
+  sky.addColorStop(0, '#05061a');
+  sky.addColorStop(1, '#3b0a52');
   g.fillStyle = sky;
   g.fillRect(0, 0, W, H);
   if (snapshot && snapshot.width) {
@@ -69,7 +69,7 @@ export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement
   // Top: icon and name.
   if (icon) g.drawImage(icon, 70, 235, 130, 130);
   g.textAlign = 'left';
-  outlined(g, GAME_NAME, 225, 330, 86, '#ffc93c', 14);
+  outlined(g, GAME_NAME, 225, 330, 86, '#5ff7ff', 14);
 
   // The burst behind the number.
   burst(g, W / 2, 760, 460, 300, 18);
@@ -80,7 +80,7 @@ export async function drawShareCard(run: RunSummary, snapshot: HTMLCanvasElement
   outlined(g, number, W / 2, 830, fitSize(g, number, 210, W - 220), '#ffffff', 24);
 
   // What happened.
-  const items = t(run.collectible === 'nuts' ? 'share.nuts' : run.collectible === 'honey' ? 'share.honey' : run.collectible === 'carrots' ? 'share.carrots' : run.collectible === 'pies' ? 'share.pies' : 'share.coins');
+  const items = t(run.collectible === 'tokens' ? 'share.tokens' : run.collectible === 'nuts' ? 'share.nuts' : run.collectible === 'honey' ? 'share.honey' : run.collectible === 'carrots' ? 'share.carrots' : run.collectible === 'pies' ? 'share.pies' : 'share.coins');
   const line = t('share.reached', { world: run.world, n: run.coins, items });
   outlined(g, line, W / 2, 1035, fitSize(g, line, 58, W - 160), '#ffc93c', 12);
 
@@ -231,7 +231,7 @@ export async function shareRun(card: HTMLCanvasElement, run: RunSummary): Promis
   }
   const blob = await new Promise<Blob | null>((resolve) => card.toBlob(resolve, 'image/png'));
   if (!blob) return 'failed';
-  const file = new File([blob], 'sanoekrun.png', { type: 'image/png' });
+  const file = new File([blob], 'glitchexe.png', { type: 'image/png' });
   const text = t('share.text', { m: run.distance, game: GAME_NAME, url: SHARE_URL });
 
   try {
@@ -247,7 +247,7 @@ export async function shareRun(card: HTMLCanvasElement, run: RunSummary): Promis
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'sanoekrun.png';
+    link.download = 'glitchexe.png';
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -45,6 +45,7 @@ export class Chaser {
       owl: buildHawk(OWL),
       snowball: buildSnowball(),
       bees: buildBees(),
+      bugs: buildBugs(),
       wolf: buildWolf(),
       lumberjack: buildLumberjack(),
       lava: buildLavaWave(),
@@ -100,6 +101,8 @@ export class Chaser {
     // The lumberjack is as tall as the camera, so he runs a little further back.
     if (this.kind === 'lumberjack') this.bodies.lumberjack.root.position.set(0.9, 0, -Math.min(1.6, Math.max(0, this.gap - 0.9)));
     if (this.kind === 'bees') this.bodies.bees.root.position.set(Math.sin(this.time * 1.3) * 0.5, 2.7, -Math.max(0, this.gap - 1.2));
+    // The bug swarm buzzes along behind, its red eyes glowing in the dark.
+    if (this.kind === 'bugs') this.bodies.bugs.root.position.set(Math.sin(this.time * 1.3) * 0.5, 2.9, -Math.max(0, this.gap - 1.3));
 
     this.bodies[this.kind].animate(this.time * (6 + speed * 0.5), this.time);
   }
@@ -422,6 +425,77 @@ function buildBees(): Body {
         b.wings[0].rotation.z = flap;
         b.wings[1].rotation.z = -flap;
       }
+    },
+  };
+}
+
+/**
+ * Glitch.exe's chaser: a swarm of software bugs. Chubby purple beetles with
+ * glowing red eyes and buzzing pixel wings, plus one big angry "404" bug in
+ * the middle. The eyes are bright enough to bloom.
+ */
+function buildBugs(): Body {
+  const root = new THREE.Group();
+  const shell = mat('#3a1d6e');
+  const shellLight = mat('#7a3cff');
+  const black = mat('#120a24');
+  const eye = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff2a4a').multiplyScalar(3) });
+  const wing = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff4fd8').multiplyScalar(1.6), transparent: true, opacity: 0.55, depthWrite: false });
+  const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 5);
+  const bugs: Array<{ g: THREE.Group; wings: THREE.Mesh[]; legs: THREE.Mesh[]; r: number; speed: number; phase: number; tilt: number }> = [];
+  const makeBug = (size: number) => {
+    const g = new THREE.Group();
+    g.scale.setScalar(size);
+    part(SPHERE, shell, g, 0, 0, 0.1, 1.0, 0.75, 1.1);
+    part(BOX, shellLight, g, 0, 0.36, 0.1, 0.08, 0.06, 1.0);
+    part(SPHERE, black, g, 0, 0.02, -0.55, 0.62, 0.55, 0.5);
+    for (const side of [-1, 1]) {
+      part(SPHERE, eye, g, side * 0.16, 0.1, -0.78, 0.18, 0.2, 0.08);
+      const antenna = part(legGeo, black, g, side * 0.14, 0.4, -0.65, 0.6, 1, 0.6);
+      antenna.rotation.set(-0.5, 0, -side * 0.5);
+    }
+    const legs: THREE.Mesh[] = [];
+    for (const side of [-1, 1]) {
+      for (const z of [-0.25, 0.1, 0.45]) {
+        const leg = part(legGeo, black, g, side * 0.5, -0.25, z, 1, 1, 1);
+        leg.rotation.z = side * 1.0;
+        legs.push(leg);
+      }
+    }
+    const wings: THREE.Mesh[] = [];
+    for (const side of [-1, 1]) {
+      const w = new THREE.Mesh(BOX, wing);
+      w.scale.set(0.7, 0.03, 0.42);
+      w.position.set(side * 0.45, 0.42, 0.15);
+      g.add(w);
+      wings.push(w);
+    }
+    root.add(g);
+    return { g, wings, legs };
+  };
+  for (let i = 0; i < 9; i++) {
+    const b = makeBug(0.22 + Math.random() * 0.06);
+    bugs.push({ ...b, r: 0.45 + Math.random() * 0.8, speed: 1.8 + Math.random() * 2.2, phase: Math.random() * Math.PI * 2, tilt: Math.random() * 0.8 });
+  }
+  const boss = makeBug(0.46);
+  return {
+    root,
+    animate: (_pace, time) => {
+      for (const b of bugs) {
+        const a = time * b.speed + b.phase;
+        b.g.position.set(Math.cos(a) * b.r * 1.8, Math.sin(a * 1.7) * 0.45 + Math.sin(a) * b.tilt * 0.4, Math.sin(a) * b.r * 0.7);
+        b.g.rotation.y = -a;
+        const flap = Math.sin(time * 55 + b.phase) * 0.5;
+        b.wings[0].rotation.z = flap;
+        b.wings[1].rotation.z = -flap;
+        b.legs.forEach((l, i) => (l.rotation.x = Math.sin(time * 20 + i) * 0.4));
+      }
+      boss.g.position.set(0, Math.sin(time * 3) * 0.15, 0.2);
+      boss.g.rotation.set(Math.sin(time * 4) * 0.08, Math.sin(time * 1.3) * 0.35, 0);
+      const flap = Math.sin(time * 45) * 0.45;
+      boss.wings[0].rotation.z = flap;
+      boss.wings[1].rotation.z = -flap;
+      boss.legs.forEach((l, i) => (l.rotation.x = Math.sin(time * 16 + i * 1.3) * 0.5));
     },
   };
 }

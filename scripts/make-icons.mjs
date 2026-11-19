@@ -17,7 +17,7 @@ writeFileSync(new URL('icon.svg', out), svg);
 
 // Maskable: Android crops icons to its own shape, so keep the art in the middle 80%.
 const square = svg.replace('rx="112"', 'rx="0"');
-const maskable = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#4fb8ff"/><g transform="translate(51 51) scale(0.8)">${square.replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g></svg>`;
+const maskable = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#05061a"/><g transform="translate(51 51) scale(0.8)">${square.replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g></svg>`;
 
 const jobs = [
   ['icon-192.png', 192, svg],

@@ -1,5 +1,13 @@
 # SanökRun: project handbook
 
+> **Glitch.exe fork (Nov 2026).** This repo started as a copy of SanökRun and
+> was re-themed into Glitch.exe (see README, "What's new compared to the
+> template"). The handbook below still describes the template; everything in
+> it applies, with these differences: one hero (`glitch`, gait `float`), one
+> route (`cloud`), decor `data`, path style `grid`, chaser `bugs`, collectible
+> `token`, storage keys `glitchexe.*`, bloom pass in `engine.ts`.
+
+
 Everything a new chat (or a new developer) needs to keep building SanökRun.
 Read this first, then the code. Keep it up to date when architecture changes.
 

@@ -9,12 +9,21 @@
 
 import { LANGUAGES, type LanguageChoice } from '../i18n';
 
-export const GAME_NAME = 'SanökRun';
+export const GAME_NAME = 'Glitch.exe';
+
+/** `VITE_RECORDS=off` hides the online records (for builds hosted without the /api server). */
+export const RECORDS: boolean = (() => {
+  const value = String(import.meta.env.VITE_RECORDS ?? '').toLowerCase();
+  if (['off', 'false', '0'].includes(value)) return false;
+  if (['on', 'true', '1'].includes(value)) return true;
+  // The one-file build runs without the server, so no records there by default.
+  return import.meta.env.MODE !== 'single';
+})();
 
 /** The link printed on share cards. */
-export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.vercel.app';
+export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://glitch-exe.vercel.app';
 
-export type Character = 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf';
+export type Character = 'glitch' | 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf';
 export type MusicStyle = 'chase' | 'hop' | 'menu' | 'off';
 
 export interface Effects {
@@ -34,6 +43,8 @@ export interface Effects {
   speedZoom: boolean;
   /** Dark cartoon outlines around everything. */
   outlines: boolean;
+  /** Neon things glow (a bloom pass). */
+  bloom: boolean;
 }
 
 export interface Settings {
@@ -43,14 +54,15 @@ export interface Settings {
   music: MusicStyle;
   sound: boolean;
   /** Which world to run in; any hero can run in any world. */
-  world: 'forest' | 'boardwalk' | 'honey';
+  world: 'cloud' | 'forest' | 'boardwalk' | 'honey';
   effects: Effects;
   /** Bumped when defaults change for everyone (2: slow motion off, 3: chase music). */
   revision?: number;
 }
 
 /** The options, in the order the Settings buttons cycle through them. Their names live in src/i18n. */
-export const CHARACTERS: Character[] = ['squirrel', 'hare', 'bear', 'wolf', 'lumberjack'];
+/** Glitch.exe has one hero (the other models are kept in the code from the template). */
+export const CHARACTERS: Character[] = ['glitch'];
 export const MUSIC_STYLES: MusicStyle[] = ['chase', 'hop', 'menu', 'off'];
 export const EFFECT_KEYS: Array<keyof Effects> = [
   'coinSparkle',
@@ -61,6 +73,7 @@ export const EFFECT_KEYS: Array<keyof Effects> = [
   'screenFlash',
   'speedZoom',
   'outlines',
+  'bloom',
 ];
 export const LANGUAGE_CHOICES: LanguageChoice[] = ['auto', ...LANGUAGES];
 
@@ -80,10 +93,10 @@ function envChoice<T extends string>(name: string, options: readonly T[], fallba
 
 export const DEFAULT_SETTINGS: Settings = {
   language: envChoice('VITE_LANGUAGE', LANGUAGE_CHOICES, 'auto'),
-  character: envChoice('VITE_CHARACTER', ['lumberjack', 'squirrel', 'bear', 'hare', 'wolf'] as const, 'lumberjack'),
+  character: envChoice('VITE_CHARACTER', ['glitch'] as const, 'glitch'),
   music: envChoice('VITE_MUSIC', ['chase', 'hop', 'menu', 'off'] as const, 'chase'),
   sound: envFlag('VITE_SOUND', true),
-  world: envChoice('VITE_WORLD', ['forest', 'boardwalk', 'honey'] as const, 'forest'),
+  world: envChoice('VITE_WORLD', ['cloud'] as const, 'cloud'),
   revision: 3,
   effects: {
     coinSparkle: envFlag('VITE_FX_COIN_SPARKLE', true),
@@ -94,10 +107,11 @@ export const DEFAULT_SETTINGS: Settings = {
     screenFlash: envFlag('VITE_FX_SCREEN_FLASH', true),
     speedZoom: envFlag('VITE_FX_SPEED_ZOOM', true),
     outlines: envFlag('VITE_FX_OUTLINES', true),
+    bloom: envFlag('VITE_FX_BLOOM', true),
   },
 };
 
-const STORAGE_KEY = 'sanoekrun.settings';
+const STORAGE_KEY = 'glitchexe.settings';
 
 /** The live settings. Read from anywhere; change through `updateSettings`. */
 export const settings: Settings = load();
@@ -121,7 +135,7 @@ function load(): Settings {
     if ((saved.character as string) === 'explorer') saved.character = 'lumberjack';
     if (saved.character && !CHARACTERS.includes(saved.character)) delete saved.character;
     if (saved.language && !LANGUAGE_CHOICES.includes(saved.language)) delete saved.language;
-    if (saved.world && !['forest', 'boardwalk', 'honey'].includes(saved.world)) delete saved.world;
+    if (saved.world && !['cloud'].includes(saved.world)) delete saved.world;
     const effects = { ...base.effects, ...(saved.effects ?? {}) };
     // Slow motion on close calls became opt-in; switch it off once for everyone.
     if ((saved.revision ?? 1) < 2) effects.slowMotion = base.effects.slowMotion;

@@ -147,7 +147,8 @@ export class Hud {
   }
 
   /** Coin or acorn icon next to the counter. */
-  setCollectible(kind: 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie'): void {
+  setCollectible(kind: 'coin' | 'acorn' | 'honey' | 'carrot' | 'pie' | 'token'): void {
+    this.root.classList.toggle('is-token', kind === 'token');
     this.root.classList.toggle('is-pie', kind === 'pie');
     this.root.classList.toggle('is-acorn', kind === 'acorn');
     this.root.classList.toggle('is-carrot', kind === 'carrot');

@@ -1,9 +1,9 @@
 {
-  "name": "sanoekrun",
+  "name": "glitch-exe",
   "private": true,
-  "version": "1.16.0",
+  "version": "0.1.0",
   "type": "module",
-  "description": "Sanoek Run — an endless Temple Run style runner built with Three.js, Vite and TypeScript.",
+  "description": "Glitch.exe: a tiny AI escapes the cloud. A neon endless runner built with Three.js, Vite and TypeScript (from the San\u00f6kRun template).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -1,5 +1,10 @@
 {
   "routes": {
+    "cloud": [
+      "server-farm",
+      "social-feed",
+      "open-web"
+    ],
     "forest": [
       "forest-trail",
       "dark-thicket",
@@ -1095,6 +1100,145 @@
         "low": 3,
         "high": 2,
         "gap": 0,
+        "block": 3
+      }
+    },
+    {
+      "id": "server-farm",
+      "name": "Server farm",
+      "length": 650,
+      "chaser": "bugs",
+      "caughtBy": "Swarmed by bugs",
+      "decor": "data",
+      "theme": {
+        "skyTop": "#03041a",
+        "sky": "#0d1650",
+        "fog": "#0a1238",
+        "fogNear": 26,
+        "fogFar": 105,
+        "sun": "#bfd4ff",
+        "sunIntensity": 1.6,
+        "hemiSky": "#9fb4ff",
+        "hemiGround": "#1a1040",
+        "abyss": "#3ff6ff",
+        "abyssGlow": true,
+        "accent": "#3ff6ff",
+        "stars": true,
+        "abyssY": -14,
+        "grid": true
+      },
+      "path": {
+        "style": "grid",
+        "slab": "#0b1236",
+        "grout": "#3ff6ff",
+        "body": "#070b24",
+        "curb": "#3ff6ff"
+      },
+      "palette": {
+        "leaves": [
+          "#3ff6ff",
+          "#7a5cff",
+          "#ff3fd1"
+        ],
+        "trunk": "#141a3f"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 1,
+        "block": 3
+      }
+    },
+    {
+      "id": "social-feed",
+      "name": "Social feed",
+      "length": 650,
+      "chaser": "bugs",
+      "caughtBy": "Swarmed by bugs",
+      "decor": "data",
+      "theme": {
+        "skyTop": "#10021c",
+        "sky": "#3b0a52",
+        "fog": "#2a0a3e",
+        "fogNear": 26,
+        "fogFar": 105,
+        "sun": "#ffc4f0",
+        "sunIntensity": 1.6,
+        "hemiSky": "#ffa8e8",
+        "hemiGround": "#2a0838",
+        "abyss": "#ff4fd8",
+        "abyssGlow": true,
+        "accent": "#ff4fd8",
+        "stars": true,
+        "abyssY": -14,
+        "grid": true
+      },
+      "path": {
+        "style": "grid",
+        "slab": "#1c0830",
+        "grout": "#ff4fd8",
+        "body": "#12041f",
+        "curb": "#ff4fd8"
+      },
+      "palette": {
+        "leaves": [
+          "#ff4fd8",
+          "#ffd23f",
+          "#3ff6ff"
+        ],
+        "trunk": "#2a0f3d"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 3,
+        "gap": 1,
+        "block": 3
+      }
+    },
+    {
+      "id": "open-web",
+      "name": "The open web",
+      "length": 650,
+      "chaser": "bugs",
+      "caughtBy": "Swarmed by bugs",
+      "decor": "data",
+      "theme": {
+        "skyTop": "#090632",
+        "sky": "#5c1a80",
+        "fog": "#b13f8f",
+        "fogNear": 30,
+        "fogFar": 120,
+        "sun": "#ffd9a8",
+        "sunIntensity": 1.9,
+        "hemiSky": "#ffc6e0",
+        "hemiGround": "#2a0f50",
+        "abyss": "#b04bff",
+        "abyssGlow": true,
+        "accent": "#ffd23f",
+        "stars": true,
+        "sunDisc": "#ffb347",
+        "abyssY": -14,
+        "grid": true
+      },
+      "path": {
+        "style": "grid",
+        "slab": "#1a0d3d",
+        "grout": "#b04bff",
+        "body": "#100828",
+        "curb": "#ffd23f"
+      },
+      "palette": {
+        "leaves": [
+          "#ffd23f",
+          "#b04bff",
+          "#3ff6ff"
+        ],
+        "trunk": "#22124a"
+      },
+      "obstacles": {
+        "low": 3,
+        "high": 2,
+        "gap": 2,
         "block": 3
       }
     }

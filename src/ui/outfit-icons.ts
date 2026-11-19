@@ -93,6 +93,23 @@ const ICONS: Record<string, string> = {
   wizard: `<path d="M18 48 L32 6 L46 48 Z" fill="#5b4bd6" ${S}/>
     <ellipse cx="32" cy="48" rx="24" ry="6" fill="#5b4bd6" ${S}/>
     <path d="M30 24 L32 19 L34 24 L39 24 L35 27 L37 32 L32 29 L27 32 L29 27 L25 24 Z" fill="#ffd23f" stroke="${INK}" stroke-width="2"/>`,
+  antenna: `<path d="M32 50 V22" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="32" cy="16" r="8" fill="#ff4fd8" ${S}/>
+    <rect x="18" y="46" width="28" height="10" rx="5" fill="#3ff6ff" ${S}/>`,
+  headset: `<path d="M14 38 Q14 12 32 12 Q50 12 50 38" fill="none" stroke="#2b2b3d" stroke-width="7" stroke-linecap="round"/>
+    <rect x="6" y="32" width="14" height="20" rx="6" fill="#3ff6ff" ${S}/>
+    <rect x="44" y="32" width="14" height="20" rx="6" fill="#3ff6ff" ${S}/>
+    <path d="M13 50 Q16 58 28 56" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>`,
+  'pixel-shades': `<rect x="6" y="24" width="52" height="8" fill="#14142a" ${S}/>
+    <path d="M10 32 H28 V40 H22 V44 H14 V40 H10 Z M36 32 H54 V40 H50 V44 H42 V40 H36 Z" fill="#14142a" ${S}/>
+    <rect x="13" y="34" width="4" height="4" fill="#ffffff"/><rect x="39" y="34" width="4" height="4" fill="#ffffff"/>`,
+  propeller: `<path d="M12 44 Q12 20 32 20 Q52 20 52 44 Z" fill="#ff4fd8" ${S}/>
+    <path d="M12 44 Q12 20 32 20 V44 Z" fill="#3ff6ff" ${S}/>
+    <path d="M32 20 V12" stroke="${INK}" stroke-width="4"/>
+    <ellipse cx="20" cy="10" rx="12" ry="4" fill="#ffd23f" ${S}/><ellipse cx="44" cy="10" rx="12" ry="4" fill="#ffd23f" ${S}/>`,
+  halo: `<ellipse cx="32" cy="32" rx="24" ry="9" fill="none" stroke="${INK}" stroke-width="12"/>
+    <ellipse cx="32" cy="32" rx="24" ry="9" fill="none" stroke="#5ff7ff" stroke-width="6"/>`,
+
 };
 
 export function outfitIcon(id: string): string {

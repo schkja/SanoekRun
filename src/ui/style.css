@@ -12,14 +12,19 @@
   --font-display: 'Lilita One', 'Rubik', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Nunito', 'Trebuchet MS', system-ui, -apple-system, sans-serif;
 
-  --ink: #1f2a44;          /* outlines and dark text */
-  --paper: #ffffff;        /* cards and chips */
-  --paper-2: #eef4fb;      /* secondary buttons, stat rows */
-  --sun: #ffc93c;          /* coins, badges */
-  --leaf: #4fd07a;         /* primary action */
-  --leaf-dark: #2a9a52;
-  --berry: #ff5c7a;        /* danger, multiplier */
-  --sky: #4fb8ff;
+  /* Glitch.exe: dark glass cards, neon cyan and magenta. */
+  --ink: #05030f;          /* outlines and ledges */
+  --text: #eaf2ff;         /* text on cards */
+  --muted: #9aa6d6;        /* secondary text */
+  --paper: #161038;        /* cards and chips */
+  --paper-2: #231a56;      /* secondary buttons, stat rows */
+  --sun: #ffd23f;          /* tokens, badges */
+  --leaf: #ff4fd8;         /* primary action */
+  --leaf-dark: #a3218c;
+  --berry: #ff2a4a;        /* danger, multiplier */
+  --sky: #3ff6ff;
+  --neon: #3ff6ff;
+  --neon-2: #ff4fd8;
 
   --outline: 3px solid var(--ink);
   --ledge: 0 5px 0 var(--ink);
@@ -38,9 +43,9 @@ body {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  background: #4f9e4a;
+  background: #05061a;
   font-family: var(--font-body);
-  color: var(--ink);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   user-select: none;
@@ -236,7 +241,7 @@ body {
   border-radius: 999px;
   font-family: var(--font-display);
   font-size: 16px;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper);
   border: 2.5px solid var(--ink);
   opacity: 0.55;
@@ -474,7 +479,7 @@ body {
   touch-action: pan-y;
   padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px))
     calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
-  background: rgba(20, 50, 80, 0.28);
+  background: rgba(5, 3, 20, 0.35);
   pointer-events: auto;
   animation: fade-in 0.2s ease-out;
 }
@@ -491,9 +496,10 @@ body {
   padding: 26px 22px 24px;
   text-align: center;
   background: var(--paper);
-  border: 4px solid var(--ink);
+  border: 3px solid var(--neon);
   border-radius: 28px;
-  box-shadow: 0 8px 0 var(--ink);
+  box-shadow: 0 8px 0 var(--ink), 0 0 24px rgba(63, 246, 255, 0.45), inset 0 0 24px rgba(63, 246, 255, 0.12);
+  color: var(--text);
   animation: card-in 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
 }
 
@@ -510,7 +516,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #6a7896;
+  color: var(--muted);
 }
 
 .menu-title {
@@ -536,7 +542,7 @@ body {
   font-family: var(--font-display);
   font-size: 64px;
   line-height: 1;
-  color: var(--ink);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -547,7 +553,7 @@ body {
   border-radius: 999px;
   background: var(--sun);
   border: 3px solid var(--ink);
-  color: var(--ink);
+  color: var(--text);
   font-family: var(--font-display);
   font-size: 17px;
   transform: rotate(-2deg);
@@ -559,7 +565,7 @@ body {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
-  color: #4a5878;
+  color: var(--muted);
 }
 
 .menu-stats {
@@ -595,7 +601,7 @@ body {
   padding: 12px 18px 13px;
   font-family: var(--font-display);
   font-size: 19px;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper-2);
   border: var(--outline);
   border-radius: var(--radius);
@@ -632,7 +638,7 @@ body {
 .menu.is-gate .menu-body {
   max-width: none;
   padding: 12px 14px;
-  color: var(--ink);
+  color: var(--text);
   background: var(--sun);
   border: var(--outline);
   border-radius: var(--radius);
@@ -654,7 +660,7 @@ body {
 
 .menu.is-title .menu-body {
   margin-bottom: 14px;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .menu.is-title .menu-badge {
@@ -667,7 +673,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #6a7896;
+  color: var(--muted);
 }
 
 .menu-choices {
@@ -684,7 +690,7 @@ body {
   gap: 2px;
   padding: 10px 8px 12px;
   font: inherit;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper-2);
   border: var(--outline);
   border-radius: 20px;
@@ -699,7 +705,7 @@ body {
 }
 
 .menu-choice.is-selected {
-  background: #e6fbe9;
+  background: #2a1460;
   border-color: var(--leaf-dark);
   box-shadow: 0 4px 0 var(--leaf-dark);
   transform: translateY(-2px) rotate(-1deg);
@@ -750,7 +756,7 @@ body {
   font-size: 12px;
   font-weight: 700;
   line-height: 1.25;
-  color: #5a6886;
+  color: var(--muted);
   text-wrap: balance;
 }
 
@@ -758,7 +764,7 @@ body {
   margin: 14px 0 0;
   font-size: 13px;
   font-weight: 700;
-  color: #7a88a6;
+  color: var(--muted);
 }
 
 /* Chips (level, coins), the text field, and the small toolbar buttons. */
@@ -786,7 +792,7 @@ body {
   font-family: var(--font-display);
   font-size: 24px;
   text-align: center;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper-2);
   border: var(--outline);
   border-radius: var(--radius);
@@ -824,7 +830,7 @@ body {
   overflow-wrap: anywhere;
   hyphens: auto;
   line-height: 1.15;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper-2);
   border: 3px solid var(--ink);
   border-radius: 14px;
@@ -844,7 +850,7 @@ body {
   width: 64px;
   height: 64px;
   font-size: 40px;
-  background: #ffffff;
+  background: #231a56;
   border: 3px solid var(--ink);
   border-radius: 50%;
 }
@@ -879,7 +885,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #6a7896;
+  color: var(--muted);
 }
 
 .menu-rows {
@@ -899,7 +905,7 @@ body {
   font: inherit;
   font-size: 15px;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
   text-align: left;
   background: transparent;
   border: 0;
@@ -924,7 +930,7 @@ body {
 .menu-row-hint {
   font-size: 12px;
   font-weight: 700;
-  color: #7a88a6;
+  color: var(--muted);
 }
 
 .menu-row-value {
@@ -941,7 +947,7 @@ body {
 .menu-row-chevron {
   font-size: 22px;
   line-height: 1;
-  color: #9aa6c0;
+  color: var(--muted);
 }
 
 .menu-row-check {
@@ -951,7 +957,7 @@ body {
 }
 
 .menu-row.is-selected {
-  background: #e6fbe9;
+  background: #2a1460;
 }
 
 /* A chunky on/off switch. */
@@ -960,7 +966,7 @@ body {
   width: 50px;
   height: 30px;
   padding: 3px;
-  background: #c9d3e2;
+  background: #3a3470;
   border: 3px solid var(--ink);
   border-radius: 999px;
   transition: background 0.15s ease;
@@ -1118,7 +1124,7 @@ body {
   padding: 0;
   font: inherit;
   line-height: 1;
-  color: var(--ink);
+  color: var(--text);
   background: var(--paper);
   border: 3px solid var(--ink);
   border-radius: 16px;
@@ -1141,7 +1147,7 @@ body {
 .menu-picker-caption {
   font-size: 13px;
   font-weight: 700;
-  color: #5a6886;
+  color: var(--muted);
   text-wrap: balance;
 }
 
@@ -1162,4 +1168,60 @@ body {
   .menu-picker-label {
     font-size: 22px;
   }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Glitch.exe title: chromatic split and a little glitch now and then.
+   --------------------------------------------------------------------------- */
+.glitch-title {
+  position: relative;
+  display: inline-block;
+  color: #eaf2ff;
+  -webkit-text-stroke: 0;
+  text-shadow: -3px 0 var(--neon-2), 3px 0 var(--neon), 0 0 18px rgba(63, 246, 255, 0.8);
+  animation: glitch 3.2s infinite steps(1);
+}
+
+.glitch-ext {
+  color: var(--neon);
+  text-shadow: -2px 0 var(--neon-2), 0 0 14px rgba(63, 246, 255, 0.9);
+}
+
+@keyframes glitch {
+  0%, 86%, 100% {
+    transform: none;
+    clip-path: none;
+  }
+  88% {
+    transform: translate(-3px, 1px) skewX(-8deg);
+    clip-path: inset(10% 0 45% 0);
+  }
+  90% {
+    transform: translate(4px, -1px);
+    clip-path: inset(55% 0 5% 0);
+  }
+  92% {
+    transform: translate(-2px, 0);
+    clip-path: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-title {
+    animation: none;
+  }
+}
+
+.menu-picker.is-single .menu-picker-arrow {
+  visibility: hidden;
+}
+
+.hud.is-token .hud-coin {
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  background: radial-gradient(circle, var(--neon) 0 28%, var(--sun) 30%);
+  border: 0;
 }

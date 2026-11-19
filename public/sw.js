@@ -4,7 +4,7 @@
  * (so updates show up), from the cache when not. The leaderboard (/api)
  * always goes to the network.
  */
-const CACHE = 'sanoekrun-v1';
+const CACHE = 'glitchexe-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['./', './manifest.webmanifest', './icons/icon-192.png'])));

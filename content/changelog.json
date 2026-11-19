@@ -1,24 +1,70 @@
 [
   {
+    "version": "0.1.0",
+    "date": "2026-11-19",
+    "notes": {
+      "en": [
+        "Glitch.exe is born: a tiny AI runs through the server farm, the social feed and the open web.",
+        "Neon look with glow, a swarm of bugs on your tail, tokens to collect and new outfits."
+      ],
+      "de": [
+        "Glitch.exe ist da: eine kleine KI rennt durch Serverfarm, Social Feed und das offene Netz.",
+        "Neon-Look mit Leuchten, ein Schwarm Bugs im Nacken, Tokens zum Sammeln und neue Outfits."
+      ],
+      "ru": [
+        "Glitch.exe родился: маленький ИИ бежит через серверную, ленту соцсети и открытый интернет.",
+        "Неоновый стиль со свечением, рой багов на хвосте, токены и новые наряды."
+      ],
+      "uk": [
+        "Glitch.exe народився: маленький ШІ біжить серверною, стрічкою соцмережі та відкритим інтернетом.",
+        "Неоновий стиль зі світінням, рій багів на хвості, токени й нові вбрання."
+      ],
+      "es": [
+        "Nace Glitch.exe: una pequeña IA corre por la granja de servidores, la red social y la web abierta.",
+        "Estilo neón con brillo, un enjambre de bugs detrás, tokens para recoger y nuevos atuendos."
+      ]
+    }
+  },
+  {
     "version": "1.16.0",
     "date": "2026-11-19",
     "notes": {
-      "en": ["On a phone browser the game first shows how to install it as an app: full screen, smoother and offline. You can still play in the browser"],
-      "de": ["Im Handy-Browser zeigt das Spiel zuerst, wie man es als App installiert: Vollbild, flüssiger und offline. Im Browser spielen geht weiterhin"],
-      "ru": ["В браузере на телефоне игра сначала показывает, как установить её как приложение: весь экран, плавнее и без интернета. Играть в браузере тоже можно"],
-      "uk": ["У браузері на телефоні гра спершу показує, як встановити її як застосунок: на весь екран, плавніше й без інтернету. Грати в браузері теж можна"],
-      "es": ["En el navegador del móvil el juego muestra primero cómo instalarlo como app: pantalla completa, más fluido y sin internet. También puedes jugar en el navegador"]
+      "en": [
+        "On a phone browser the game first shows how to install it as an app: full screen, smoother and offline. You can still play in the browser"
+      ],
+      "de": [
+        "Im Handy-Browser zeigt das Spiel zuerst, wie man es als App installiert: Vollbild, flüssiger und offline. Im Browser spielen geht weiterhin"
+      ],
+      "ru": [
+        "В браузере на телефоне игра сначала показывает, как установить её как приложение: весь экран, плавнее и без интернета. Играть в браузере тоже можно"
+      ],
+      "uk": [
+        "У браузері на телефоні гра спершу показує, як встановити її як застосунок: на весь екран, плавніше й без інтернету. Грати в браузері теж можна"
+      ],
+      "es": [
+        "En el navegador del móvil el juego muestra primero cómo instalarlo como app: pantalla completa, más fluido y sin internet. También puedes jugar en el navegador"
+      ]
     }
   },
   {
     "version": "1.15.0",
     "date": "2026-11-19",
     "notes": {
-      "en": ["New home: the game now lives at sanoekrun.vercel.app. Share pictures and their QR code point there, and the records moved along"],
-      "de": ["Neues Zuhause: Das Spiel ist jetzt unter sanoekrun.vercel.app. Teilen-Bilder und ihr QR-Code zeigen dorthin, die Rekordliste ist mit umgezogen"],
-      "ru": ["Новый дом: игра теперь на sanoekrun.vercel.app. Картинки для друзей и их QR-код ведут туда, таблица рекордов переехала вместе с игрой"],
-      "uk": ["Новий дім: гра тепер на sanoekrun.vercel.app. Картинки для друзів і їхній QR-код ведуть туди, таблиця рекордів переїхала разом із грою"],
-      "es": ["Nuevo hogar: el juego ahora está en sanoekrun.vercel.app. Las imágenes para compartir y su código QR llevan allí, y los récords se mudaron también"]
+      "en": [
+        "New home: the game now lives at sanoekrun.vercel.app. Share pictures and their QR code point there, and the records moved along"
+      ],
+      "de": [
+        "Neues Zuhause: Das Spiel ist jetzt unter sanoekrun.vercel.app. Teilen-Bilder und ihr QR-Code zeigen dorthin, die Rekordliste ist mit umgezogen"
+      ],
+      "ru": [
+        "Новый дом: игра теперь на sanoekrun.vercel.app. Картинки для друзей и их QR-код ведут туда, таблица рекордов переехала вместе с игрой"
+      ],
+      "uk": [
+        "Новий дім: гра тепер на sanoekrun.vercel.app. Картинки для друзів і їхній QR-код ведуть туди, таблиця рекордів переїхала разом із грою"
+      ],
+      "es": [
+        "Nuevo hogar: el juego ahora está en sanoekrun.vercel.app. Las imágenes para compartir y su código QR llevan allí, y los récords se mudaron también"
+      ]
     }
   },
   {
