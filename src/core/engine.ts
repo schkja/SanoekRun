@@ -88,7 +88,7 @@ export class Engine {
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1.0, 0.55, 0.9);
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.35, 0.2, 1.4);
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
@@ -120,7 +120,7 @@ export class Engine {
     if (theme.grid) {
       // A neon grid stretching to the horizon, like an old synthwave poster.
       this.abyssMaterial.map = (this.gridTexture ??= makeGridTexture());
-      this.abyssMaterial.color.multiplyScalar(1.8);
+      this.abyssMaterial.color.multiplyScalar(0.9);
     } else {
       this.abyssMaterial.map = null;
     }

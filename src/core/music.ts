@@ -32,71 +32,78 @@ interface Song {
   /** 64 steps (4 bars) of melody, semitones above the root; -1 is a rest. */
   melody: number[];
   drums: Drums;
-  /** Lead sound: a bright detuned "supersaw" or a sparkly marimba pluck. */
-  lead: 'saw' | 'pluck';
+  /** Lead sound: a bright detuned "supersaw", a sparkly marimba pluck or a chiptune square. */
+  lead: 'saw' | 'pluck' | 'chip';
   /** Arpeggio speed in 16ths (1 = every 16th, 2 = every 8th). */
   arp: 1 | 2;
   /** Swing amount for off-beat 16ths, 0..0.3. */
   swing: number;
+  /** A burst of digital stutter at the end of every second loop. */
+  glitch?: boolean;
 }
 
 const _ = -1;
 
 export const SONGS: Record<Exclude<MusicStyle, 'off'>, Song> = {
-  // Driving chase, A minor: Am F C G at 150 bpm. Four-on-the-floor kick,
-  // rolling bass, 16th arpeggio and a bright supersaw hook.
+  // "Overclock": dark synthwave chase in D harmonic minor, Dm Bb Gm A at
+  // 140 bpm. Four-on-the-floor, rolling bass, 16th arpeggio, a supersaw hook
+  // that climbs to the A major chord, and a digital stutter at the loop's end.
   chase: {
-    bpm: 150,
-    root: 57,
-    chords: [[0, 3, 7, 12], [-4, 0, 3, 8], [-9, -5, -2, 3], [-2, 2, 5, 10]],
-    bass: [0, -4, 3, -2],
+    bpm: 140,
+    root: 50,
+    chords: [[0, 3, 7, 12], [-4, 0, 3, 8], [5, 8, 12, 17], [-5, -1, 2, 7]],
+    bass: [0, -4, 5, -5],
     bassSteps: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14],
     melody: [
-      12, _, 10, _, 7, _, 10, _, 12, _, 15, _, 12, _, 10, _,
-      12, _, 8, _, 7, _, 8, _, 12, _, 15, _, 17, _, 15, _,
-      15, _, 14, _, 10, _, 7, _, 10, _, 14, _, 15, _, 14, _,
-      14, _, 12, _, 10, _, 7, _, 5, _, 7, _, 10, _, 14, _,
+      12, _, 12, 15, _, 14, _, 12, 14, _, 15, _, 17, _, 15, 14,
+      15, _, _, 14, _, 12, _, 10, 12, _, _, _, 8, _, 10, 12,
+      10, _, 10, 14, _, 12, _, 10, 14, _, 17, _, 19, _, 17, 15,
+      19, _, _, _, 14, _, _, _, 11, _, 14, _, 19, _, 23, _,
     ],
     drums: 'drive',
     lead: 'saw',
     arp: 1,
     swing: 0,
+    glitch: true,
   },
-  // Bouncy and cheerful, C major: C G Am F at 132 bpm, shuffled.
+  // "Bit hop": cheerful chiptune in A major, A E F#m D at 136 bpm, with a
+  // square-wave lead that wobbles like an old game console.
   hop: {
-    bpm: 132,
-    root: 60,
+    bpm: 136,
+    root: 57,
     chords: [[0, 4, 7, 12], [-5, -1, 2, 7], [-3, 0, 4, 9], [-7, -3, 0, 5]],
     bass: [0, -5, -3, -7],
-    bassSteps: [0, 3, 6, 8, 11, 14],
+    bassSteps: [0, 3, 4, 6, 8, 11, 12, 14],
     melody: [
-      12, _, 7, _, 9, 12, _, 14, 16, _, 14, 12, _, 9, 7, _,
-      11, _, 7, _, 14, _, 11, 14, 19, _, 17, _, 14, _, 11, _,
-      12, _, 16, _, 21, _, 19, 16, _, 16, 12, _, 9, _, 11, 12,
-      12, _, 9, _, 5, _, 9, 12, _, 14, 16, _, 19, _, 17, 16,
+      12, _, 16, _, 19, _, 16, _, 21, _, 19, _, 16, _, 14, _,
+      14, _, 11, _, 14, _, 19, _, 23, _, 21, _, 19, _, 14, _,
+      16, _, 12, 16, _, 21, _, 16, 24, _, 21, _, 16, _, 12, _,
+      17, _, 21, _, 24, _, 21, _, 19, _, 17, _, 16, _, 14, _,
     ],
-    drums: 'bounce',
-    lead: 'pluck',
-    arp: 2,
-    swing: 0.14,
+    drums: 'drive',
+    lead: 'chip',
+    arp: 1,
+    swing: 0,
+    glitch: true,
   },
-  // Title screen: friendly and moving, but not hectic. Fmaj7 Em7 Dm7 Cmaj7.
+  // "Standby": the title screen, a slow dreamy synthwave loop.
+  // Fmaj7 G Em Am at 96 bpm.
   menu: {
-    bpm: 104,
-    root: 60,
-    chords: [[5, 9, 12, 16], [4, 7, 11, 14], [2, 5, 9, 12], [0, 4, 7, 11]],
-    bass: [5, 4, 2, 0],
+    bpm: 96,
+    root: 57,
+    chords: [[-4, 0, 3, 7], [-2, 2, 5, 10], [-5, -2, 2, 7], [0, 3, 7, 12]],
+    bass: [-4, -2, -5, 0],
     bassSteps: [0, 6, 8, 14],
     melody: [
-      16, _, 14, _, 12, _, 9, _, 12, _, _, _, 16, _, _, _,
-      14, _, 12, _, 11, _, 7, _, 11, _, _, _, 14, _, _, _,
-      12, _, 14, _, 16, _, 17, _, 19, _, _, _, 16, _, _, _,
-      16, _, 14, _, 12, _, 11, _, 12, _, _, _, _, _, _, _,
+      19, _, _, _, 16, _, 15, _, 12, _, _, _, 15, _, _, _,
+      17, _, _, _, 14, _, 12, _, 10, _, _, _, 14, _, _, _,
+      14, _, _, _, 12, _, 10, _, 7, _, _, _, 10, _, 12, _,
+      12, _, _, _, _, _, _, _, 15, _, 14, _, 12, _, _, _,
     ],
     drums: 'soft',
     lead: 'pluck',
     arp: 2,
-    swing: 0.08,
+    swing: 0.05,
   },
 };
 
@@ -112,6 +119,7 @@ export class Music {
   private reverb: GainNode | null = null;
   private echo: GainNode | null = null;
   private noise: AudioBuffer | null = null;
+  private loops = 0;
 
   constructor(private readonly audio: Audio) {}
 
@@ -176,7 +184,7 @@ export class Music {
 
     // Echo: a dotted-eighth delay that feeds back softly, darker each repeat.
     const delay = ctx.createDelay(1);
-    delay.delayTime.value = (60 / 150) * 0.75;
+    delay.delayTime.value = (60 / 140) * 0.75;
     const feedback = ctx.createGain();
     feedback.gain.value = 0.32;
     const tone = ctx.createBiquadFilter();
@@ -238,11 +246,15 @@ export class Music {
       }
     }
 
+    // A glitch: bits of noise and blips stuttering over the last beat.
+    if (L >= 3 && s.glitch && i === 60 && (this.loops++ & 1) === 1) this.stutter(ctx, t, sixteenth);
+
     // 4: the hook.
     if (L >= 4) {
       const m = s.melody[i];
       if (m >= 0) {
         if (s.lead === 'saw') this.supersaw(ctx, t, hz(s.root + 12 + m), sixteenth * 1.8);
+        else if (s.lead === 'chip') this.chip(ctx, t, hz(s.root + 12 + m), sixteenth * 1.7);
         else this.pluck(ctx, t, hz(s.root + 12 + m), 0.17, 2.2, 0.45, true);
       }
     }
@@ -366,6 +378,66 @@ export class Music {
     mod.start(t);
     carrier.stop(t + d + 0.05);
     mod.stop(t + d + 0.05);
+  }
+
+  /**
+   * Chiptune lead: a narrow pulse (two squares, slightly apart) with a
+   * quick pitch blip at the start and a little vibrato, like an old console.
+   */
+  private chip(ctx: AudioContext, t: number, f: number, d: number): void {
+    const g = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 4200;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.04, t + 0.004);
+    g.gain.setValueAtTime(0.04, t + d * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.05);
+    const vibrato = ctx.createOscillator();
+    const vibratoDepth = ctx.createGain();
+    vibrato.frequency.value = 6;
+    vibratoDepth.gain.value = f * 0.012;
+    vibrato.connect(vibratoDepth);
+    for (const [ratio, type] of [[1, 'square'], [1.004, 'square']] as const) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.setValueAtTime(f * ratio * 2, t);
+      o.frequency.exponentialRampToValueAtTime(f * ratio, t + 0.025);
+      vibratoDepth.connect(o.frequency);
+      o.connect(filter);
+      o.start(t);
+      o.stop(t + d + 0.08);
+    }
+    vibrato.start(t);
+    vibrato.stop(t + d + 0.08);
+    filter.connect(g);
+    g.connect(this.bus!);
+    g.connect(this.echo!);
+  }
+
+  /**
+   * The "glitch": over one beat, a stutter of tiny square blips at random
+   * high pitches and clicks of noise, as if the music crashed for a moment.
+   */
+  private stutter(ctx: AudioContext, t: number, sixteenth: number): void {
+    const n = 8;
+    const step = (sixteenth * 4) / n;
+    for (let k = 0; k < n; k++) {
+      const at = t + k * step;
+      if (k % 3 === 2) {
+        this.hat(ctx, at, 0.18);
+        continue;
+      }
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square';
+      o.frequency.value = 600 + Math.floor(Math.random() * 6) * 220;
+      g.gain.setValueAtTime(0.025, at);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + step * 0.8);
+      o.connect(g).connect(this.bus!);
+      o.start(at);
+      o.stop(at + step);
+    }
   }
 
   /** Punchy kick: a sine dropping fast in pitch. */

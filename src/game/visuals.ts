@@ -191,8 +191,8 @@ export function neon(color: string, k = 2.4, extra: THREE.MeshBasicMaterialParam
   return new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), ...extra });
 }
 
-const TOKEN_RIM = toon('#ffd23f', { emissive: '#ffb000', emissiveIntensity: 0.9 });
-const TOKEN_CHIP = neon('#3ff6ff', 2.6);
+const TOKEN_RIM = toon('#ffc21f', { emissive: '#a86a00', emissiveIntensity: 0.3 });
+const TOKEN_CHIP = neon('#3ff6ff', 1.6);
 const TOKEN_GEO = new THREE.CylinderGeometry(0.38, 0.38, 0.12, 8);
 
 /** Glitch's collectible: a gold octagonal token with a glowing chip in the middle. */
@@ -376,16 +376,16 @@ function kitFor(world: WorldDef): Kit {
     fungus: std('#f5b54a'),
     portal: std(accent, { emissive: accent, emissiveIntensity: 1.4, flatShading: false }),
     portalDisc: new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
-    neon: world.palette.leaves.map((c) => neon(c)) as Kit['neon'],
+    neon: world.palette.leaves.map((c) => neon(c, 1.5)) as Kit['neon'],
     panel: std(world.palette.trunk),
     panelLight: std(new THREE.Color(world.palette.trunk).offsetHSL(0, 0, 0.12).getStyle()),
-    laser: neon('#ff2a4a', 3.2),
+    laser: neon('#ff2a4a', 2),
     bubble: std('#f4f2ff'),
   };
   if (p.style === 'grid') {
     // An unlit floor whose grid lines glow, and a glowing portal ring.
-    kit.floorTop = new THREE.MeshBasicMaterial({ map: makeFloorTexture(p.style, p.slab, p.grout), color: new THREE.Color(1, 1, 1).multiplyScalar(0.95) }) as unknown as Mat;
-    kit.curb = neon(p.curb, 2.2) as unknown as Mat;
+    kit.floorTop = new THREE.MeshBasicMaterial({ map: makeFloorTexture(p.style, p.slab, p.grout), color: new THREE.Color(1, 1, 1).multiplyScalar(0.8) }) as unknown as Mat;
+    kit.curb = neon(p.curb, 1.1) as unknown as Mat;
     kit.portal = neon(accent, 3) as unknown as Mat;
   }
   kits.set(world.id, kit);
@@ -1545,8 +1545,8 @@ export function makeGlitchModel(outfit = 'antenna'): RunnerModel {
   const mat = (c: string) => cache.get(c) ?? cache.set(c, toon(c)).get(c)!;
   const shell = toon('#b8cdee');
   const screen = toon('#0d1236');
-  const cyan = neon('#3ff6ff', 3);
-  const pink = neon('#ff4fd8', 2.8);
+  const cyan = neon('#3ff6ff', 2.2);
+  const pink = neon('#ff4fd8', 1.7);
   const Y = 1.0;
 
   part(shell, body, ORB, 0, Y, 0, 1.2, 1.15, 1.2);
@@ -1575,7 +1575,7 @@ export function makeGlitchModel(outfit = 'antenna'): RunnerModel {
   // Jets of light underneath.
   const legL = limb(-0.2, Y - 0.62);
   const legR = limb(0.2, Y - 0.62);
-  const jet = neon('#3ff6ff', 2.4, { transparent: true, opacity: 0.8, depthWrite: false });
+  const jet = neon('#3ff6ff', 1.5, { transparent: true, opacity: 0.8, depthWrite: false });
   for (const leg of [legL, legR]) part(jet, leg, GEO.cone, 0, -0.2, 0, 0.14, 0.4, 0.14).rotation.x = Math.PI;
   // A trail of pixels behind it.
   const pixels: THREE.Object3D[] = [];
@@ -1616,7 +1616,7 @@ function glitchHat(outfit: string, body: THREE.Group, part: ModelPart, mat: MatF
   } else {
     // The antenna with a glowing tip.
     part(antenna(mat), body, GEO.cyl, 0, y + 0.12, 0, 0.05, 0.3, 0.05);
-    part(neon('#ff4fd8', 3), body, GEO.sphere, 0, y + 0.32, 0, 0.18, 0.18, 0.18);
+    part(neon('#ff4fd8', 2), body, GEO.sphere, 0, y + 0.32, 0, 0.18, 0.18, 0.18);
   }
 }
 

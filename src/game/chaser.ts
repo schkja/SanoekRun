@@ -439,8 +439,8 @@ function buildBugs(): Body {
   const shell = mat('#3a1d6e');
   const shellLight = mat('#7a3cff');
   const black = mat('#120a24');
-  const eye = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff2a4a').multiplyScalar(3) });
-  const wing = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff4fd8').multiplyScalar(1.6), transparent: true, opacity: 0.55, depthWrite: false });
+  const eye = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff2a4a').multiplyScalar(2.2) });
+  const wing = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff4fd8').multiplyScalar(1.1), transparent: true, opacity: 0.55, depthWrite: false });
   const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 5);
   const bugs: Array<{ g: THREE.Group; wings: THREE.Mesh[]; legs: THREE.Mesh[]; r: number; speed: number; phase: number; tilt: number }> = [];
   const makeBug = (size: number) => {
