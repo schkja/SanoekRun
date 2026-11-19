@@ -16,8 +16,9 @@ export const RECORDS: boolean = (() => {
   const value = String(import.meta.env.VITE_RECORDS ?? '').toLowerCase();
   if (['off', 'false', '0'].includes(value)) return false;
   if (['on', 'true', '1'].includes(value)) return true;
-  // The one-file build runs without the server, so no records there by default.
-  return import.meta.env.MODE !== 'single';
+  // Off until Glitch.exe has its own records database: a deploy of this branch
+  // must not write into SanökRun's leaderboard. Set VITE_RECORDS=on to enable.
+  return false;
 })();
 
 /** The link printed on share cards. */

@@ -25,7 +25,7 @@ so it ships with zero asset files.
 | `src/game/chaser.ts` | `buildBugs()`: a swarm of bugs with glowing red eyes and a big boss bug |
 | `src/core/engine.ts` | Bloom (`UnrealBloomPass`, off on the lowest quality step), neon grid floor far below, striped synthwave sun |
 | `src/ui/` | Dark neon UI, glitching title, new icon, portrait and outfit icons |
-| Settings | `effects.bloom` ("Neon glow"); `VITE_RECORDS=off` hides the online records (default off in `build:single`) |
+| Settings | `effects.bloom` ("Neon glow"); online records are off until Glitch.exe has its own database (`VITE_RECORDS=on` turns them on) |
 
 The template's other heroes and forest worlds are still in the code, so you can
 bring them back by adding them to `CHARACTERS` and `ROUTES`.
