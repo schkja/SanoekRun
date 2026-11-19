@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.15.0",
+    "date": "2026-11-19",
+    "notes": {
+      "en": ["New home: the game now lives at sanoekrun.vercel.app. Share pictures and their QR code point there, and the records moved along"],
+      "de": ["Neues Zuhause: Das Spiel ist jetzt unter sanoekrun.vercel.app. Teilen-Bilder und ihr QR-Code zeigen dorthin, die Rekordliste ist mit umgezogen"],
+      "ru": ["Новый дом: игра теперь на sanoekrun.vercel.app. Картинки для друзей и их QR-код ведут туда, таблица рекордов переехала вместе с игрой"],
+      "uk": ["Новий дім: гра тепер на sanoekrun.vercel.app. Картинки для друзів і їхній QR-код ведуть туди, таблиця рекордів переїхала разом із грою"],
+      "es": ["Nuevo hogar: el juego ahora está en sanoekrun.vercel.app. Las imágenes para compartir y su código QR llevan allí, y los récords se mudaron también"]
+    }
+  },
+  {
     "version": "1.14.0",
     "date": "2026-11-08",
     "notes": {

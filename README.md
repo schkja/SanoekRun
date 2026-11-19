@@ -82,16 +82,18 @@ Kept on the device (`src/game/progress.ts`, localStorage `sanoekrun.profile`).
 
 ## Leaderboard
 
-A tiny server (`server/index.mjs`, Node, no dependencies) keeps the top 500 of
-all time and today's runs in `/data/scores.json`. When a run makes the board,
+Three small Vercel Functions (`api/scores.mjs`, `api/health.mjs`,
+`api/prune.mjs`, rules in `server/leaderboard.mjs`) keep the top 500 of all
+time and today's runs in an Upstash Redis database. When a run makes the board,
 the game asks for a nickname (1 to 12 letters, rude words filtered in all five
 languages). It rejects impossible runs (too far for the time taken, too many
-coins) and limits how often one device or address can submit. When the server
-can't be reached, the game simply doesn't show it.
+coins) and limits how often one device or address can submit. When the
+leaderboard can't be reached, the game simply doesn't show it.
 
 API: `GET /api/scores?period=all|today&device=…`, `POST /api/scores`,
-`GET /api/health`. In development, `npm run dev` proxies `/api` to
-`localhost:8080`; start the server with `node server/index.mjs`.
+`GET /api/health`. A daily cron (`vercel.json`) removes yesterday's runs that
+didn't make the all-time board. `npm run dev` runs the game without the
+leaderboard; for both, use `npx vercel dev` after `npx vercel env pull .env.local`.
 
 ## Install on a phone
 
@@ -167,18 +169,19 @@ it downloads the picture instead. The link printed on it is `VITE_SHARE_URL`.
 
 ## Deployment
 
-Every push to `main` deploys itself:
+The game runs on Vercel (Hobby plan), connected to this GitHub repo:
 
-1. GitHub Actions (`.github/workflows/deploy.yml`) type-checks, builds, and
-   publishes a Docker image to `ghcr.io/schkja/sanoekrun:latest`.
-2. On the server, Watchtower checks for a new image every minute and restarts
-   the game container with it.
+- Every push to `main` goes live at https://sanoekrun.vercel.app.
+- Every other branch and pull request gets its own preview link.
+- `.github/workflows/check.yml` type-checks and builds each push, so a broken
+  change shows up on the PR.
 
-The server runs `deploy/docker-compose.yml`: the game image (nginx serving
-the built game, `deploy/nginx.conf`) and the leaderboard image
-(`ghcr.io/schkja/sanoekrun-api`, data in `./data`). Traefik sends `/api` to
-the leaderboard and everything else to the game
-(`deploy/traefik-sanoekrun.yaml`).
+Vercel uses the Vite preset (`npm run build`, output `dist`). `vercel.json`
+sets the function region (Frankfurt), the daily cron and the cache headers.
+The leaderboard database is Upstash Redis from the Vercel Marketplace (EU
+region); connecting it to the project sets `KV_REST_API_URL` and
+`KV_REST_API_TOKEN`. To move scores from an old `scores.json`, run
+`scripts/import-scores.mjs` (instructions in the file).
 
 ## Tuning the feel
 

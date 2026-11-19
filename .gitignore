@@ -1,3 +1,9 @@
 node_modules
 dist
 dist-single
+
+# Local secrets (database keys from `vercel env pull`) and the Vercel CLI link
+.env
+.env.local
+.env.*.local
+.vercel

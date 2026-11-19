@@ -12,7 +12,7 @@ import { LANGUAGES, type LanguageChoice } from '../i18n';
 export const GAME_NAME = 'SanökRun';
 
 /** The link printed on share cards. */
-export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.sascha.iodatalabs.dev';
+export const SHARE_URL: string = import.meta.env.VITE_SHARE_URL || 'https://sanoekrun.vercel.app';
 
 export type Character = 'lumberjack' | 'squirrel' | 'bear' | 'hare' | 'wolf';
 export type MusicStyle = 'chase' | 'hop' | 'menu' | 'off';

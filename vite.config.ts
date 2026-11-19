@@ -6,7 +6,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig(({ mode }) => ({
   // Relative base so the built game also works when opened from a subfolder
-  // (e.g. GitHub Pages, itch.io, or a plain static host).
+  // (e.g. itch.io or a plain static host).
   base: './',
   // Shown on the Info screen.
   define: {
@@ -19,11 +19,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     open: true,
     host: true,
-    // In development, run `node server/index.mjs` too and the game talks to it.
-    proxy: { '/api': 'http://localhost:8080' },
-  },
-  preview: {
-    proxy: { '/api': 'http://localhost:8080' },
   },
   build: {
     outDir: mode === 'single' ? 'dist-single' : 'dist',
