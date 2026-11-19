@@ -54,7 +54,7 @@
 
   <section id="datenschutz">
     <h2>Datenschutzerklärung</h2>
-    <p class="muted">Stand: 7. November 2026</p>
+    <p class="muted">Stand: 19. November 2026</p>
 
     <h3>1. Verantwortlicher</h3>
     <p>Sascha Belon (siehe <a href="#kontakt">Kontakt</a>), E-Mail: <a href="mailto:saschabelon@gmail.com">saschabelon@gmail.com</a>.</p>
@@ -62,14 +62,15 @@
     <h3>2. Kurz gesagt</h3>
     <ul>
       <li>Keine Werbung, keine Analyse- oder Tracking-Dienste, keine Cookies.</li>
-      <li>Keine Inhalte von Drittanbietern: Schriften, Grafiken und Töne werden von unserem eigenen Server geladen.</li>
+      <li>Keine eingebundenen Inhalte fremder Anbieter: Schriften, Grafiken und Töne kommen direkt von dieser Website.</li>
       <li>Spielstand und Einstellungen bleiben auf deinem Gerät.</li>
-      <li>An unseren Server geht nur, was für die Rekordliste nötig ist, und nur wenn du deinen Rekord speichern willst oder die Liste ansiehst.</li>
+      <li>An die Rekordliste geht nur, was dafür nötig ist, und nur wenn du deinen Rekord speichern willst oder die Liste ansiehst.</li>
     </ul>
 
-    <h3>3. Aufruf der Webseite (Server-Logdateien)</h3>
-    <p>Beim Aufruf verarbeitet unser Server technisch notwendig deine IP-Adresse, Datum und Uhrzeit, die aufgerufene Datei, den Browsertyp und den Statuscode, um das Spiel auszuliefern und Angriffe abzuwehren. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren, funktionierenden Angebot). Der Spielserver selbst schreibt keine Zugriffsprotokolle; technisch bedingte Protokolle werden nach spätestens 7 Tagen gelöscht.</p>
-    <p>Der Server steht in Deutschland bei der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, die in unserem Auftrag tätig ist (Auftragsverarbeitung nach Art. 28 DSGVO).</p>
+    <h3>3. Aufruf der Webseite (Hosting und Server-Logdateien)</h3>
+    <p>Die Website wird bei der Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA, gehostet, die in unserem Auftrag tätig ist (Auftragsverarbeitung nach Art. 28 DSGVO). Beim Aufruf verarbeitet Vercel technisch notwendig deine IP-Adresse, Datum und Uhrzeit, die aufgerufene Datei, den Browsertyp und den Statuscode, um das Spiel auszuliefern und Angriffe abzuwehren. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren, funktionierenden Angebot).</p>
+    <p>Vercel liefert die Spieldateien über ein weltweites Servernetz aus, in der Regel von einem Standort in deiner Nähe. Die Rekordliste läuft auf Vercel-Servern in Frankfurt am Main. Wir selbst werten keine Zugriffsprotokolle aus; technisch bedingte Protokolle bewahrt Vercel nur kurze Zeit nach seinen eigenen Fristen auf.</p>
+    <p>Vercel ist nach dem EU-US Data Privacy Framework zertifiziert. Eine Übermittlung in die USA stützt sich daher auf den Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO). Mehr dazu: <a href="https://vercel.com/legal/privacy-policy" rel="noopener">Datenschutzhinweise von Vercel</a>.</p>
 
     <h3>4. Speicherung auf deinem Gerät</h3>
     <p>Das Spiel speichert im lokalen Speicher deines Browsers (localStorage): deine Einstellungen (Sprache, Ton, Effekte, Held), deinen Fortschritt (Bestweite, Münzkasse, Aufgaben, Level, Outfits, erreichte Welten), den zuletzt benutzten Spitznamen und eine zufällige Geräte-Kennung. Diese Daten verlassen dein Gerät nicht, außer wie in Punkt 5 beschrieben. Die Speicherung ist für das von dir gewünschte Spiel unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Du kannst alles löschen, indem du die Website-Daten im Browser löschst.</p>
@@ -78,7 +79,8 @@
     <h3>5. Rekordliste</h3>
     <p>Beim Ansehen der Rekordliste wird die zufällige Geräte-Kennung mitgeschickt, damit deine eigenen Einträge markiert werden können.</p>
     <p>Wenn du einen Rekord speicherst, übermitteln wir: den Spitznamen, den du eingibst, den Helden, die Weite, die Münzen, die Dauer des Laufs und die Geräte-Kennung. Öffentlich sichtbar sind nur Spitzname, Held, Weite und Platz. Bitte verwende einen Spitznamen und nicht deinen echten Namen.</p>
-    <p>Zum Schutz vor Missbrauch (zu viele Einträge) wird deine IP-Adresse nur als verschlüsselter Prüfwert (Hash mit wechselndem Zufallswert) im Arbeitsspeicher verwendet, höchstens eine Stunde lang. Sie wird nicht auf der Festplatte gespeichert.</p>
+    <p>Zum Schutz vor Missbrauch (zu viele Einträge) wird deine IP-Adresse nur als Prüfwert (Hash mit täglich wechselndem Zufallswert) verwendet und dafür höchstens eine Stunde lang in der Datenbank gehalten. Die IP-Adresse selbst wird nicht gespeichert.</p>
+    <p>Die Einträge der Rekordliste liegen in einer Datenbank der Upstash, Inc. (USA), mit Speicherort Frankfurt am Main. Upstash ist in unserem Auftrag tätig (Auftragsverarbeitung nach Art. 28 DSGVO). Für einen möglichen Zugriff aus den USA gelten die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO), die Teil des Auftragsverarbeitungsvertrags von Upstash sind.</p>
     <p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (die von dir gewünschte Teilnahme an der Rekordliste) und lit. f (faire Rekordliste ohne Missbrauch). Gespeichert werden die 500 besten Läufe aller Zeiten und die Läufe des aktuellen Tages; alle anderen Einträge werden nach dem Tageswechsel automatisch gelöscht. Auf Wunsch löschen wir deine Einträge jederzeit: schreib uns einfach eine E-Mail mit deinem Spitznamen.</p>
 
     <h3>6. Teilen</h3>
@@ -97,9 +99,9 @@
     <ul>
       <li>No ads, no analytics, no tracking, no cookies, no third-party content.</li>
       <li>Settings and progress stay in your browser (localStorage), together with a random device ID. Clear the site data to delete them.</li>
-      <li>The web server processes your IP address to deliver the game; the game server keeps no access log, and technical logs are deleted after 7 days at the latest. Hosting: Hetzner Online GmbH, Germany.</li>
+      <li>Hosting: Vercel Inc., USA (EU-US Data Privacy Framework). Vercel processes your IP address to deliver the game through its worldwide network; the leaderboard runs in Frankfurt. We don't analyse access logs; Vercel keeps technical logs only briefly.</li>
       <li>Saving a record sends your nickname, hero, distance, coins, run time and the random device ID. Only nickname, hero, distance and rank are public. Please use a nickname, not your real name.</li>
-      <li>Your IP address is used only as a salted hash in memory for rate limiting, for at most one hour, and never stored on disk.</li>
+      <li>Leaderboard entries are stored with Upstash, Inc. (USA) in Frankfurt, under EU Standard Contractual Clauses. Your IP address is used only as a salted hash (salt changes daily) for rate limiting and kept for at most one hour; the address itself is never stored.</li>
       <li>We keep the top 500 runs and today's runs; others are removed the next day. Email us to have your entries deleted.</li>
       <li>Controller and contact: Sascha Belon, <a href="mailto:saschabelon@gmail.com">saschabelon@gmail.com</a>. You have the rights under Articles 15 to 21 GDPR and may complain to a data protection authority.</li>
     </ul>

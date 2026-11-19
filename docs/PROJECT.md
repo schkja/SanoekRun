@@ -4,11 +4,11 @@ Everything a new chat (or a new developer) needs to keep building SanökRun.
 Read this first, then the code. Keep it up to date when architecture changes.
 
 - **Repo:** `github.com/schkja/SanoekRun` (branch `main`, PRs from feature branches)
-- **Live:** https://sanoekrun.sascha.iodatalabs.dev
+- **Live:** https://sanoekrun.vercel.app (Vercel Hobby; until Nov 2026 it ran on a Hetzner box at sanoekrun.sascha.iodatalabs.dev)
 - **Owner:** schkja (Sascha). Owns the license and all commits.
 - **State (Nov 2026):** v1 playable and deployed. PR #6 `leaderboard-and-progress`
   adds leaderboard, missions, shop, power-ups, PWA install, logo and the 9:16
-  share picture. Server steps for it are in §9.
+  share picture. Hosting and database steps are in §9.
 
 ---
 
@@ -61,11 +61,11 @@ thick outlines), bright forest. Portrait phone first, works on desktop.
 | UI | Plain DOM overlay over the canvas (`#ui`), one CSS file. No framework. |
 | Fonts | Bundled via fontsource (works offline): Lilita One (display, Latin), Rubik 800 (display, Cyrillic), Nunito 700/800 (body) |
 | Audio | WebAudio, synthesized SFX + layered music (`src/core/audio.ts`, `music.ts`) |
-| Backend | Zero-dependency Node 22 HTTP server (`server/index.mjs`), JSON file storage |
-| Hosting | Docker on a Hetzner box: nginx (game) + node (API) behind Traefik; Watchtower auto-updates |
-| CI | GitHub Actions builds and pushes images to GHCR on every push to `main` |
+| Backend | Vercel Functions (`api/*.mjs`, logic in `server/leaderboard.mjs`), Upstash Redis via the Vercel Marketplace (EU) |
+| Hosting | Vercel Hobby, Git-connected: `main` → production, branches/PRs → preview links. Functions in `fra1` |
+| CI | GitHub Actions `check.yml`: typecheck + build + `node --check` on every push/PR (Vercel does the deploy) |
 
-No runtime dependencies besides `three` and fonts. Keep it that way unless there is a strong reason.
+No runtime dependencies besides `three` and fonts (game) and `@upstash/redis` (API only). Keep it that way unless there is a strong reason.
 
 ---
 
@@ -76,9 +76,11 @@ index.html                 #game (canvas) + #ui (overlay); icons, manifest, PWA 
 content/worlds.json        worlds (theme, decor, path style, chaser, length) + per-hero routes
 public/                    icons/, manifest.webmanifest, sw.js, models/, sounds/
 scripts/make-icons.mjs     renders ICON_SVG (src/ui/logo.ts) to PNG icons via Playwright
-server/                    leaderboard API (index.mjs) + Dockerfile
-deploy/                    docker-compose.yml, nginx.conf, traefik-sanoekrun.yaml (reference)
-.github/workflows/deploy.yml  typecheck, build, push ghcr.io/schkja/sanoekrun and sanoekrun-api
+scripts/import-scores.mjs  one-time move of an old scores.json into the Redis database
+api/                       Vercel Functions: scores.mjs, health.mjs, prune.mjs
+server/                    leaderboard.mjs (rules + Redis storage, shared by api/)
+vercel.json                region, daily cron, cache headers
+.github/workflows/check.yml   typecheck, build, node --check (Vercel deploys by itself)
 
 src/main.ts                fonts, creates Game, registers the service worker (prod + https only)
 src/core/
@@ -201,12 +203,13 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 ### 6.5 Leaderboard
 - Client `leaderboard.ts`: `fetchBoard(period, device)`, `submitRun(run)`. Base `./api/scores`, 6 s timeout, **all failures are silent** (game works offline / in previews).
 - Name prompt opens automatically for runs ≥ 50 m (and ≥ board cutoff); every run ≥ 20 m gets a "🏆 Add to the records" button on the end screen until saved. If the API can't be reached, the prompt says so (`records.down`) instead of failing silently.
-- Server `server/index.mjs`:
+- Server: Vercel Functions `api/scores.mjs`, `api/health.mjs`, `api/prune.mjs`; rules and storage in `server/leaderboard.mjs`:
   - `GET /api/scores?period=all|today&device=` → `{period, total, entries[{rank,name,character,distance,mine}], cutoff}` (top 100).
   - `POST /api/scores {name, character, device, distance, coins, durationMs}` → `{ok, rank, rankToday}`; 400 `name|character|device`, 422 `run`, 429 rate limit.
   - `GET /api/health` → `{ok:true}`.
-  - Storage `DATA_FILE` (default `/data/scores.json`), atomic write via tmp + rename. Keeps top 500 all-time + today's runs (day = Europe/Berlin).
-  - Anti-cheat (plausibility, not security): `distance ≤ seconds × 24 × 1.08 + 30`, `coins ≤ distance × 0.5 + 20`. Rate limit: 8 s between submits, 40/hour per device and per IP.
+  - Storage: Upstash Redis key `scores` (whole board as one JSON array). Every change is one Lua script (`EVAL`), so parallel submits can't overwrite each other. Keeps top 500 all-time + today's runs (day = Europe/Berlin). Daily cron `/api/prune` (vercel.json, 23:20 UTC) drops yesterday's runs that missed the all-time board; `GET` also hides them.
+  - Env: `KV_REST_API_URL` + `KV_REST_API_TOKEN` (set by the Marketplace integration; `UPSTASH_REDIS_REST_*` also work). Optional `CRON_SECRET` protects `/api/prune`.
+  - Anti-cheat (plausibility, not security): `distance ≤ seconds × 24 × 1.08 + 30`, `coins ≤ distance × 0.5 + 20`. Rate limit in Redis: 8 s between submits, 40/hour per device and per IP (IP as SHA-256 with a random salt that changes daily; keys expire within an hour).
   - Names: any pseudonym, 1–16 code points (any script, emoji, symbols). Refused: control/private/unassigned chars, bidi overrides, zero-width space, `<` `>`, and the bad-word list in 5 languages (matched on letters only).
   - Known limitation: a determined cheater can forge requests. Next step if needed: signed run tokens issued at run start + server-side duration check.
 
@@ -218,7 +221,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 - `public/manifest.webmanifest` (fullscreen, portrait, sky-blue theme, icons incl. maskable).
 - `public/sw.js`: network-first, cache fallback, skips `/api` and non-GET. Cache name `sanoekrun-v1` (bump to force cleanup). Registered only in production on https/localhost.
 - Install screen: `detectPlatform()` (ios / android / mac Safari / chromium desktop / firefox; iPads report as Mac, so touch is checked) puts this device's steps first: iPhone (Share → Add to Home Screen), Android, Mac Safari (File/Share → Add to Dock), Chrome/Edge/Brave (install icon or menu), Firefox (can't install, use another browser). The captured `beforeinstallprompt` becomes an "Install now" button. Hidden when already installed (`display-mode: standalone/fullscreen` or `navigator.standalone`).
-- Icons: change `ICON_SVG` in `src/ui/logo.ts`, then `node scripts/make-icons.mjs` (needs Playwright), and regenerate `public/favicon.ico` (16/32/48 from `icon-512.png`, e.g. with Pillow). The tab favicon is linked as .ico first, then PNG 32/16, then SVG (Safari ignores SVG favicons). nginx returns 404 for missing static files instead of the game page.
+- Icons: change `ICON_SVG` in `src/ui/logo.ts`, then `node scripts/make-icons.mjs` (needs Playwright), and regenerate `public/favicon.ico` (16/32/48 from `icon-512.png`, e.g. with Pillow). The tab favicon is linked as .ico first, then PNG 32/16, then SVG (Safari ignores SVG favicons). Vercel returns 404 for missing static files (no SPA fallback on purpose).
 - Why it matters: kids often can't install store apps; home-screen web app needs no account.
 
 ---
@@ -228,7 +231,7 @@ Every world a hero reaches is saved in `profile.reached[character]` (`markReache
 - `content/changelog.json`: one entry per version with notes in all 5 languages. **On every release:** bump `package.json` version and add a changelog entry.
 - Title toolbar → ℹ️ Info: version, author (opens site), bug report (mailto), website, privacy/imprint, last 4 changelog entries.
 - `public/legal.html` (static, linkable from forums): contact section (name + email, marked as private non-commercial hobby/learning project; the owner chose not to publish a postal address for now, aware that §18 MStV may require name + address once the game is promoted publicly, e.g. on forums; an HTML comment marks where to add it), Datenschutzerklärung (DE, binding) + English summary, licences (three.js MIT, fonts OFL).
-- Privacy by design, keep it that way: no cookies, no analytics, no third-party requests, fonts bundled; nginx `access_log off`; API keeps IPs only as a salted in-memory hash for rate limiting (cleared hourly); Docker logs capped (5 MB × 2); name prompt warns to use a nickname. Any new data flow (accounts, analytics, ads, external fonts/CDNs) requires updating `legal.html` first.
+- Privacy by design, keep it that way: no cookies, no analytics, no third-party requests, fonts bundled; API keeps IPs only as a salted hash for rate limiting (salt changes daily, entries expire within an hour); Vercel and Upstash are processors named in legal.html; name prompt warns to use a nickname. Any new data flow (accounts, analytics, ads, external fonts/CDNs) requires updating `legal.html` first.
 
 ### 6.9 Ground worlds (forest trail)
 `theme.ground: true` raises the engine's "abyss" plane to y −0.06 and colours it as grass, so the path lies on the forest floor. Decor `trail` + path style `trail`: sandy path, grass verge, bushes (some with berries), flower bunches, ferns, stones, toadstools, rooted trees, hedge at every corner. No gaps (`obstacles.gap: 0`). Missing a corner = "ran into the bushes" (instant death in `step()`, no falling).
@@ -282,11 +285,11 @@ Edit `content/worlds.json` only (no code) if you reuse existing parts:
 
 ```
 npm install
-npm run dev              # http://localhost:5173, proxies /api → localhost:8080
-node server/index.mjs    # leaderboard (set DATA_FILE=./data/scores.json locally)
+npm run dev              # http://localhost:5173, game only (leaderboard hidden, fails silently)
+npx vercel env pull .env.local && npx vercel dev   # game + /api functions with the real database
 npm run typecheck        # must be clean before every commit
 npm run build            # dist/
-npm run preview          # http://localhost:4173, also proxies /api
+npm run preview          # http://localhost:4173
 npm run build:single     # dist-single/index.html, one self-contained file (used for previews)
 ```
 
@@ -302,41 +305,18 @@ npm run build:single     # dist-single/index.html, one self-contained file (used
 
 ## 9. Deployment and operations
 
-**Pipeline:** push to `main` → GitHub Actions (`deploy.yml`): `npm ci`, typecheck, build, `node --check server/index.mjs`, build and push
-`ghcr.io/schkja/sanoekrun:latest` (nginx + dist) and `ghcr.io/schkja/sanoekrun-api:latest` (server/). Watchtower on the server (label-enabled, 60 s poll) pulls and restarts. Verified: live ~20 s after the image is pushed.
+**Pipeline:** Vercel is connected to the GitHub repo. Push to `main` → production at https://sanoekrun.vercel.app; any other branch or PR → its own preview URL (posted on the PR). Build: Vite preset, `npm run build`, output `dist`. GitHub Actions `check.yml` only checks (typecheck, build, `node --check`).
 
-**Server (Hetzner):**
-- App dir `/srv/sanoekrun.sascha.iodatalabs.dev` (git checkout); `docker-compose.yml` there is a symlink to `deploy/docker-compose.yml`.
-- Services: `sanoekrun` (nginx :80) and `sanoekrun-api` (node :8080, volume `./data:/data`), both on external network `proxy`, both with the Watchtower label.
-- Traefik file provider in `/srv/traefik/conf.d/`: `sanoekrun.sascha.iodatalabs.dev.yaml` (site) and `sanoekrun-api.yaml` (`Host(...) && PathPrefix(/api)` → `http://sanoekrun-api:8080`, higher priority because the rule is longer).
-- nginx: `/assets/` immutable for 1 year; `/`, `/sw.js` and the manifest no-cache so updates show immediately. Never add a server-level `types {}` block (it replaces all MIME types and breaks JS).
+**vercel.json:** function region `fra1`; daily cron `/api/prune`; cache headers that the old nginx had: `/assets/*` immutable for 1 year, `/sw.js` no-cache/no-store, manifest no-cache with `application/manifest+json`.
 
-**One-time server setup for the leaderboard (done 2026-11-07):**
-1. GitHub → Packages → `sanoekrun-api` → make public (or `docker login ghcr.io` on the server).
-2. Create the API route:
-   ```
-   cat > /srv/traefik/conf.d/sanoekrun-api.yaml <<'EOF'
-   http:
-     routers:
-       sanoekrun-api:
-         rule: Host(`sanoekrun.sascha.iodatalabs.dev`) && PathPrefix(`/api`)
-         entryPoints:
-           - websecure
-         service: sanoekrun-api
-         tls:
-           certResolver: letsencrypt
-     services:
-       sanoekrun-api:
-         loadBalancer:
-           servers:
-             - url: http://sanoekrun-api:8080
-   EOF
-   ```
-   (Done on 2026-11-07, `/api/health` answers `{"ok":true}`. An earlier sed one-liner produced port 80 instead of 8080 and gave a 502.)
-3. `cd /srv/sanoekrun.sascha.iodatalabs.dev && git pull && docker compose pull && docker compose up -d`
-4. Check `curl https://sanoekrun.sascha.iodatalabs.dev/api/health` → `{"ok":true}`.
-- **Backup:** `./data/scores.json` is the only state on the server. Copy it in any server backup.
+**Leaderboard database (one-time setup):**
+1. Vercel project → Storage → Create Database → Upstash for Redis (free plan), primary region Frankfurt (eu-central-1), connect it to the project (all environments). This sets `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+2. Redeploy, then check `https://sanoekrun.vercel.app/api/health` → `{"ok":true}`.
+3. Optional: Settings → Environment Variables → `CRON_SECRET` (any long random string).
+4. Move the old scores: copy `/srv/sanoekrun.sascha.iodatalabs.dev/data/scores.json` off the Hetzner box, then `npx vercel env pull .env.local && node --env-file=.env.local scripts/import-scores.mjs scores.json`.
+- **Backup:** the `scores` key in Upstash is the only state (Upstash console → Data Browser, or `GET scores` via the REST API).
 - **Player data** (bank, outfits, missions) lives only in the browser. Clearing site data resets it. A cloud save would need accounts; deliberately not done (kids, privacy).
+- **Old Hetzner host:** printed QR codes and shared pictures still point to sanoekrun.sascha.iodatalabs.dev. Keep that domain answering with a permanent redirect to sanoekrun.vercel.app for a while before switching the box off. A new domain for Vercel goes in Settings → Domains, then change `VITE_SHARE_URL`.
 
 ---
 
@@ -369,7 +349,7 @@ npm run build:single     # dist-single/index.html, one self-contained file (used
 
 ## 12. Prompt to start a new chat
 
-> Project SanökRun (repo schkja/SanoekRun, Three.js + Vite + TS endless runner, deployed at sanoekrun.sascha.iodatalabs.dev). Read `docs/PROJECT.md` in the repo first. Rules: commits only as schkja, no AI mention anywhere, branch + PR via `gh api .../pulls`, answer me in Russian TLDR. Task: ...
+> Project SanökRun (repo schkja/SanoekRun, Three.js + Vite + TS endless runner, deployed at sanoekrun.vercel.app). Read `docs/PROJECT.md` in the repo first. Rules: commits only as schkja, no AI mention anywhere, branch + PR via `gh api .../pulls`, answer me in Russian TLDR. Task: ...
 
 ### Squirrel style reference
 The owner's reference is the squirrels of classic Soviet hand-drawn cartoons: chubby round body, big round head, large cream bib and cheeks, tall pointed ears with dark tufts, big bushy tail with a curled tip, warm red-orange fur. Running, the tail streams out behind (`plume.rotation.x ≈ 1.3`), which keeps it below the head from the game camera; upright, tail-over-the-back poses belong on the title/share art, not in the run.
